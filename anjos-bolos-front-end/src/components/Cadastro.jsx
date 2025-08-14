@@ -6,8 +6,9 @@ import { Button } from "./Button";
 import { Modal } from "./Modal";
 import sucesso from "../assets/success.svg";
 import erro from "../assets/error.svg"
+import { Navbar } from "./Navbar";
 
-export function Formulario(props) {
+export function Cadastro(props) {
     const [form, setForm] = useState({
         nome:"",
         email:"",
@@ -36,17 +37,19 @@ export function Formulario(props) {
     }
 
     return(
-        <div className={ styles.container }>
+        <><Navbar />
+        <div className={styles.cadastro}>
+        <div className={styles.container}>
             <h1>{props.titulo}</h1>
 
-            <div className={ styles["input-grid"] }>
-                <div className={ styles["input-group"] }>
-                    <TextBox name="nome" label="Nome" type="text" value={ form.nome } onChange={ alterarForm }/>
-                    <TextBox name="email" label="E-mail" type="text" value={ form.email } onChange={ alterarForm }/>
+            <div className={styles["input-grid"]}>
+                <div className={styles["input-group"]}>
+                    <TextBox name="nome" label="Nome" type="text" value={form.nome} onChange={alterarForm} />
+                    <TextBox name="email" label="E-mail" type="text" value={form.email} onChange={alterarForm} />
                 </div>
 
-                <div className={ styles["input-group"] }>
-                    <TextBox name="senha" label="Senha" type="password" value={ form.senha } onChange={ alterarForm }/>
+                <div className={styles["input-group"]}>
+                    <TextBox name="senha" label="Senha" type="password" value={form.senha} onChange={alterarForm} />
                     <select name="funcao" onChange={alterarForm}>
                         <option value="" selected disabled>Selecione uma opção</option>
                         <option value="ADMINISTRADOR">Administrador</option>
@@ -56,19 +59,20 @@ export function Formulario(props) {
                 </div>
             </div>
 
-            <Button function="Cadastrar" onClick={ cadastrar }/>
+            <Button function="Cadastrar" onClick={cadastrar} />
 
             <Modal isOpen={modalAberto} onClose={() => setModalAberto(false)}>
                 <h1>Cadastro Concluído</h1>
-                <p>Funcionário <b>{ form.nome }</b> cadastrado concluído.</p>
-                <img src={ sucesso } alt="" />
+                <p>Funcionário <b>{form.nome}</b> cadastrado concluído.</p>
+                <img src={sucesso} alt="" />
             </Modal>
 
             <Modal isOpen={modalErroAberto} onClose={() => setModalErroAberto(false)}>
                 <h1>Erro ao realizar Cadastro</h1>
                 <p>Verifique as informações preenchidas e tente novamente.</p>
-                <img src={ erro } alt="" />
+                <img src={erro} alt="" />
             </Modal>
         </div>
+        </div></>
     )
 }
