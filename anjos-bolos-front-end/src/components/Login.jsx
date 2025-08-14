@@ -6,8 +6,9 @@ import { Button } from "./Button";
 import { Modal } from "./Modal";
 import sucesso from "../assets/success.svg";
 import erro from "../assets/error.svg"
+import { Navbar } from "./Navbar";
 
-export function Formulario2(props) {
+export function Login(props) {
     const [form, setForm] = useState({
         email:"",
         senha:""
@@ -33,32 +34,35 @@ export function Formulario2(props) {
         }
     }
     return(
-        <div className={ styles.container } style={{ width: "640px" }}>
+        <><Navbar />
+        <div className={styles.cadastro}>
+        <div className={styles.container} style={{ width: "640px" }}>
             <h1>{props.titulo}</h1>
 
-            <div className={ styles["input-grid"] }>
-                <div className={ styles["input-group"] }>
-                    <TextBox name="email" label="E-mail" type="text" value={ form.email } onChange={ alterarForm }/>
+            <div className={styles["input-grid"]}>
+                <div className={styles["input-group"]}>
+                    <TextBox name="email" label="E-mail" type="text" value={form.email} onChange={alterarForm} />
                 </div>
 
-                <div className={ styles["input-group"] }>
-                    <TextBox name="senha" label="Senha" type="password" value={ form.senha } onChange={ alterarForm }/>
+                <div className={styles["input-group"]}>
+                    <TextBox name="senha" label="Senha" type="password" value={form.senha} onChange={alterarForm} />
                 </div>
             </div>
 
-            <Button function="Entrar" onClick={ acessar }/>
+            <Button function="Entrar" onClick={acessar} />
 
             <Modal isOpen={modalAberto} onClose={() => setModalAberto(false)}>
                 <h1>Autenticação bem-sucedida!</h1>
                 <p>Usuário auntenticado com sucesso.</p>
-                <img src={ sucesso } alt="" />
+                <img src={sucesso} alt="" />
             </Modal>
 
             <Modal isOpen={modalErroAberto} onClose={() => setModalErroAberto(false)}>
                 <h1>Erro ao acessar o Sistema</h1>
                 <p>Verifique as informações preenchidas e tente novamente.</p>
-                <img src={ erro } alt="" />
+                <img src={erro} alt="" />
             </Modal>
-        </div>
+            </div>
+        </div></>
     )
 }
