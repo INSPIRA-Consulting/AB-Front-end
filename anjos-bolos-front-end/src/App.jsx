@@ -1,7 +1,7 @@
 import { RouterProvider } from "react-router-dom"
 import "./App.css"
-import { Cadastro } from "./components/Cadastro"
-import { Login } from "./components/Login"
+import { Cadastro } from "./pages/Cadastro"
+import { Login } from "./pages/Login"
 import { Navbar } from "./components/Navbar"
 import { router } from "./router"
 
