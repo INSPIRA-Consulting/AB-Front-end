@@ -1,0 +1,58 @@
+@import '../styles/fonts/fonts.css';
+
+.container {
+    background-color: #F7F7F7;
+}
+
+.container h1 {
+    font-family: 'DancingScript';
+    font-size: 4rem;
+    font-weight: bold;
+    color: #663b2b;
+}
+
+h3{
+    font-family: 'DancingScript';
+    font-size: 2.5rem;
+    font-weight: bold;
+    color: #56270B;
+}
+
+.labelFiltro{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-left: 10%;
+    padding-right: 10%;
+
+    h4 {
+        font-family: 'Montserrat';
+        font-size: 2rem;
+        color: #663b2b;
+        font-weight: normal;
+        margin-bottom: 0.5rem;
+        margin-top: 0.5rem;
+    }
+
+    select {
+        width: 260px;
+        padding: 12px 12px;
+        font-size: 1.5rem;
+        color: #FFFFFF;
+        border-radius: 8px;
+        outline: none;
+        background-color: #56270B;
+    }
+
+    button {
+        width: 150px;
+        padding: 12px 12px;
+        font-size: 1.5rem;
+        color: #FFFFFF;
+        border-radius: 8px;
+        outline: none;
+        background-color: #663b2B;
+        border: none;
+        cursor: pointer;
+    }
+}
