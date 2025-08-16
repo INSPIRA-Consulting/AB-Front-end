@@ -4,6 +4,12 @@
     font-family: 'Montserrat';
 }
 
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 40px;
+}
+
 nav {
     height: 80px;
     background-color: #BAB1AB;
