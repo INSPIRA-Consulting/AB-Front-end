@@ -20,12 +20,12 @@ export function Produto(props) {
             <div>
                 <div style={{ textAlign: 'center' }}>
                     <h2 style={{ color: 'black' }}>{props.titulo}</h2>
-                    <img src={props.imagem} alt={props.titulo} style={{ width: '200px', height: '200px', borderRadius: '20px', border: '5px solid #663b2b'}} />
+                    <img onClick={clickAumentar} src={props.imagem} alt={props.titulo} style={{ width: '200px', height: '200px', borderRadius: '20px', border: '5px solid #663b2b', cursor: 'pointer'}} />
                     <div style={{ marginTop: '10px' }}>
                         <span style={{ margin: '0 10px 0 0', color: '#56270B', fontSize: '20px', fontWeight: 'bold' }}>Qtd.</span>
-                        <button onClick={clickDiminuir} style={{ borderRadius:'35px', width: '15px', backgroundColor:'#56270B'}}>-</button>
-                        <span style={{ margin: '0 10px', color: 'black' }}>{contador}</span>
-                        <button onClick={clickAumentar} style={{ borderRadius:'35px', width: '15px', backgroundColor:'#56270B'}}>+</button>
+                        <button onClick={clickDiminuir} style={{ borderRadius:'35px', width: '15px', backgroundColor:'#56270B', padding: '8px 20px 8px 15px', fontWeight: 'bold'}}>-</button>
+                        <span style={{ margin: '0 10px', color: 'black', fontSize: '24px', fontWeight: 'bold', paddingTop: '10px' }}>{contador}</span>
+                        <button onClick={clickAumentar} style={{ borderRadius:'35px', width: '35px', backgroundColor:'#56270B', padding: '8px 20px 8px 12px', fontWeight: 'bold'}}>+</button>
                     </div>
                 </div>
             </div>
