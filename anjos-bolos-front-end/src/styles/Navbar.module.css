@@ -11,14 +11,14 @@
 }
 
 nav {
-    height: 80px;
+    height: 75px;
     background-color: #BAB1AB;
     display: flex;
     flex-direction: row;
     justify-content: space-between;
     align-items: center;
     padding: 0 80px;
-    border-bottom: 2px solid #663b2b;
+    border-bottom: 2px solid #4d2200;
 }
 
 nav img {
@@ -34,18 +34,29 @@ nav .links {
 }
 
 .links .navlink {
-    width: fit-content;
-    min-width: 64px;
-    padding: 10px 20px;
+    width: 95px;
+    min-width: 95px;
+    max-width: 95px;
+    padding: 8px 0;
     border-radius: 10px;
-    background-color: #663b2b;
+    background-color: #4d2200;
     color: #fff;
-    font-size: 1rem;
-    font-weight: bold;
+    font-size: 1.1rem;
+    font-weight: 600;
     text-align: center;
+    border: none;
+    outline: none;
+    box-sizing: border-box;
 }
 
 .navlink:hover {
     cursor: pointer;
-    background-color: #9c573d;
+    background-color: #76533E;
+}
+
+h4{
+    font-family: 'DancingScript';
+    font-size: 1.8rem;
+    font-weight: bold;
+    color: #56270B;
 }

@@ -6,13 +6,13 @@ export function Navbar(props) {
         <nav>
             <div className={ styles.logo }>
                 <img src={ Logo } alt="Logotipo Anjos Bolos" />
-                {props.logado && <h3>Olá, Usuário</h3>}
+                {props.logado && <h4>Olá, Usuário</h4>}
             </div>
 
             <div className={ styles.links }>
-                <div className={ styles.navlink }>Menu</div>
-                <div className={ styles.navlink }>Ajuda</div>
-                {props.logado && <div className={ styles.navlink }>Sair</div>}
+                <button className={ styles.navlink }>Menu</button>
+                <button className={ styles.navlink }>Ajuda</button>
+                {props.logado && <button className={ styles.navlink }>Sair</button>}
             </div>
         </nav>
     )
