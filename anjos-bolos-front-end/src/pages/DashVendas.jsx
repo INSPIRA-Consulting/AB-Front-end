@@ -7,25 +7,26 @@ import { DashSidebar } from '../components/DashSidebar';
 
 
 import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Title,
-  Tooltip,
-  Legend,
+	Chart as ChartJS,
+	CategoryScale,
+	LinearScale,
+	PointElement,
+	LineElement,
+	Title,
+	Tooltip,
+	Legend
 } from 'chart.js';
 import { Line } from 'react-chartjs-2';
 
+// Registrar apenas os módulos necessários para o gráfico de linha nesta página
 ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Title,
-  Tooltip,
-  Legend
+	CategoryScale,
+	LinearScale,
+	PointElement,
+	LineElement,
+	Title,
+	Tooltip,
+	Legend
 );
 
 
@@ -121,7 +122,7 @@ export function DashVendas() {
 
 		return (
 			<div className={styles.dashContainer}>
-				<Navbar logado={true} />
+				   <Navbar logado={true} activePage="vendas" />
 				<div className={styles.dashMain}>
 					<DashSidebar activeItem="vendas" />
 					<main className={styles.dashContent}>

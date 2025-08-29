@@ -62,7 +62,7 @@
 	border: 1.5px solid #4d2c0c;
 	border-radius: 8px;
 	padding: 5px 18px 5px 14px;
-	font-size: 1.08rem;
+	font-size: 1.04rem;
 	color: #fff;
 	font-weight: 600;
 	margin-bottom: 6px;
@@ -80,7 +80,7 @@
 .datePlaceholder {
 	color: #fff;
 	opacity: 0.85;
-	font-size: 1.08rem;
+	font-size: 1.04rem;
 	font-weight: 600;
 	font-family: inherit;
 	pointer-events: none;
@@ -109,8 +109,8 @@
 /* Cards */
 .dashCards {
 	display: flex;
-	gap: 43px;
-	margin: 22px 0 22px 0;
+	gap: 100px;
+	margin: 12px 0 12px 0;
 	width: 100%;
 	max-width: 1100px;
 }
@@ -130,7 +130,7 @@
 .dashCardTitle {
 	width: 100%;
 	text-align: center;
-	font-size: 1.08rem;
+	font-size: 1.rem;
 	font-weight: 700;
 	padding: 10px 0 7px 0;
 	border-radius: 12px 12px 0 0;

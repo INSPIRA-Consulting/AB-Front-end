@@ -54,6 +54,13 @@ nav .links {
     background-color: #76533E;
 }
 
+.navlink.active {
+    background-color: #a86b32;
+    color: #fff;
+    box-shadow: 0 2px 8px #a86b3233;
+    border: 2px solid #a86b32;
+}
+
 h4{
     font-family: 'DancingScript';
     font-size: 1.8rem;
