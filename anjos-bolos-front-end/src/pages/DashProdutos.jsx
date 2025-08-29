@@ -167,58 +167,72 @@ export function DashProdutos() {
 											<div className={styles.dashCardTitle} style={{ background: "#4d2c0c", color: "#fff", borderRadius: "12px 12px 0 0" }}>
 												TOP 5 Recheios mais populares:
 											</div>
-											<div className={styles.pieChartContainer}>
-												<Pie
-													data={pieData}
-													options={{
-														maintainAspectRatio: false,
-														responsive: true,
-														plugins: {
-															legend: {
-																position: "bottom",
-																labels: {
-																	color: "#4d2c0c",
-																	font: { family: 'Montserrat', size: 13, weight: 600 },
-																	usePointStyle: true
-																}
-															},
-															tooltip: {
-																callbacks: {
-																	label: function(context) {
-																		const label = context.label || '';
-																		const value = context.parsed;
-																		const total = context.chart._metasets[context.datasetIndex].total;
-																		const percent = ((value / total) * 100).toFixed(1);
-																		return `${label}: ${percent}%`;
+											<div style={{ width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
+												<div style={{
+													background: '#fff',
+													borderRadius: '14px',
+													width: '100%',
+													maxWidth: 420,
+													minWidth: 320,
+													height: 145,
+													display: 'flex',
+													alignItems: 'center',
+													justifyContent: 'center',
+													boxShadow: '0 2px 8px #0001',
+													margin: '10px 0'
+												}}>
+													<Pie
+														data={pieData}
+														options={{
+															maintainAspectRatio: false,
+															responsive: true,
+															plugins: {
+																legend: {
+																	position: "bottom",
+																	labels: {
+																		color: "#4d2c0c",
+																		font: { family: 'Montserrat', size: 13, weight: 600 },
+																		usePointStyle: true
 																	}
+																},
+																tooltip: {
+																	callbacks: {
+																		label: function(context) {
+																			const label = context.label || '';
+																			const value = context.parsed;
+																			const total = context.chart._metasets[context.datasetIndex].total;
+																			const percent = ((value / total) * 100).toFixed(1);
+																			return `${label}: ${percent}%`;
+																		}
+																	}
+																},
+																datalabels: {
+																	color: '#4d2c0c',
+																	font: {
+																		family: 'Montserrat',
+																		size: 13,
+																		weight: 'bold'
+																	},
+																	formatter: (value, context) => {
+																		const label = context.chart.data.labels[context.dataIndex];
+																		const total = context.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
+																		const percent = ((value / total) * 100).toFixed(1);
+																		return `${label}\n${percent}%`;
+																	},
+																	align: 'center',
+																	anchor: 'center',
 																}
-															},
-															datalabels: {
-																color: '#4d2c0c',
-																font: {
-																	family: 'Montserrat',
-																	size: 13,
-																	weight: 'bold'
-																},
-																formatter: (value, context) => {
-																	const label = context.chart.data.labels[context.dataIndex];
-																	const total = context.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
-																	const percent = ((value / total) * 100).toFixed(1);
-																	return `${label}\n${percent}%`;
-																},
-																align: 'center',
-																anchor: 'center',
 															}
-														}
-													}}
-													width={220}
-													height={220}
-												/>
+														}}
+														width={220}
+														height={135}
+													/>
+												</div>
 											</div>
 										</div>
 						{/* Card categorias */}
-						<div className={styles.dashCard} style={{ background: "#a86b32", color: "#fff", minWidth: 320, maxWidth: 420, flex: 1 }}>
-							<div className={styles.dashCardTitle} style={{ background: "#a86b32", color: "#fff", borderRadius: "12px 12px 0 0" }}>
+						<div className={styles.dashCard} style={{ background: "rgb(77, 44, 12)", color: "#fff", minWidth: 320, maxWidth: 420, flex: 1 }}>
+							<div className={styles.dashCardTitle} style={{ background: "rgb(77, 44, 12)", color: "#fff", borderRadius: "12px 12px 0 0" }}>
 								TOP 5 Categorias de produtos mais vendidos:
 							</div>
 							<table className={styles.categoriasTable}>
