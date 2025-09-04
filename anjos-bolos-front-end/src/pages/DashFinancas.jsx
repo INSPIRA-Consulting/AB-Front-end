@@ -214,31 +214,31 @@ export function DashFinancas() {
                         <section className={styles.dashCards}>
                             <div className={styles.dashCard}>
                                 <div className={styles.dashCardTitle + ' ' + styles.dashCardTitleLucro}>% de Lucro sobre os produtos</div>
-                                <div className={styles.dashCardContent + ' ' + styles.horizontal}>
-                                    <div className={styles.lucroCard}>
+                                <div className={styles.dashCardContent + ' ' + styles.lucroCardContainer}>
+                                    <div className={styles.lucroSection}>
                                         <span className={styles.lucroLabel}>Mínimo:</span>
-                                        <span className={styles.lucroValue}>10%</span>
+                                        <span className={styles.lucroValueMin}>10%</span>
                                     </div>
-                                    <div className={styles.lucroCard}>
+                                    <div className={styles.lucroSection}>
                                         <span className={styles.lucroLabel}>Máximo:</span>
-                                        <span className={styles.lucroValue}>35%</span>
+                                        <span className={styles.lucroValueMax}>35%</span>
                                     </div>
                                 </div>
                             </div>
                             <div className={styles.dashCard}>
                                 <div className={styles.dashCardTitle + ' ' + styles.dashCardTitleResumo}>Resumo Financeiro</div>
-                                <div className={styles.dashCardContent}>
-                                    <div className={styles.resumoCard}>
-                                        <span className={styles.resumoCardLabel}>Entrada:</span>
-                                        <span className={styles.resumoCardValue}>R$ 3.000,00</span>
+                                <div className={styles.dashCardContent + ' ' + styles.resumoCardContainer}>
+                                    <div className={styles.resumoItem + ' ' + styles.resumoEntrada}>
+                                        <span className={styles.resumoItemLabel}>Entrada:</span>
+                                        <span className={styles.resumoItemValue}>R$ 3.000,00</span>
                                     </div>
-                                    <div className={styles.resumoCard}>
-                                        <span className={styles.resumoCardLabel}>Saída:</span>
-                                        <span className={styles.resumoCardValue}>R$ 1.000,00</span>
+                                    <div className={styles.resumoItem + ' ' + styles.resumoSaida}>
+                                        <span className={styles.resumoItemLabel}>Saída:</span>
+                                        <span className={styles.resumoItemValue}>R$ 1.000,00</span>
                                     </div>
-                                    <div className={styles.resumoCard}>
-                                        <span className={styles.resumoCardLabel}>Lucro:</span>
-                                        <span className={styles.resumoCardValue}>R$ 2.000,00</span>
+                                    <div className={styles.resumoItem + ' ' + styles.resumoLucro}>
+                                        <span className={styles.resumoItemLabel}>Lucro Aproximado:</span>
+                                        <span className={styles.resumoItemValue}>R$ 2.000,00</span>
                                     </div>
                                 </div>
                             </div>
