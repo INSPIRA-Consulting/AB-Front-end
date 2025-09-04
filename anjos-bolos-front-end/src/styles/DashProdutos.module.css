@@ -20,18 +20,18 @@
 	font-size: 1.08rem;
 	margin: 0 auto;
 	overflow: hidden;
-	border: 2px solid #a86b32;
+	border: 2px solid #4d2c0c;
 }
 .recomendTable th, .recomendTable td {
-	padding: 10px 18px;
+	padding: 8px 18px;
 	text-align: center;
 }
 .recomendTable th {
-	background: #AD5959;
+	background: #4d2c0c;
 	color: #fff;
 	font-weight: 700;
 	font-size: 1.12rem;
-	border-bottom: 2px solid #a86b32;
+	border-bottom: 2px solid #4d2c0c;
 	border-right: 1px solid #fff;
 }
 .recomendTable th:last-child {
@@ -57,124 +57,99 @@
 	border-right: none;
 }
 
-/* Tabela de categorias harmonizada */
+/* Tabela de categorias - mesmo estilo da tabela de recomendações */
 .categoriasTable {
 	width: 100%;
-	background: #fff;
-	color: #4d2c0c;
-	border-radius: 14px;
-	margin: 10px 0;
-	font-weight: 700;
-	font-size: 1.08rem;
 	border-collapse: separate;
 	border-spacing: 0;
-	border: 2px solid #a86b32;
-	max-height: 165px;
+	background: #fff;
+	border-radius: 16px;
+	box-shadow: 0 2px 8px #0001;
+	font-size: 1.08rem;
+	margin: 0 auto;
+	overflow: hidden;
+	border: 2px solid #9D4F4F;
+	height: 180px;
 	display: block;
 	overflow-y: auto;
-	/* Scrollbar custom */
-	scrollbar-width: thin;
-	scrollbar-color: #a86b32 #f9f6f3;
-	box-shadow: 0 2px 8px #0001;
 }
+
 .categoriasTable::-webkit-scrollbar {
-	width: 8px;
-	background: #f9f6f3;
-	border-radius: 8px;
+	width: 6px;
+	background: transparent;
 }
+
+.categoriasTable::-webkit-scrollbar-track {
+	background: rgba(77, 44, 12, 0.1);
+	border-radius: 10px;
+	margin: 5px;
+}
+
 .categoriasTable::-webkit-scrollbar-thumb {
-	background: #a86b32;
-	border-radius: 8px;
+	background: linear-gradient(180deg, #6b3a13 0%, #4d2c0c 100%);
+	border-radius: 10px;
+	border: 1px solid rgba(77, 44, 12, 0.2);
+	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
+
 .categoriasTable::-webkit-scrollbar-thumb:hover {
-	background: #5c2a0c;
+	background: linear-gradient(180deg, #8b4a1b 0%, #5d3410 100%);
+	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
 }
-.categoriasTable td, .categoriasTable th {
-	padding: 14px 22px;
+
+.categoriasTable thead,
+.categoriasTable tbody,
+.categoriasTable tr {
+	display: table;
+	width: 100%;
+	table-layout: fixed;
+}
+
+.categoriasTable thead {
+	width: calc(100% - 6px);
+	position: sticky;
+	top: 0;
+	z-index: 10;
+}
+
+.categoriasTable th, .categoriasTable td {
+	padding: 8px 18px;
 	text-align: center;
-	white-space: nowrap;
-	vertical-align: middle;
-	border-right: 1px solid #e6b07a;
-	border-bottom: 1.5px solid #f7e7d9;
 }
+
 .categoriasTable th {
-	background:#4d2c0c;;
+	background: #9D4F4F;
 	color: #fff;
 	font-weight: 700;
 	font-size: 1.12rem;
-	border-bottom: 2px solid #a86b32;
+	border-bottom: 2px solid #9D4F4F;
 	border-right: 1px solid #fff;
 }
-.categoriasTable th:last-child, .categoriasTable td:last-child {
-	border-right: none;
-}
-.categoriasTable tr:last-child td {
-	border-bottom: none;
-}
-.categoriasTable tr:hover {
-	background: #f7e7d1;
-}
-.categoriasTable td {
-	color: #4d2c0c;
-	font-weight: 600;
-	background: #fff;
-	font-size: 1.08rem;
-}
-.categoriasTable td:first-child, .categoriasTable th:first-child {
-	width: 16%;
-	min-width: 36px;
-	max-width: 48px;
-}
-.categoriasTable td:nth-child(2), .categoriasTable th:nth-child(2) {
-	width: 68%;
-	text-align: left;
-	padding-left: 10px;
-}
-.categoriasTable td:last-child, .categoriasTable th:last-child {
-	width: 16%;
-	min-width: 32px;
-	max-width: 40px;
-}
-.categoriasTable td:first-child, .categoriasTable th:first-child {
-	width: 18%;
-	min-width: 40px;
-	max-width: 60px;
-}
-.categoriasTable td:nth-child(2), .categoriasTable th:nth-child(2) {
-	width: 62%;
-}
-.categoriasTable td:last-child, .categoriasTable th:last-child {
-	width: 20%;
-	min-width: 32px;
-	max-width: 48px;
-}
-.categoriasTable th {
-	background: #8b5c2a;
-	color: #fff;
-	font-weight: 700;
-	font-size: 1.12rem;
-	border-bottom: 2px solid #a86b32;
-	border-right: 1px solid #fff;
-}
+
 .categoriasTable th:last-child {
 	border-right: none;
 }
+
 .categoriasTable tr {
-	border-bottom: 2px solid #a86b32;
+	border-bottom: 2px solid #4d2c0c;
 	transition: background 0.2s;
 }
-.categoriasTable tr:last-child td {
+
+.categoriasTable tr:last-child {
 	border-bottom: none;
 }
+
 .categoriasTable tr:hover {
-	background: #f7e7d1;
+	background: #f5f1ec;
 }
+
 .categoriasTable td {
 	color: #4d2c0c;
 	font-weight: 600;
 	background: #fff;
 	border-right: 1px solid #e6b07a;
 }
+
 .categoriasTable td:last-child {
 	border-right: none;
 }
@@ -276,8 +251,8 @@
 .periodoDate {
 	display: flex;
 	align-items: center;
-	background: #4d2c0c;
-	border: 1.5px solid #4d2c0c;
+	background: #9D4F4F;
+	border: 1.5px solid #9D4F4F;
 	border-radius: 8px;
 	padding: 5px 18px 5px 14px;
 	font-size: 1.08rem;
@@ -337,9 +312,8 @@
 	background: #fff;
 	border: 2.5px solid #6b3a13;
 	border-radius: 18px;
-	flex: 1;
-	min-width: 260px;
-	max-width: 340px;
+	width: 100%;
+	max-width: 800px;
 	max-height: 250px;
 	flex-direction: column;
 	align-items: center;

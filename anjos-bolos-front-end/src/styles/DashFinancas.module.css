@@ -131,7 +131,7 @@
 	text-align: center;
 	font-size: 1rem;
 	font-weight: 700;
-	padding: 10px 0 7px 0;
+	padding: 8px 0 6px 0;
 	border-radius: 12px 12px 0 0;
 	letter-spacing: 0.2px;
 }
@@ -148,17 +148,18 @@
 	font-weight: 700;
 	color: #6b3a13;
 	text-align: center;
-	padding: 12px 10px 12px 10px;
+	padding: 6px 12px 6px 12px;
 	display: flex;
 	align-items: center;
 	justify-content: center;
 	flex-direction: column;
-	gap: 4px;
+	gap: 1px;
 }
 
 .dashCardContent.horizontal {
 	flex-direction: row;
-	gap: 8px;
+	gap: 12px;
+	padding: 8px;
 }
 
 .resumoItem {
@@ -215,14 +216,27 @@
 
 .lucroCard {
 	display: flex;
-	justify-content: space-between;
+	flex-direction: column;
 	align-items: center;
+	justify-content: center;
 	width: 100%;
-	padding: 3px 8px;
-	background: rgba(255, 255, 255, 0.3);
-	border-radius: 4px;
-	border: 1px solid rgba(168, 107, 50, 0.2);
+	padding: 8px 8px;
+	border-radius: 8px;
 	flex: 1;
+	margin: 4px;
+	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+	text-align: center;
+	min-height: 45px;
+}
+
+.lucroCard:first-child {
+	background: linear-gradient(135deg, #d32f2f, #f44336);
+	color: white;
+}
+
+.lucroCard:last-child {
+	background: linear-gradient(135deg, #2e7d32, #4caf50);
+	color: white;
 }
 
 .resumoCard {
@@ -230,10 +244,32 @@
 	justify-content: space-between;
 	align-items: center;
 	width: 100%;
-	padding: 3px 8px;
-	background: rgba(255, 255, 255, 0.3);
-	border-radius: 4px;
-	border: 1px solid rgba(168, 107, 50, 0.2);
+	padding: 4px 12px;
+	border-radius: 8px;
+	margin-bottom: 2px;
+	box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+	transition: all 0.3s ease;
+	border-left: 4px solid transparent;
+}
+
+.resumoCard:nth-child(1) {
+	background: linear-gradient(135deg, rgba(76, 175, 80, 0.15), rgba(76, 175, 80, 0.05));
+	border-left-color: #4caf50;
+}
+
+.resumoCard:nth-child(2) {
+	background: linear-gradient(135deg, rgba(244, 67, 54, 0.15), rgba(244, 67, 54, 0.05));
+	border-left-color: #f44336;
+}
+
+.resumoCard:nth-child(3) {
+	background: linear-gradient(135deg, rgba(255, 193, 7, 0.15), rgba(255, 193, 7, 0.05));
+	border-left-color: #ffc107;
+}
+
+.resumoCard:hover {
+	transform: translateY(-2px);
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 .infoLabel {
@@ -249,27 +285,56 @@
 }
 
 .lucroLabel {
-	font-size: 0.9rem;
-	font-weight: 700;
-	color: #6b3a13;
+	font-size: 0.85rem;
+	font-weight: 600;
+	color: rgba(255, 255, 255, 0.9);
+	margin-bottom: 4px;
+	text-transform: uppercase;
+	letter-spacing: 0.5px;
 }
 
 .lucroValue {
-	font-size: 1rem;
+	font-size: 1.4rem;
 	font-weight: 700;
-	color: #4d2c0c;
+	color: white;
+	text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
 .resumoCardLabel {
 	font-size: 0.9rem;
 	font-weight: 700;
-	color: #6b3a13;
+	letter-spacing: 0.3px;
+	text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.resumoCard:nth-child(1) .resumoCardLabel {
+	color: #2e7d32;
+}
+
+.resumoCard:nth-child(2) .resumoCardLabel {
+	color: #d32f2f;
+}
+
+.resumoCard:nth-child(3) .resumoCardLabel {
+	color: #f57c00;
 }
 
 .resumoCardValue {
-	font-size: 1rem;
+	font-size: 1.05rem;
 	font-weight: 700;
-	color: #4d2c0c;
+	text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.resumoCard:nth-child(1) .resumoCardValue {
+	color: #1b5e20;
+}
+
+.resumoCard:nth-child(2) .resumoCardValue {
+	color: #b71c1c;
+}
+
+.resumoCard:nth-child(3) .resumoCardValue {
+	color: #e65100;
 }
 
 /* Gráfico */
