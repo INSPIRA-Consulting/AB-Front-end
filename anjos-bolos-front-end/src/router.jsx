@@ -9,6 +9,7 @@ import { DashVendas } from "./pages/DashVendas";
 import { DashProdutos } from "./pages/DashProdutos";
 import { DashFinancas } from "./pages/DashFinancas";
 import { CatalogoProdutos } from "./pages/CatalogoProdutos";
+import { PaginaNaoEncontrada } from "./pages/PaginaNaoEncontrada";
 
 export const router = createBrowserRouter([
     {
@@ -50,5 +51,9 @@ export const router = createBrowserRouter([
     {
       path: "/catalogo-produtos",
       element: <CatalogoProdutos titulo="Catalogo de Produtos" />
+    },
+    {
+        path: "*",
+        element: <PaginaNaoEncontrada titulo="Página Não Encontrada" />
     }
 ])
