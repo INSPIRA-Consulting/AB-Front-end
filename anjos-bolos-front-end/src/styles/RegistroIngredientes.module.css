@@ -1,0 +1,70 @@
+@import '../styles/fonts/fonts.css';
+
+.registroIngredientes{
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+}
+
+.container {
+    width: 1280px;
+    height: 380px;
+    padding: 32px 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    background-color: #D1C8C2;
+    border-radius: 10px;
+    border: 3px solid #56270B;
+    margin-top: 0;
+}
+
+.registroIngredientes h1 {
+    font-family: 'DancingScript';
+    font-size: 4rem;
+    font-weight: bold;
+    color: #663b2b;
+}
+
+.registroIngredientes .input-grid {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+}
+
+.registroIngredientes .input-group {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 20px;
+    gap: 40px;   
+}
+
+.registroIngredientes select {
+  width: 330px;
+  padding: 12px 12px;
+  font-size: 1rem;
+  color: #663b2b;
+  border: 2px solid #663b2b;
+  border-radius: 4px;
+  outline: none;
+  background-color: #D9D9D9;
+}
+
+.registroIngredientes input {
+    border: 2px solid #663b2b;
+    background-color: #D9D9D9;
+    width: 450px;
+}
+
+.registroIngredientes label {
+  color: #663b2b;
+  font-size: 1rem;
+  background-color: #D9D9D9;
+} 
+

@@ -3,6 +3,11 @@ import { Cadastro } from "./pages/Cadastro";
 import { Login } from "./pages/Login";
 import { Home } from "./pages/Home";
 import { RegistroVendas } from "./pages/RegistroVendas";
+import { RegistroIngredientes } from "./pages/RegistroIngredientes";
+import { Menu } from "./pages/Menu";
+import { DashVendas } from "./pages/DashVendas";
+import { DashProdutos } from "./pages/DashProdutos";
+import { DashFinancas } from "./pages/DashFinancas";
 import { CatalogoProdutos } from "./pages/CatalogoProdutos";
 
 export const router = createBrowserRouter([
@@ -23,7 +28,27 @@ export const router = createBrowserRouter([
         element: <Login titulo="Login" />
     },
     {
-         path: "/catalogo-produtos",
-        element: <CatalogoProdutos titulo="Catalogo de Produtos" />
+        path: "/registro-ingredientes",
+        element: <RegistroIngredientes titulo="Registro de Ingredientes" />
+    },
+    {
+        path: "/menu",
+        element: <Menu titulo="Menu" />
+    },
+    {
+        path: "/DashVendas",
+        element: <DashVendas titulo="Dashboard de Vendas" />
+    },
+    {
+        path: "/DashProdutos",
+        element: <DashProdutos titulo="Dashboard de Produtos" />
+    },
+    {
+        path: "/DashFinancas",
+        element: <DashFinancas titulo="Dashboard de Finanças" />
+    },
+    {
+      path: "/catalogo-produtos",
+      element: <CatalogoProdutos titulo="Catalogo de Produtos" />
     }
 ])

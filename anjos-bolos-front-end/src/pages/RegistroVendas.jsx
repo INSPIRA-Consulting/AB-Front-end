@@ -3,6 +3,7 @@ import { Button } from "../components/Button";
 import { Navbar } from "../components/Navbar";
 import styles from "../styles/RegistroVendas.module.css";
 import { Produto } from "../components/Produto";
+import Footer from "../components/Footer";
 
 export function RegistroVendas() {
 
@@ -205,15 +206,23 @@ export function RegistroVendas() {
             </div>
 
             <div className={styles.produtos}>
-                {produtos.slice(0, limitador).map((p, index) => (
+                {/* {produtos.slice(0, limitador).map((p, index) => (
                     <Produto
                     key={index}
                     imagem={p.imagem}
                     titulo={p.titulo}
                     onButtonClick={handleProdutoClick}
                     />
-                ))}
+                ))} */}
+
+                {produtos.map(produtos => <Produto
+                    key={produtos.titulo}
+                    imagem={produtos.imagem}
+                    titulo={produtos.titulo}
+                    onButtonClick={handleProdutoClick}
+                    />)}
             </div>
+            <Footer />
         </div>
     )
 }
