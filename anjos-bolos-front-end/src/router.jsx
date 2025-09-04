@@ -9,6 +9,7 @@ import { DashVendas } from "./pages/DashVendas";
 import { DashProdutos } from "./pages/DashProdutos";
 import { DashFinancas } from "./pages/DashFinancas";
 import { CatalogoProdutos } from "./pages/CatalogoProdutos";
+import { CatalogoIngredientes } from "./pages/CatalogoIngredientes";
 import { PaginaNaoEncontrada } from "./pages/PaginaNaoEncontrada";
 
 export const router = createBrowserRouter([
@@ -51,6 +52,10 @@ export const router = createBrowserRouter([
     {
       path: "/catalogo-produtos",
       element: <CatalogoProdutos titulo="Catalogo de Produtos" />
+    },
+    {
+      path: "/catalogo-ingredientes",
+      element: <CatalogoIngredientes titulo="Catalogo de Ingredientes" />
     },
     {
         path: "*",

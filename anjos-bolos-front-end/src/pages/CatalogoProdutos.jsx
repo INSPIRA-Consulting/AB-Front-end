@@ -1,72 +1,115 @@
 import { useState } from "react";
-import axios from "axios";
-import { Button } from "../components/Button";
 import { Navbar } from "../components/Navbar";
+import { CatalogHeader } from "../components/CatalogHeader";
+import { SearchBar } from "../components/SearchBar";
+import { FilterSection } from "../components/FilterSection";
+import { DataTable } from "../components/DataTable";
 import styles from "../styles/CatalogoProdutos.module.css";
-import { Produto } from "../components/Produto";
 
 
 export function CatalogoProdutos() {
-    const [isButtonActive, setIsButtonActive] = useState(false);
+    const [categoriasSelecionadas, setCategoriasSelecionadas] = useState([]);
+    const [searchTerm, setSearchTerm] = useState('');
+
+    // Opções do seletor
+    const selectOptions = [
+        { value: "produtos", label: "Produtos" },
+        { value: "ingredientes", label: "Ingredientes" }
+    ];
+
+    // Filtros disponíveis
+    const filters = [
+        { id: 'bolosTradicionais', label: 'Bolos Tradicionais', colorClass: 'bolosTradicionais' },
+        { id: 'bebidas', label: 'Bebidas', colorClass: 'bebidas' },
+        { id: 'salgados', label: 'Salgados', colorClass: 'salgados' },
+        { id: 'bolosPote', label: 'Bolos de pote', colorClass: 'bolosPote' },
+        { id: 'bolosFesta', label: 'Bolos de Festa', colorClass: 'bolosFesta' }
+    ];
+
+    // Headers da tabela
+    const tableHeaders = ["Produto", "Categoria", "Custo de Produção", "Valor de Venda", "Lucro"];
+
+    const handleCategoriaChange = (categoria) => {
+        setCategoriasSelecionadas(prev => {
+            if (prev.includes(categoria)) {
+                return prev.filter(c => c !== categoria);
+            } else {
+                return [...prev, categoria];
+            }
+        });
+    };
+
+    // Dados mockados da tabela
+    const produtos = [
+        { produto: "Bolo de Cenoura", categoria: "Bolo da Vovó", custoProducao: "R$ 10,00", valorVenda: "R$ 10,00", lucro: "R$ 10,00" },
+        { produto: "Bolo de Cenoura", categoria: "Bolo da Vovó", custoProducao: "R$ 10,00", valorVenda: "R$ 10,00", lucro: "R$ 10,00" },
+        { produto: "Bolo de Cenoura", categoria: "Bolo da Vovó", custoProducao: "R$ 10,00", valorVenda: "R$ 10,00", lucro: "R$ 10,00" },
+        { produto: "Bolo de Cenoura", categoria: "Bolo da Vovó", custoProducao: "R$ 10,00", valorVenda: "R$ 10,00", lucro: "R$ 10,00" },
+        { produto: "Bolo de Cenoura", categoria: "Bolo da Vovó", custoProducao: "R$ 10,00", valorVenda: "R$ 10,00", lucro: "R$ 10,00" },
+        { produto: "Bolo de Cenoura", categoria: "Bolo da Vovó", custoProducao: "R$ 10,00", valorVenda: "R$ 10,00", lucro: "R$ 10,00" },
+        { produto: "Bolo de Cenoura", categoria: "Bolo da Vovó", custoProducao: "R$ 10,00", valorVenda: "R$ 10,00", lucro: "R$ 10,00" },
+        { produto: "Bolo de Cenoura", categoria: "Bolo da Vovó", custoProducao: "R$ 10,00", valorVenda: "R$ 10,00", lucro: "R$ 10,00" },
+        { produto: "Bolo de Cenoura", categoria: "Bolo da Vovó", custoProducao: "R$ 10,00", valorVenda: "R$ 10,00", lucro: "R$ 10,00" },
+        { produto: "Bolo de Cenoura", categoria: "Bolo da Vovó", custoProducao: "R$ 10,00", valorVenda: "R$ 10,00", lucro: "R$ 10,00" },
+        { produto: "Bolo de Cenoura", categoria: "Bolo da Vovó", custoProducao: "R$ 10,00", valorVenda: "R$ 10,00", lucro: "R$ 10,00" },
+        { produto: "Bolo de Cenoura", categoria: "Bolo da Vovó", custoProducao: "R$ 10,00", valorVenda: "R$ 10,00", lucro: "R$ 10,00" },
+        { produto: "Bolo de Cenoura", categoria: "Bolo da Vovó", custoProducao: "R$ 10,00", valorVenda: "R$ 10,00", lucro: "R$ 10,00" }
+    ];
+
+    const handleSelectChange = (value) => {
+        if (value === 'produtos') {
+            window.location.href = '/catalogo-produtos';
+        } else if (value === 'ingredientes') {
+            window.location.href = '/catalogo-ingredientes';
+        }
+    };
+
+    const handleButtonClick = () => {
+        // Função para o botão registrar
+        console.log('Registrar produto clicado');
+    };
+
+    const renderTableRow = (produto) => {
+        return (
+            <>
+                <div className={styles.tableCell}>{produto.produto}</div>
+                <div className={styles.tableCell}>{produto.categoria}</div>
+                <div className={styles.tableCell}>{produto.custoProducao}</div>
+                <div className={styles.tableCell}>{produto.valorVenda}</div>
+                <div className={styles.tableCell}>{produto.lucro}</div>
+            </>
+        );
+    };
 
     return (
         <div className={styles.container}>
             <Navbar logado={true} />
-            <h1>Catálogo de Produtos</h1>
-            <div className={styles.labelFiltro}>
-                <div>
-                    <h4>Tipo de venda</h4>
-                    <select name="" id="">
-                        <option value="">Pronta-Entrega</option>
-                        <option value="">Encomenda</option>
-                    </select>
-                </div>
-                <button disabled={!isButtonActive} className={!isButtonActive ? styles.inactiveButton : ''}>
-                    Registrar
-                </button>
-            </div>
-            <div className={styles.filtro}>
-                <h4>Filtrar por categorias</h4>
-                <div>
-                    <label>
-                        <input
-                            type="radio"
-                            name="categoria"
-                            value="tradicionais"
-                            defaultChecked />
-                        Bolos Tradicionais
-                    </label>
-                    <label>
-                        <input
-                            type="radio"
-                            name="categoria"
-                            value="bebidas" />
-                        Bebidas
-                    </label>
-                    <label>
-                        <input
-                            type="radio"
-                            name="categoria"
-                            value="salgados" />
-                        Salgados
-                    </label>
-                    <label>
-                        <input
-                            type="radio"
-                            name="categoria"
-                            value="pote" />
-                        Bolos de Pote
-                    </label>
-                    <label>
-                        <input
-                            type="radio"
-                            name="categoria"
-                            value="festa" />
-                        Bolos de Festa
-                    </label>
-                </div>
-            </div>
+            
+            <CatalogHeader
+                options={selectOptions}
+                defaultValue="produtos"
+                onSelectChange={handleSelectChange}
+                buttonText="Registrar Produto"
+                onButtonClick={handleButtonClick}
+            />
 
+            <SearchBar
+                searchTerm={searchTerm}
+                onSearchChange={setSearchTerm}
+                placeholder="Pesquise um produto"
+            />
+
+            <FilterSection
+                filters={filters}
+                selectedCategories={categoriasSelecionadas}
+                onCategoryChange={handleCategoriaChange}
+            />
+
+            <DataTable
+                headers={tableHeaders}
+                data={produtos}
+                renderRow={renderTableRow}
+            />
         </div>
     )
 }
