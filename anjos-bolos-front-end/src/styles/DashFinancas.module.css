@@ -18,30 +18,34 @@
 	overflow: hidden;
 }
 
-/* Layout principal */
+/* Conteúdo principal */
 .dashContent {
 	flex: 1;
-	padding: 20px;
-	display: flex;
-	flex-direction: column;
-	gap: 20px;
-	height: 100%;
-	overflow-y: auto;
-	overflow-x: hidden;
-}
-
-/* Seção de período */
-.dashPeriodo {
+	padding: 32px 32px 0 32px;
 	display: flex;
 	flex-direction: column;
 	align-items: center;
+	justify-content: flex-start;
+	height: 100%;
+.dashMain {
+	overflow: hidden;
+}
+	overflow: hidden;
+}
+
+
+.dashGrafico {
+	box-sizing: border-box;
+	margin: 18px 0 10px 0;
+	width: 100%;
+	max-width: 1100px;
 }
 
 .dashPeriodo h2 {
-	font-size: 1.4rem;
+	font-size: 1.6rem;
 	color: #4d2c0c;
 	font-weight: 700;
-	margin-bottom: 12px;
+	margin-bottom: 8px;
 }
 
 .periodoInputs {
@@ -65,14 +69,12 @@
 	position: relative;
 	cursor: pointer;
 }
-
 .calendarIcon {
 	font-size: 1.2rem;
 	margin-right: 7px;
 	color: #fff;
 	z-index: 1;
 }
-
 .datePlaceholder {
 	color: #fff;
 	opacity: 0.85;
@@ -82,7 +84,6 @@
 	pointer-events: none;
 	z-index: 1;
 }
-
 .dateValue {
 	color: #fff;
 	font-size: 1.08rem;
@@ -90,7 +91,6 @@
 	font-family: inherit;
 	z-index: 1;
 }
-
 .invisibleDateInput {
 	position: absolute;
 	left: 0;
@@ -104,153 +104,196 @@
 	background: transparent;
 }
 
-/* Seção do meio - layout horizontal */
-.middleSection {
+/* Cards */
+.dashCards {
 	display: flex;
-	gap: 20px;
+	gap: 55px;
+	margin: 12px 0 12px 0;
+	width: 100%;
+	max-width: 1100px;
 	justify-content: center;
-	align-items: flex-start;
 }
-
-/* Resumo Financeiro */
-.resumoFinanceiro {
-	flex: 1;
-	max-width: 400px;
-}
-
-.resumoFinanceiro h2 {
-	font-size: 1.2rem;
-	color: #4d2c0c;
-	font-weight: 700;
-	margin-bottom: 12px;
-	text-align: center;
-}
-
-.resumoCard {
-	background: #8B5C2A;
+.dashCard {
+	background: #fff;
+	border: 2px solid #a86b32;
 	border-radius: 14px;
-	padding: 16px;
+	flex: 1;
+	min-width: 180px;
+	max-width: 320px;
 	display: flex;
 	flex-direction: column;
-	gap: 10px;
+	align-items: center;
+	padding: 0;
+	box-shadow: 0 2px 8px #0001;
+}
+.dashCardTitle {
+	width: 100%;
+	text-align: center;
+	font-size: 1rem;
+	font-weight: 700;
+	padding: 10px 0 7px 0;
+	border-radius: 12px 12px 0 0;
+	letter-spacing: 0.2px;
+}
+.dashCardTitleLucro {
+	background: #a86b32;
+	color: #fff;
+}
+.dashCardTitleResumo {
+	background: #4d2c0c;
+	color: #fff;
+}
+.dashCardContent {
+	font-size: 1.18rem;
+	font-weight: 700;
+	color: #6b3a13;
+	text-align: center;
+	padding: 12px 10px 12px 10px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	flex-direction: column;
+	gap: 4px;
+}
+
+.dashCardContent.horizontal {
+	flex-direction: row;
+	gap: 8px;
 }
 
 .resumoItem {
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
-	padding: 8px 16px;
+	padding: 6px 12px;
 	border-radius: 6px;
-	font-size: 0.9rem;
+	font-size: 0.85rem;
+	width: 100%;
+	box-sizing: border-box;
+	margin-bottom: 4px;
 }
 
 .resumoItem.entrada {
-	background: rgba(255, 255, 255, 0.9);
-	color: #000;
+	background: rgba(76, 175, 80, 0.1);
+	color: #2e7d32;
+	border: 1px solid rgba(76, 175, 80, 0.3);
 }
 
 .resumoItem.saida {
-	background: rgba(173, 89, 89, 0.9);
-	color: #fff;
+	background: rgba(244, 67, 54, 0.1);
+	color: #c62828;
+	border: 1px solid rgba(244, 67, 54, 0.3);
 }
 
 .resumoItem.lucro {
-	background: rgba(255, 255, 255, 0.9);
-	color: #000;
+	background: rgba(255, 193, 7, 0.1);
+	color: #f57c00;
+	border: 1px solid rgba(255, 193, 7, 0.3);
 }
 
 .resumoLabel {
 	font-weight: 600;
+	font-size: 0.8rem;
 }
 
 .resumoValue {
 	font-weight: 700;
+	font-size: 0.85rem;
 }
 
-/* Seção de Lucro */
-.lucroSection {
+.infoCard {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	width: 100%;
+	padding: 3px 8px;
+	background: rgba(255, 255, 255, 0.3);
+	border-radius: 4px;
+	border: 1px solid rgba(168, 107, 50, 0.2);
 	flex: 1;
-	max-width: 400px;
-}
-
-.lucroSection h2 {
-	font-size: 1.1rem;
-	color: #4d2c0c;
-	font-weight: 700;
-	margin-bottom: 12px;
-	text-align: center;
 }
 
 .lucroCard {
-	background: #fff;
-	border: 2px solid #a86b32;
-	border-radius: 14px;
-	padding: 16px;
 	display: flex;
-	justify-content: space-around;
+	justify-content: space-between;
 	align-items: center;
-	gap: 20px;
-}
-
-.lucroColumn {
-	text-align: center;
+	width: 100%;
+	padding: 3px 8px;
+	background: rgba(255, 255, 255, 0.3);
+	border-radius: 4px;
+	border: 1px solid rgba(168, 107, 50, 0.2);
 	flex: 1;
 }
 
-.lucroLabel {
-	display: block;
-	font-weight: 600;
+.resumoCard {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	width: 100%;
+	padding: 3px 8px;
+	background: rgba(255, 255, 255, 0.3);
+	border-radius: 4px;
+	border: 1px solid rgba(168, 107, 50, 0.2);
+}
+
+.infoLabel {
 	font-size: 0.9rem;
+	font-weight: 600;
+	color: #6b3a13;
+}
+
+.infoValue {
+	font-size: 1rem;
+	font-weight: 700;
 	color: #4d2c0c;
-	margin-bottom: 8px;
+}
+
+.lucroLabel {
+	font-size: 0.9rem;
+	font-weight: 700;
+	color: #6b3a13;
 }
 
 .lucroValue {
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	gap: 8px;
-	font-size: 1.2rem;
-	font-weight: 700;
-	padding: 12px 16px;
-	border-radius: 6px;
-}
-
-.lucroValue.minimo {
-	background: rgba(255, 0, 0, 0.1);
-	color: #d32f2f;
-}
-
-.lucroValue.maximo {
-	background: rgba(0, 128, 0, 0.1);
-	color: #388e3c;
-}
-
-.lucroIcon {
 	font-size: 1rem;
+	font-weight: 700;
+	color: #4d2c0c;
 }
 
+.resumoCardLabel {
+	font-size: 0.9rem;
+	font-weight: 700;
+	color: #6b3a13;
+}
 
-/* Gráfico - ocupa toda a largura na parte inferior */
+.resumoCardValue {
+	font-size: 1rem;
+	font-weight: 700;
+	color: #4d2c0c;
+}
+
+/* Gráfico */
 .dashGrafico {
+	margin-top: 18px;
 	width: 100%;
-	margin-top: 10px;
+	max-width: 1100px;
 }
-
 .dashGrafico h2 {
-	font-size: 1.2rem;
+	font-size: 1.4rem;
 	color: #4d2c0c;
 	font-weight: 700;
 	margin-bottom: 8px;
 }
-
 .graficoPlaceholder {
 	background: #fff;
 	border: 2px solid #a86b32;
 	border-radius: 14px;
 	padding: 16px;
-	height: 200px;
+	min-height: 140px;
+	height: 220px;
+	margin-bottom: 18px;
 	width: 100%;
+	max-width: 1080px;
 	box-sizing: border-box;
 	display: flex;
 	flex-direction: column;
@@ -260,22 +303,21 @@
 }
 
 @media (max-width: 1100px) {
+	.dashCards {
+		flex-direction: column;
+		gap: 14px;
+	}
+	.dashMain {
+		flex-direction: column;
+		height: auto;
+	}
 	.dashContent {
-		padding: 16px;
+		padding: 18px 8px 0 8px;
 	}
-	
-	.middleSection {
-		flex-direction: column;
-		align-items: center;
+	.dashPeriodo, .dashCards, .dashGrafico {
+		max-width: 98vw;
 	}
-	
-	.resumoFinanceiro, .lucroSection {
-		max-width: 100%;
-		width: 100%;
-	}
-	
-	.lucroCard {
-		flex-direction: column;
-		gap: 16px;
+	.dashGrafico, .graficoPlaceholder {
+		max-width: 98vw;
 	}
 }

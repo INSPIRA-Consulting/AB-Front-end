@@ -43,11 +43,11 @@ export function DashFinancas() {
         datasets: [
             {
                 label: 'Entrada',
-                data: [60, 58, 55, 48, 45, 83, 75, 42],
-                borderColor: '#4d2c0c',
-                backgroundColor: 'rgba(77, 44, 12, 0.1)',
+                data: [1250.50, 1380.25, 1150.75, 980.30, 850.60, 1750.90, 1420.15, 920.45],
+                borderColor: '#2e7d32',
+                backgroundColor: 'rgba(46, 125, 50, 0.1)',
                 borderWidth: 3,
-                pointBackgroundColor: '#4d2c0c',
+                pointBackgroundColor: '#2e7d32',
                 pointBorderColor: '#fff',
                 pointBorderWidth: 2,
                 pointRadius: 5,
@@ -74,15 +74,24 @@ export function DashFinancas() {
             },
             tooltip: {
                 backgroundColor: 'rgba(255, 255, 255, 0.9)',
-                titleColor: '#6b3a13',
-                bodyColor: '#6b3a13',
-                borderColor: '#a86b32',
+                titleColor: '#2e7d32',
+                bodyColor: '#2e7d32',
+                borderColor: '#2e7d32',
                 borderWidth: 1,
                 titleFont: {
                     family: 'Montserrat, Arial, sans-serif'
                 },
                 bodyFont: {
                     family: 'Montserrat, Arial, sans-serif'
+                },
+                callbacks: {
+                    label: function(context) {
+                        const value = context.parsed.y;
+                        return context.dataset.label + ': ' + value.toLocaleString('pt-BR', {
+                            style: 'currency',
+                            currency: 'BRL'
+                        });
+                    }
                 }
             }
         },
@@ -103,13 +112,19 @@ export function DashFinancas() {
             },
             y: {
                 min: 0,
-                max: 100,
+                max: 2000,
                 ticks: {
-                    color: '#6b3a13',
+                    color: '#2e7d32',
                     font: {
                         family: 'Montserrat, Arial, sans-serif',
                         size: 11,
                         weight: 600
+                    },
+                    callback: function(value) {
+                        return value.toLocaleString('pt-BR', {
+                            style: 'currency',
+                            currency: 'BRL'
+                        });
                     }
                 },
                 grid: {
@@ -196,48 +211,41 @@ export function DashFinancas() {
                             </div>
                         </section>
 
-                        <div className={styles.middleSection}>
-                            <section className={styles.lucroSection}>
-                                <h2>% de Lucro sobre os produtos</h2>
-                                <div className={styles.lucroCard}>
-                                    <div className={styles.lucroColumn}>
-                                        <span className={styles.lucroLabel}>Mínimo</span>
-                                        <div className={styles.lucroValue + ' ' + styles.minimo}>
-                                            <span>10%</span>
-                                            <div className={styles.lucroIcon}>🔍</div>
-                                        </div>
+                        <section className={styles.dashCards}>
+                            <div className={styles.dashCard}>
+                                <div className={styles.dashCardTitle + ' ' + styles.dashCardTitleLucro}>% de Lucro sobre os produtos</div>
+                                <div className={styles.dashCardContent + ' ' + styles.horizontal}>
+                                    <div className={styles.lucroCard}>
+                                        <span className={styles.lucroLabel}>Mínimo:</span>
+                                        <span className={styles.lucroValue}>10%</span>
                                     </div>
-                                    <div className={styles.lucroColumn}>
-                                        <span className={styles.lucroLabel}>Máxima</span>
-                                        <div className={styles.lucroValue + ' ' + styles.maximo}>
-                                            <span>35%</span>
-                                            <div className={styles.lucroIcon}>🔍</div>
-                                        </div>
+                                    <div className={styles.lucroCard}>
+                                        <span className={styles.lucroLabel}>Máximo:</span>
+                                        <span className={styles.lucroValue}>35%</span>
                                     </div>
                                 </div>
-                            </section>
-
-                            <section className={styles.resumoFinanceiro}>
-                                <h2>Resumo Financeiro</h2>
-                                <div className={styles.resumoCard}>
-                                    <div className={styles.resumoItem + ' ' + styles.entrada}>
-                                        <span className={styles.resumoLabel}>Entrada:</span>
-                                        <span className={styles.resumoValue}>R$ 3000,00</span>
+                            </div>
+                            <div className={styles.dashCard}>
+                                <div className={styles.dashCardTitle + ' ' + styles.dashCardTitleResumo}>Resumo Financeiro</div>
+                                <div className={styles.dashCardContent}>
+                                    <div className={styles.resumoCard}>
+                                        <span className={styles.resumoCardLabel}>Entrada:</span>
+                                        <span className={styles.resumoCardValue}>R$ 3.000,00</span>
                                     </div>
-                                    <div className={styles.resumoItem + ' ' + styles.saida}>
-                                        <span className={styles.resumoLabel}>Saída:</span>
-                                        <span className={styles.resumoValue}>R$ 1000,00</span>
+                                    <div className={styles.resumoCard}>
+                                        <span className={styles.resumoCardLabel}>Saída:</span>
+                                        <span className={styles.resumoCardValue}>R$ 1.000,00</span>
                                     </div>
-                                    <div className={styles.resumoItem + ' ' + styles.lucro}>
-                                        <span className={styles.resumoLabel}>Lucro Aproximado:</span>
-                                        <span className={styles.resumoValue}>R$ 2000,00</span>
+                                    <div className={styles.resumoCard}>
+                                        <span className={styles.resumoCardLabel}>Lucro:</span>
+                                        <span className={styles.resumoCardValue}>R$ 2.000,00</span>
                                     </div>
                                 </div>
-                            </section>
-                        </div>
+                            </div>
+                        </section>
 
                         <section className={styles.dashGrafico}>
-                            <h2>Entrada/Saída por Período:</h2>
+                            <h2>Entrada por Período:</h2>
                             <div className={styles.graficoPlaceholder}>
                                 <Line 
                                     data={chartData}
