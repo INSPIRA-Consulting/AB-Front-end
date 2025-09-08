@@ -7,6 +7,7 @@ import { RegistroIngredientes } from "./pages/RegistroIngredientes";
 import { Menu } from "./pages/Menu";
 import { DashVendas } from "./pages/DashVendas";
 import { DashProdutos } from "./pages/DashProdutos";
+import { HistoricoVendas } from "./pages/HistoricoVendas";
 import { DashFinancas } from "./pages/DashFinancas";
 import { CatalogoProdutos } from "./pages/CatalogoProdutos";
 import { CatalogoIngredientes } from "./pages/CatalogoIngredientes";
@@ -46,6 +47,8 @@ export const router = createBrowserRouter([
         element: <DashProdutos titulo="Dashboard de Produtos" />
     },
     {
+        path: "/HistoricoVendas",
+        element: <HistoricoVendas titulo="Historico de Vendas" />
         path: "/DashFinancas",
         element: <DashFinancas titulo="Dashboard de Finanças" />
     },
@@ -61,4 +64,5 @@ export const router = createBrowserRouter([
         path: "*",
         element: <PaginaNaoEncontrada titulo="Página Não Encontrada" />
     }
+
 ])
