@@ -129,7 +129,7 @@ export function DashProdutos() {
 								<thead>
 									<tr>
 										<th>Ranking</th>
-										<th>Categorias</th>
+										<th>Categorias <FaFilter style={{ fontSize: 17, marginLeft: 4, verticalAlign: "middle" }} /></th>
 										<th>Qtd.</th>
 										<th></th>
 									</tr>
@@ -139,31 +139,31 @@ export function DashProdutos() {
 										<td>1º</td>
 										<td>Bolos Tradicionais</td>
 										<td>25</td>
-										<td><FaSearch style={{ color: "#9D4F4F", fontSize: 20 }} /></td>
+										<td><FaSearch style={{ color: "#4d2c0c", fontSize: 24 }} /></td>
 									</tr>
 									<tr>
 										<td>2º</td>
 										<td>Bolos de Pote</td>
 										<td>10</td>
-										<td><FaSearch style={{ color: "#9D4F4F", fontSize: 20 }} /></td>
+										<td><FaSearch style={{ color: "#4d2c0c", fontSize: 24 }} /></td>
 									</tr>
 									<tr>
 										<td>3º</td>
 										<td>Bolos de Festa</td>
 										<td>9</td>
-										<td><FaSearch style={{ color: "#9D4F4F", fontSize: 20 }} /></td>
+										<td><FaSearch style={{ color: "#4d2c0c", fontSize: 24 }} /></td>
 									</tr>
 									<tr>
 										<td>4º</td>
 										<td>Salgado</td>
 										<td>8</td>
-										<td><FaSearch style={{ color: "#9D4F4F", fontSize: 20 }} /></td>
+										<td><FaSearch style={{ color: "#4d2c0c", fontSize: 24 }} /></td>
 									</tr>
 									<tr>
 										<td>5º</td>
 										<td>Bebida</td>
 										<td>3</td>
-										<td><FaSearch style={{ color: "#9D4F4F", fontSize: 20 }} /></td>
+										<td><FaSearch style={{ color: "#4d2c0c", fontSize: 24 }} /></td>
 									</tr>
 								</tbody>
 							</table>

@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import { FaRegCalendarAlt } from "react-icons/fa";
+import { FaRegCalendarAlt, FaSearch } from "react-icons/fa";
 import styles from '../styles/DashFinancas.module.css';
 import '../styles/fonts/fonts.css';
 import { Navbar } from '../components/Navbar';
@@ -217,11 +217,11 @@ export function DashFinancas() {
                                 <div className={styles.dashCardContent + ' ' + styles.lucroCardContainer}>
                                     <div className={styles.lucroSection}>
                                         <span className={styles.lucroLabel}>Mínimo:</span>
-                                        <span className={styles.lucroValueMin}>10%</span>
+                                        <span className={styles.lucroValueMin}>10% <FaSearch style={{ fontSize: 24, marginLeft: 6, color: '#4d2c0c' }} /></span>
                                     </div>
                                     <div className={styles.lucroSection}>
                                         <span className={styles.lucroLabel}>Máximo:</span>
-                                        <span className={styles.lucroValueMax}>35%</span>
+                                        <span className={styles.lucroValueMax}>35% <FaSearch style={{ fontSize: 24, marginLeft: 6, color: '#4d2c0c' }} /></span>
                                     </div>
                                 </div>
                             </div>

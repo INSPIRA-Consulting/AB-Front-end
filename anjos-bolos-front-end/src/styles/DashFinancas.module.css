@@ -115,7 +115,7 @@
 }
 .dashCard {
 	background: #fff;
-	border: 2px solid #4d2c0c;
+	border: 2px solid #a86b32;
 	border-radius: 14px;
 	flex: 1;
 	min-width: 180px;
@@ -136,7 +136,7 @@
 	letter-spacing: 0.2px;
 }
 .dashCardTitleLucro {
-	background: #4d2c0c;
+	background: #a86b32;
 	color: #fff;
 }
 .dashCardTitleResumo {
@@ -176,7 +176,7 @@
 }
 
 .lucroSection:first-child {
-	border-right: 1px solid rgba(77, 44, 12, 0.3);
+	border-right: 1px solid rgba(168, 107, 50, 0.3);
 	position: relative;
 }
 
@@ -187,8 +187,8 @@
 	top: 15%;
 	bottom: 15%;
 	width: 1px;
-	background: rgba(77, 44, 12, 0.2);
-	box-shadow: 1px 0 2px rgba(77, 44, 12, 0.1);
+	background: rgba(168, 107, 50, 0.2);
+	box-shadow: 1px 0 2px rgba(168, 107, 50, 0.1);
 }
 
 .lucroLabel {
@@ -229,7 +229,7 @@
 	font-size: 0.9rem;
 	width: 100%;
 	box-sizing: border-box;
-	border-bottom: 1px solid rgba(77, 44, 12, 0.2);
+	border-bottom: 1px solid rgba(168, 107, 50, 0.2);
 }
 
 .resumoItem:last-child {
@@ -256,7 +256,7 @@
 
 .resumoLucro .resumoItemValue {
 	font-weight: 700;
-	color: #f57c00;
+	color: #4d2c0c;
 	font-size: 1.05rem;
 }
 
@@ -278,7 +278,7 @@
 	padding: 3px 8px;
 	background: rgba(255, 255, 255, 0.3);
 	border-radius: 4px;
-	border: 1px solid rgba(77, 44, 12, 0.2);
+	border: 1px solid rgba(168, 107, 50, 0.2);
 	flex: 1;
 }
 
@@ -378,7 +378,7 @@
 }
 .graficoPlaceholder {
 	background: #fff;
-	border: 2px solid #4d2c0c;
+	border: 2px solid #a86b32;
 	border-radius: 14px;
 	padding: 16px;
 	min-height: 140px;
