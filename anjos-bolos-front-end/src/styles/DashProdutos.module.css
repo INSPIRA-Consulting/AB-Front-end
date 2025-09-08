@@ -1,3 +1,138 @@
+/* Filtros externos */
+.filterDropdown {
+	position: absolute;
+	background-color: #fff;
+	border-radius: 12px;
+	box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+	z-index: 1000;
+	min-width: 250px;
+	max-width: 300px;
+	max-height: 400px;
+	padding: 16px;
+	border: 2px solid;
+	margin-top: 8px;
+	overflow: hidden;
+	right: 0;
+	top: 60px;
+}
+
+.filterOptionsContainer {
+	max-height: 280px;
+	overflow-y: auto;
+	margin: 8px 0;
+	padding-right: 8px;
+}
+
+.filterOptionsContainer::-webkit-scrollbar {
+	width: 6px;
+	background: transparent;
+}
+
+.filterOptionsContainer::-webkit-scrollbar-track {
+	background: rgba(0, 0, 0, 0.05);
+	border-radius: 10px;
+	margin: 5px;
+}
+
+.filterOptionsContainer::-webkit-scrollbar-thumb {
+	background: linear-gradient(180deg, #a0a0a0 0%, #808080 100%);
+	border-radius: 10px;
+	border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.filterOptionsContainer::-webkit-scrollbar-thumb:hover {
+	background: linear-gradient(180deg, #909090 0%, #707070 100%);
+}
+
+.filterDropdownRecomend {
+	border-color: #9D4F4F;
+	height: 200px;
+	padding: 12px 16px;
+	display: flex;
+	flex-direction: column;
+}
+
+.filterDropdownRecomend .filterTitle {
+	margin-bottom: 8px;
+	padding-bottom: 6px;
+	flex-shrink: 0;
+}
+
+.filterDropdownRecomend .filterOptionsContainer {
+	max-height: none;
+	height: calc(100% - 50px);
+	overflow-y: auto;
+	flex: 1;
+}
+
+.filterDropdownCategorias {
+	border-color: #4d2c0c;
+	height: 180px;
+	padding: 12px 16px;
+	display: flex;
+	flex-direction: column;
+	right: 200px;
+}
+
+.filterDropdownCategorias .filterTitle {
+	margin-bottom: 8px;
+	padding-bottom: 6px;
+	flex-shrink: 0;
+}
+
+.filterDropdownCategorias .filterOptionsContainer {
+	max-height: none;
+	height: calc(100% - 50px);
+	overflow-y: auto;
+	flex: 1;
+}
+
+.filterTitle {
+	font-size: 1.1rem;
+	font-weight: 700;
+	margin-bottom: 12px;
+	padding-bottom: 8px;
+	border-bottom: 1px solid #f0f0f0;
+}
+
+.filterTitleRecomend {
+	color: #9D4F4F;
+}
+
+.filterTitleCategorias {
+	color: #4d2c0c;
+}
+
+.filterOption {
+	display: flex;
+	align-items: center;
+	padding: 8px 0;
+	cursor: pointer;
+	transition: background 0.2s;
+	border-radius: 6px;
+	padding-left: 8px;
+	padding-right: 8px;
+}
+
+.filterOption:hover {
+	background: #f8f8f8;
+}
+
+.filterOption input {
+	margin-right: 10px;
+	width: 16px;
+	height: 16px;
+	cursor: pointer;
+}
+
+.filterOption label {
+	color: #4d2c0c;
+	font-weight: 600;
+	font-size: 0.95rem;
+	cursor: pointer;
+	flex: 1;
+}
+
 /* Títulos de seção padronizados igual DashVendas */
 .sectionTitle {
 	font-size: 1.6rem;
