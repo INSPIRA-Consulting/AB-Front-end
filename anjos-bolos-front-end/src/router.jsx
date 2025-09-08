@@ -8,6 +8,10 @@ import { Menu } from "./pages/Menu";
 import { DashVendas } from "./pages/DashVendas";
 import { DashProdutos } from "./pages/DashProdutos";
 import { HistoricoVendas } from "./pages/HistoricoVendas";
+import { DashFinancas } from "./pages/DashFinancas";
+import { CatalogoProdutos } from "./pages/CatalogoProdutos";
+import { CatalogoIngredientes } from "./pages/CatalogoIngredientes";
+import { PaginaNaoEncontrada } from "./pages/PaginaNaoEncontrada";
 
 export const router = createBrowserRouter([
     {
@@ -27,7 +31,7 @@ export const router = createBrowserRouter([
         element: <Login titulo="Login" />
     },
     {
-        path: "/registo-ingredientes",
+        path: "/registro-ingredientes",
         element: <RegistroIngredientes titulo="Registro de Ingredientes" />
     },
     {
@@ -45,6 +49,20 @@ export const router = createBrowserRouter([
     {
         path: "/HistoricoVendas",
         element: <HistoricoVendas titulo="Historico de Vendas" />
+        path: "/DashFinancas",
+        element: <DashFinancas titulo="Dashboard de Finanças" />
+    },
+    {
+      path: "/catalogo-produtos",
+      element: <CatalogoProdutos titulo="Catalogo de Produtos" />
+    },
+    {
+      path: "/catalogo-ingredientes",
+      element: <CatalogoIngredientes titulo="Catalogo de Ingredientes" />
+    },
+    {
+        path: "*",
+        element: <PaginaNaoEncontrada titulo="Página Não Encontrada" />
     }
 
 ])

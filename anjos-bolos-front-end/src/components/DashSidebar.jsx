@@ -31,7 +31,11 @@ export function DashSidebar({ activeItem = 'vendas' }) {
                     <span className={styles.sidebarIcon}><GiPieSlice color="#4d2c0c" size={35} /></span>
                     <span>Produto</span>
                 </li>
-                <li className={activeItem === 'financas' ? styles.active : ''}>
+                <li 
+                    className={activeItem === 'financas' ? styles.active : ''}
+                    onClick={() => navigate('/DashFinancas')}
+                    style={{ cursor: 'pointer' }}
+                >
                     {/* Ícone finanças */}
                     <span className={styles.sidebarIcon}><FaCalculator color="#4d2c0c" size={30} /></span>
                     <span>Finanças</span>
