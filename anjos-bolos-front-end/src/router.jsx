@@ -49,6 +49,8 @@ export const router = createBrowserRouter([
     {
         path: "/HistoricoVendas",
         element: <HistoricoVendas titulo="Historico de Vendas" />
+    },
+    {
         path: "/DashFinancas",
         element: <DashFinancas titulo="Dashboard de Finanças" />
     },
