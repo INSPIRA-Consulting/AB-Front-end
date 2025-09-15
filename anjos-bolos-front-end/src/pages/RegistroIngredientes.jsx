@@ -17,7 +17,6 @@ export function RegistroIngredientes(props) {
 
     const salvar = async e => {
         e.preventDefault();
-
         
         axios.post(`${import.meta.env.VITE_API_URL}/ingredientes`, {
             nome: nome,
