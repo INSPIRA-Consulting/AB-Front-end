@@ -1,5 +1,6 @@
 import { useState, useRef } from "react";
 import { FaRegCalendarAlt, FaSearch } from "react-icons/fa";
+import { useNavigate } from "react-router-dom";
 import styles from '../styles/DashFinancas.module.css';
 import '../styles/fonts/fonts.css';
 import { Navbar } from '../components/Navbar';
@@ -36,6 +37,14 @@ export function DashFinancas() {
     const [endDate, setEndDate] = useState("");
     const startInputRef = useRef(null);
     const endInputRef = useRef(null);
+    
+    // Hook de navegação
+    const navigate = useNavigate();
+    
+    // Função para redirecionar para catálogo de produtos
+    const handleSearchClick = () => {
+        navigate('/catalogo-produtos');
+    };
 
     // Dados e configuração do gráfico Chart.js
     const chartData = {
@@ -217,11 +226,17 @@ export function DashFinancas() {
                                 <div className={styles.dashCardContent + ' ' + styles.lucroCardContainer}>
                                     <div className={styles.lucroSection}>
                                         <span className={styles.lucroLabel}>Mínimo:</span>
-                                        <span className={styles.lucroValueMin}>10% <FaSearch style={{ fontSize: 24, marginLeft: 6, color: '#4d2c0c' }} /></span>
+                                        <span className={styles.lucroValueMin}>10% <FaSearch 
+                                            style={{ fontSize: 24, marginLeft: 6, color: '#4d2c0c', cursor: 'pointer' }} 
+                                            onClick={handleSearchClick}
+                                        /></span>
                                     </div>
                                     <div className={styles.lucroSection}>
                                         <span className={styles.lucroLabel}>Máximo:</span>
-                                        <span className={styles.lucroValueMax}>35% <FaSearch style={{ fontSize: 24, marginLeft: 6, color: '#4d2c0c' }} /></span>
+                                        <span className={styles.lucroValueMax}>35% <FaSearch 
+                                            style={{ fontSize: 24, marginLeft: 6, color: '#4d2c0c', cursor: 'pointer' }} 
+                                            onClick={handleSearchClick}
+                                        /></span>
                                     </div>
                                 </div>
                             </div>

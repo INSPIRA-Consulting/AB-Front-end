@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { FaRegCalendarAlt, FaSearch } from "react-icons/fa";
+import { useNavigate } from "react-router-dom";
 import styles from '../styles/DashProdutos.module.css';
 import '../styles/fonts/fonts.css';
 import { Navbar } from '../components/Navbar';
@@ -12,6 +13,14 @@ export function DashProdutos() {
 	const [endDate, setEndDate] = useState("2025-06-12");
 	const startInputRef = useRef(null);
 	const endInputRef = useRef(null);
+	
+	// Hook de navegação
+	const navigate = useNavigate();
+	
+	// Função para redirecionar para histórico de vendas
+	const handleSearchClick = () => {
+		navigate('/HistoricoVendas');
+	};
 
 	// Estados para filtros
 	const [showRecomendFilter, setShowRecomendFilter] = useState(false);
@@ -273,31 +282,46 @@ export function DashProdutos() {
 										<td>1º</td>
 										<td>Bolos Tradicionais</td>
 										<td>25</td>
-										<td><FaSearch style={{ color: "#4d2c0c", fontSize: 24 }} /></td>
+										<td><FaSearch 
+											style={{ color: "#4d2c0c", fontSize: 24, cursor: 'pointer' }} 
+											onClick={handleSearchClick}
+										/></td>
 									</tr>
 									<tr>
 										<td>2º</td>
 										<td>Bolos de Pote</td>
 										<td>10</td>
-										<td><FaSearch style={{ color: "#4d2c0c", fontSize: 24 }} /></td>
+										<td><FaSearch 
+											style={{ color: "#4d2c0c", fontSize: 24, cursor: 'pointer' }} 
+											onClick={handleSearchClick}
+										/></td>
 									</tr>
 									<tr>
 										<td>3º</td>
 										<td>Bolos de Festa</td>
 										<td>9</td>
-										<td><FaSearch style={{ color: "#4d2c0c", fontSize: 24 }} /></td>
+										<td><FaSearch 
+											style={{ color: "#4d2c0c", fontSize: 24, cursor: 'pointer' }} 
+											onClick={handleSearchClick}
+										/></td>
 									</tr>
 									<tr>
 										<td>4º</td>
 										<td>Salgado</td>
 										<td>8</td>
-										<td><FaSearch style={{ color: "#4d2c0c", fontSize: 24 }} /></td>
+										<td><FaSearch 
+											style={{ color: "#4d2c0c", fontSize: 24, cursor: 'pointer' }} 
+											onClick={handleSearchClick}
+										/></td>
 									</tr>
 									<tr>
 										<td>5º</td>
 										<td>Bebida</td>
 										<td>3</td>
-										<td><FaSearch style={{ color: "#4d2c0c", fontSize: 24 }} /></td>
+										<td><FaSearch 
+											style={{ color: "#4d2c0c", fontSize: 24, cursor: 'pointer' }} 
+											onClick={handleSearchClick}
+										/></td>
 									</tr>
 								</tbody>
 							</table>

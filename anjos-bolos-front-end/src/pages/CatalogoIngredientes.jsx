@@ -1,14 +1,18 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Navbar } from "../components/Navbar";
 import { CatalogHeader } from "../components/CatalogHeader";
 import { SearchBar } from "../components/SearchBar";
 import { FilterSection } from "../components/FilterSection";
 import { DataTable } from "../components/DataTable";
+import { AdvancedFilter } from "../components/AdvancedFilter";
 import styles from "../styles/CatalogoProdutos.module.css";
 
 export function CatalogoIngredientes() {
     const [categoriasSelecionadas, setCategoriasSelecionadas] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
+    const [filtroOrdenacao, setFiltroOrdenacao] = useState('');
+    const navigate = useNavigate();
 
     // Opções do seletor
     const selectOptions = [
@@ -18,11 +22,11 @@ export function CatalogoIngredientes() {
 
     // Filtros disponíveis para ingredientes
     const filters = [
-        { id: 'farinhas', label: 'Farinhas', colorClass: 'bolosTradicionais' },
-        { id: 'adocantes', label: 'Adoçantes', colorClass: 'bebidas' },
-        { id: 'proteinas', label: 'Proteínas', colorClass: 'salgados' },
-        { id: 'lacteos', label: 'Lácteos', colorClass: 'bolosPote' },
-        { id: 'essencias', label: 'Essências', colorClass: 'bolosFesta' }
+        { id: 'bolosTradicionais', label: 'Bolos Tradicionais', colorClass: 'bolosTradicionais' },
+        { id: 'bebidas', label: 'Bebidas', colorClass: 'bebidas' },
+        { id: 'salgados', label: 'Salgados', colorClass: 'salgados' },
+        { id: 'bolosPote', label: 'Bolos de pote', colorClass: 'bolosPote' },
+        { id: 'bolosFesta', label: 'Bolos de Festa', colorClass: 'bolosFesta' }
     ];
 
     // Headers da tabela
@@ -61,8 +65,14 @@ export function CatalogoIngredientes() {
     };
 
     const handleButtonClick = () => {
-        // Função para o botão registrar
-        console.log('Registrar ingrediente clicado');
+        // Navegar para a página de registro de ingredientes
+        navigate('/registro-ingredientes');
+    };
+
+    const handleFilterChange = (filtro) => {
+        setFiltroOrdenacao(filtro);
+        console.log('Filtro selecionado:', filtro);
+        // Aqui você pode implementar a lógica de ordenação
     };
 
     const renderTableRow = (ingrediente) => {
@@ -99,6 +109,7 @@ export function CatalogoIngredientes() {
                 filters={filters}
                 selectedCategories={categoriasSelecionadas}
                 onCategoryChange={handleCategoriaChange}
+                onAdvancedFilterChange={handleFilterChange}
             />
 
             <DataTable
