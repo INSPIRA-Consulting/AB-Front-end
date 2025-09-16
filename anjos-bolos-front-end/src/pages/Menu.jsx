@@ -15,11 +15,11 @@ export function Menu() {
             <div className={styles.centerContentMenu}>
                 <h1 className={styles.title}>Gigante pela própria natureza!</h1>
                 <div className={styles.cardGrid}>
-                    <div className={styles.card1}>
+                    <div className={styles.card1} onClick={() => navigate('/registro-vendas')} style={{cursor:'pointer'}}>
                         <img src={caixa} alt="Registrar Vendas" className={styles.cardIcon} />
                         <div className={styles.cardLabel1}>Registrar Vendas</div>
                     </div>
-                    <div className={styles.card2}>
+                    <div className={styles.card2} onClick={() => navigate('/HistoricoVendas')} style={{cursor:'pointer'}}>
                         <img src={historico} alt="Histórico de Vendas" className={styles.cardIcon} />
                         <div className={styles.cardLabel2}>Histórico de Vendas</div>
                     </div>
@@ -27,13 +27,19 @@ export function Menu() {
                         <img src={ganhar} alt="Painel de Métricas" className={styles.cardIcon} />
                         <div className={styles.cardLabel3}>Painel de Métricas</div>
                     </div>
-                    <div className={styles.card4}>
+                    <div className={styles.card4} onClick={() => navigate('/catalogo-produtos')} style={{cursor:'pointer'}}>
                         <img src={catalogo} alt="Catálogo" className={styles.cardIcon} />
                         <div className={styles.cardLabel4}>Catálogo</div>
                     </div>
                 </div>
                 <div className={styles.buttonGrid}>
-                    <button className={styles.menuButton + ' ' + styles.fullButton}>Cadastro de Funcionário</button>
+                    <button 
+                        className={styles.menuButton + ' ' + styles.fullButton}
+                        onClick={() => navigate('/cadastro')}
+                        style={{cursor:'pointer'}}
+                    >
+                        Cadastro de Funcionário
+                    </button>
                 </div>
             </div>
         </div>
