@@ -2,10 +2,11 @@ import { useState } from "react";
 import { Navbar } from "../components/Navbar";
 import { CatalogHeader } from "../components/CatalogHeader";
 import { SearchBar } from "../components/SearchBar";
-// import { FilterSection } from "../components/FilterSection";
 import { DataTable } from "../components/DataTable";
 import styles from "../styles/CatalogoProdutos.module.css";
 import axios from "axios";
+import { FilterSection } from "../components/FilterSection";
+import { AdvancedFilter } from "../components/AdvancedFilter";
 import { useEffect } from "react";
 
 export function CatalogoIngredientes() {
@@ -49,7 +50,14 @@ export function CatalogoIngredientes() {
         { value: "ingredientes", label: "Ingredientes" }
     ];
 
-
+    // Filtros disponíveis para ingredientes
+    const filters = [
+        { id: 'farinhas', label: 'Farinhas', colorClass: 'bolosTradicionais' },
+        { id: 'adocantes', label: 'Adoçantes', colorClass: 'bebidas' },
+        { id: 'proteinas', label: 'Proteínas', colorClass: 'salgados' },
+        { id: 'lacteos', label: 'Lácteos', colorClass: 'bolosPote' },
+        { id: 'essencias', label: 'Essências', colorClass: 'bolosFesta' }
+    ];
 
     // Headers da tabela
     const tableHeaders = ["Ingrediente", "Custo por Medida"];
@@ -76,14 +84,20 @@ export function CatalogoIngredientes() {
         window.location.href = '/registro-ingredientes';
     };
 
+    const handleFilterChange = (filtro) => {
+        setFiltroOrdenacao(filtro);
+        console.log('Filtro selecionado:', filtro);
+        // Aqui você pode implementar a lógica de ordenação
+    };
+
     const renderTableRow = (ingrediente) => {
         return (
             <>
                 <div className={styles.tableCell}>{ingrediente.nome}</div>
                 <div className={styles.tableCell}>{
-                  ingrediente.custoMedida !== undefined
-                    ? `R$ ${Number(ingrediente.custoMedida).toFixed(2).replace('.', ',')}`
-                    : "-"
+                    ingrediente.custoMedida !== undefined
+                        ? `R$ ${Number(ingrediente.custoMedida).toFixed(2).replace('.', ',')}`
+                        : "-"
                 }</div>
             </>
         );
@@ -107,7 +121,12 @@ export function CatalogoIngredientes() {
                 placeholder="Pesquise um ingrediente"
             />
 
-
+            <FilterSection
+                filters={filters}
+                selectedCategories={categoriasSelecionadas}
+                onCategoryChange={handleCategoriaChange}
+                onAdvancedFilterChange={handleFilterChange}
+            />
 
             <DataTable
                 headers={tableHeaders}
