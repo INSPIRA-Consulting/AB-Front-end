@@ -188,6 +188,12 @@ export function RegistroVendas() {
         console.log("Vendas registradas:", vendas);
     }
 
+    const navigateToResumoVendas = () => {
+      console.log("Vendas registradas:", vendas);
+      // Navegar para a tela ResumoVendas passando vendas como propriedade
+      window.location.href = `/resumo-venda?data=${encodeURIComponent(JSON.stringify(vendas))}`;
+    };
+
     return (
       <div className={styles.containerRegistroVendas}>
       <Navbar logado={true} />
@@ -203,7 +209,7 @@ export function RegistroVendas() {
       <button
       disabled={!isButtonActive}
       className={!isButtonActive ? styles.inactiveButton : ''}
-      onClick={resumoVendas}
+      onClick={navigateToResumoVendas}
       >
       Registrar
       </button>
@@ -267,9 +273,10 @@ export function RegistroVendas() {
       key={produto.titulo}
       imagem={produto.imagem}
       titulo={produto.titulo}
+      tipo="festa"
       valor={produto.valor.toFixed(2).replace('.', ',')}
       onAdd={() => handleProdutoClick(produto, "massa")}
-      onRemove={() => handleProdutoRemove(produto)}
+      onRemove={() => handleProdutoRemove(produto, "massa")}
       />
       ))}
       </div>
@@ -285,9 +292,10 @@ export function RegistroVendas() {
       key={produto.titulo}
       imagem={produto.imagem}
       titulo={produto.titulo}
+      tipo="festa"
       valor={produto.valor.toFixed(2).replace('.', ',')}
       onAdd={() => handleProdutoClick(produto, "recheio")}
-      onRemove={() => handleProdutoRemove(produto)}
+      onRemove={() => handleProdutoRemove(produto, "recheio")}
       />
       ))}
       </div>
@@ -303,9 +311,10 @@ export function RegistroVendas() {
       key={produto.titulo}
       imagem={produto.imagem}
       titulo={produto.titulo}
+      tipo="festa"
       valor={produto.valor.toFixed(2).replace('.', ',')}
       onAdd={() => handleProdutoClick(produto, "cobertura")}
-      onRemove={() => handleProdutoRemove(produto)}
+      onRemove={() => handleProdutoRemove(produto, "cobertura")}
       />
       ))}
       </div>
@@ -324,7 +333,7 @@ export function RegistroVendas() {
       valor={produto.valor.toFixed(2).replace('.', ',')}
       onAdd={() => handleProdutoClick(produto, "item")}
       // onClick={() => setTipo("item")}
-      onRemove={() => handleProdutoRemove(produto)}
+      onRemove={() => handleProdutoRemove(produto, "item")}
       />
       ))}
       </div>
@@ -333,11 +342,25 @@ export function RegistroVendas() {
       </div>
     );
 
-    function handleProdutoRemove(produto) {
+    function handleProdutoRemove(produto, tipo) {
       setVendas((prevVendas) => {
-        const updatedVendas = prevVendas.filter(
-          (venda) => venda.nome !== produto.titulo
-        );
+        let updatedVendas;
+
+        if (tipo !== "item") {
+          updatedVendas = prevVendas.map((venda) => {
+            if (venda.nome === "Bolo de festa") {
+              const updatedVenda = { ...venda };
+              delete updatedVenda[tipo];
+              updatedVenda.valorFinal -= produto.valor;
+              return updatedVenda;
+            }
+            return venda;
+          });
+        } else {
+          updatedVendas = prevVendas.filter(
+            (venda) => venda.nome !== produto.titulo
+          );
+        }
         console.log("Produto removido:", produto.titulo);
         console.log("Todas as vendas:", updatedVendas);
         setIsButtonActive(updatedVendas.length > 0);
