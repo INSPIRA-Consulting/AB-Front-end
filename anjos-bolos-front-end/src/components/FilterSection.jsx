@@ -1,7 +1,8 @@
 import styles from "../styles/CatalogoProdutos.module.css";
 import { FilterItem } from "./FilterItem";
+import { AdvancedFilter } from "./AdvancedFilter";
 
-export function FilterSection({ filters, selectedCategories, onCategoryChange }) {
+export function FilterSection({ filters, selectedCategories, onCategoryChange, onAdvancedFilterChange }) {
     return (
         <div className={styles.filterSection}>
             <span className={styles.filterTitle}>Filtrar por categorias:</span>
@@ -16,6 +17,7 @@ export function FilterSection({ filters, selectedCategories, onCategoryChange })
                         onChange={onCategoryChange}
                     />
                 ))}
+                <AdvancedFilter onFilterChange={onAdvancedFilterChange} />
             </div>
         </div>
     );

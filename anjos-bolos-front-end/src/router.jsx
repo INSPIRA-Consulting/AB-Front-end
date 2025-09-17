@@ -7,11 +7,13 @@ import { RegistroIngredientes } from "./pages/RegistroIngredientes";
 import { Menu } from "./pages/Menu";
 import { DashVendas } from "./pages/DashVendas";
 import { DashProdutos } from "./pages/DashProdutos";
+import { RegistroProduto } from "./pages/RegistroProduto";
 import { HistoricoVendas } from "./pages/HistoricoVendas";
 import { DashFinancas } from "./pages/DashFinancas";
 import { CatalogoProdutos } from "./pages/CatalogoProdutos";
 import { CatalogoIngredientes } from "./pages/CatalogoIngredientes";
 import { PaginaNaoEncontrada } from "./pages/PaginaNaoEncontrada";
+import { ResumoVenda } from "./pages/ResumoVenda";
 
 export const router = createBrowserRouter([
     {
@@ -47,6 +49,10 @@ export const router = createBrowserRouter([
         element: <DashProdutos titulo="Dashboard de Produtos" />
     },
     {
+        path: "/RegistroProduto",
+        element: <RegistroProduto titulo="Dashboard de Produtos" />
+    },
+    {
         path: "/HistoricoVendas",
         element: <HistoricoVendas titulo="Historico de Vendas" />
     },
@@ -59,6 +65,10 @@ export const router = createBrowserRouter([
       element: <CatalogoProdutos titulo="Catalogo de Produtos" />
     },
     {
+      path: "/resumo-venda",
+      element: <ResumoVenda titulo="Resumo de Vendas" />
+    },
+    {
       path: "/catalogo-ingredientes",
       element: <CatalogoIngredientes titulo="Catalogo de Ingredientes" />
     },
@@ -66,5 +76,4 @@ export const router = createBrowserRouter([
         path: "*",
         element: <PaginaNaoEncontrada titulo="Página Não Encontrada" />
     }
-
 ])

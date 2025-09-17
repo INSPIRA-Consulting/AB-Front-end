@@ -73,7 +73,7 @@ export function CatalogoIngredientes() {
     };
 
     const handleButtonClick = () => {
-        window.location.href = '/registro   -ingredientes';
+        window.location.href = '/registro-ingredientes';
     };
 
     const renderTableRow = (ingrediente) => {

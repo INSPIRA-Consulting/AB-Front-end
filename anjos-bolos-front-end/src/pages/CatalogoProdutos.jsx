@@ -4,6 +4,7 @@ import { CatalogHeader } from "../components/CatalogHeader";
 import { SearchBar } from "../components/SearchBar";
 import { FilterSection } from "../components/FilterSection";
 import { DataTable } from "../components/DataTable";
+import { AdvancedFilter } from "../components/AdvancedFilter";
 import styles from "../styles/CatalogoProdutos.module.css";
 import { useEffect } from "react";
 import axios from "axios";
@@ -45,6 +46,7 @@ export function CatalogoProdutos() {
 
     const [categoriasSelecionadas, setCategoriasSelecionadas] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
+    const [filtroOrdenacao, setFiltroOrdenacao] = useState('');
 
     // Opções do seletor
     const selectOptions = [
@@ -87,6 +89,12 @@ export function CatalogoProdutos() {
         console.log('Registrar produto clicado');
     };
 
+    const handleFilterChange = (filtro) => {
+        setFiltroOrdenacao(filtro);
+        console.log('Filtro selecionado:', filtro);
+        // Aqui você pode implementar a lógica de ordenação
+    };
+
     const renderTableRow = (produto) => {
         return (
             <>
@@ -121,6 +129,7 @@ export function CatalogoProdutos() {
                 filters={filters}
                 selectedCategories={categoriasSelecionadas}
                 onCategoryChange={handleCategoriaChange}
+                onAdvancedFilterChange={handleFilterChange}
             />
 
             <DataTable

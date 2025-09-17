@@ -9,6 +9,16 @@
     flex-direction: column;
 }
 
+/* Container para o filtro avançado */
+.filterAdvancedContainer {
+    margin: 10px auto 20px auto;
+    width: 98%;
+    max-width: 1400px;
+    display: flex;
+    justify-content: flex-end;
+    padding: 0 15px;
+}
+
 /* Título e botão registrar */
 .containerTitulo {
     margin: 0 auto;
@@ -101,7 +111,7 @@
 }
 
 .registrarButton:hover {
-    background-color: #56270B;
+    background-color: #76533E;
 }
 
 /* Barra de pesquisa */
