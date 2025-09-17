@@ -7,6 +7,9 @@ export function Produto(props) {
         const diminuir = () => setContador(contador > 0 ? contador - 1 : 0);
 
         const clickAumentar = () => {
+            if (props.tipo === "festa" && contador >= 1) {
+                return;
+            }
             props.onAdd();
             aumentar();
         };
@@ -28,7 +31,7 @@ export function Produto(props) {
                         <span style={{ margin: '0 10px 0 0', color: '#56270B', fontSize: '20px', fontWeight: 'bold' }}>Qtd.</span>
                         <button onClick={clickDiminuir} style={{ borderRadius:'35px', width: '15px', backgroundColor:'#56270B', padding: '8px 20px 8px 15px', fontWeight: 'bold'}}>-</button>
                         <span style={{ margin: '0 10px', color: 'black', fontSize: '24px', fontWeight: 'bold', paddingTop: '10px' }}>{contador}</span>
-                        <button onClick={clickAumentar} style={{ borderRadius:'35px', width: '35px', backgroundColor:'#56270B', padding: '8px 20px 8px 12px', fontWeight: 'bold'}}>+</button>
+                        <button disabled={props.tipo === "festa" && contador >= 1} onClick={clickAumentar} style={{ borderRadius:'35px', width: '35px', backgroundColor:'#56270B', padding: '8px 20px 8px 12px', fontWeight: 'bold'}}>+</button>
                     </div>
                 </div>
             </div>

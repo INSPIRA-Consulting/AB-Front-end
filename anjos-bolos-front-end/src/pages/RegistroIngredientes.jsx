@@ -13,21 +13,29 @@ export function RegistroIngredientes(props) {
     const [nome, setNome] = useState("");
     const [medida, setMedida] = useState("");
     const [valor, setValor] = useState("");
+    const [quantidade, setQuantidade] = useState("");
 
 
     const salvar = async e => {
         e.preventDefault();
+
+        let quantidadeConvertida = quantidade;
+
+        if (medida === "quilograma" || medida === "mililitro") {
+            quantidadeConvertida = quantidade * 1000;
+        }
         
         axios.post(`${import.meta.env.VITE_API_URL}/ingredientes`, {
             nome: nome,
-            medida: medida,
-            preco: valor
+            valorEmbalagem: valor,
+            quantidadeEmbalagem: quantidadeConvertida
         })
         .then((response)=>{
             console.log(response.data);
             setNome("");
             setMedida("");
             setValor("");
+            quantidade("");
             alert("Ingrediente cadastrado com sucesso!");
         })        
     }
@@ -47,12 +55,29 @@ export function RegistroIngredientes(props) {
 
                 <div>
                     <div className={styles["input-group"]}>
-                        <TextBox name="Medida" label="Medida" type="text" value={medida} onChange={(e) => setMedida(e.target.value)} />
+                        <select
+                            value={medida}
+                            onChange={(e) => setMedida(e.target.value)}
+                            className={styles.select}
+                        >
+                            <option value="">Selecione a medida</option>
+                            {/* <option value="unidade">Unidade</option> */}
+                            <option value="grama">Grama</option>
+                            <option value="quilograma">Quilograma</option>
+                            <option value="litro">Litro</option>
+                            <option value="mililitro">Mililitro</option>
+                        </select>
+                    </div>
+
+                    <div className={styles["input-group"]}>
+                        <TextBox name="Quantidade" label="Quantidade" type="text" value={quantidade} onChange={(e) => setQuantidade(e.target.value)} />
                     </div>
 
                     <div className={styles["input-group"]}>
                         <TextBox name="Valor" label="Valor" type="text" value={valor} onChange={(e) => setValor(e.target.value)} />
                     </div>
+
+
                 </div>
             </div>
 
