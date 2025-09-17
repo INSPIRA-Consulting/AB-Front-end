@@ -7,6 +7,7 @@ import { RegistroIngredientes } from "./pages/RegistroIngredientes";
 import { Menu } from "./pages/Menu";
 import { DashVendas } from "./pages/DashVendas";
 import { DashProdutos } from "./pages/DashProdutos";
+import { RegistroProduto } from "./pages/RegistroProduto";
 
 export const router = createBrowserRouter([
     {
@@ -40,5 +41,9 @@ export const router = createBrowserRouter([
     {
         path: "/DashProdutos",
         element: <DashProdutos titulo="Dashboard de Produtos" />
+    },
+    {
+        path: "/RegistroProduto",
+        element: <RegistroProduto titulo="Dashboard de Produtos" />
     }
 ])
