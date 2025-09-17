@@ -50,12 +50,16 @@ export function RegistroProduto() {
     });
   }
 
+  function handleVoltar() {
+    window.location.href = '/catalogo-produtos';
+  }
+
   return (
     <div className={styles.pageContainer}>
       <Navbar logado={true} activePage="produtos" />
       
       <div className={styles.headerContainer}>
-        <button className={styles.voltarButton}>
+        <button className={styles.voltarButton} onClick={handleVoltar}>
           {'< Voltar'}
         </button>
       </div>

@@ -32,10 +32,21 @@ export function RegistroIngredientes(props) {
         })        
     }
 
+    const handleVoltar = () => {
+        window.location.href = '/catalogo-ingredientes';
+    }
+
    
     return(
         <><Navbar logado={true} />
         <div className={styles.registroIngredientes}>
+
+        <div className={styles.headerContainer}>
+            <button className={styles.voltarButton} onClick={handleVoltar}>
+                {'< Voltar'}
+            </button>
+        </div>
+
         <h1>{props.titulo}</h1>
         
         <div className={styles.container} style={{ width: "640px" }}>

@@ -3,13 +3,11 @@ import { useNavigate } from "react-router-dom";
 import { Navbar } from "../components/Navbar";
 import { CatalogHeader } from "../components/CatalogHeader";
 import { SearchBar } from "../components/SearchBar";
-import { FilterSection } from "../components/FilterSection";
-import { DataTable } from "../components/DataTable";
 import { AdvancedFilter } from "../components/AdvancedFilter";
+import { DataTable } from "../components/DataTable";
 import styles from "../styles/CatalogoProdutos.module.css";
 
 export function CatalogoIngredientes() {
-    const [categoriasSelecionadas, setCategoriasSelecionadas] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [filtroOrdenacao, setFiltroOrdenacao] = useState('');
     const navigate = useNavigate();
@@ -20,27 +18,8 @@ export function CatalogoIngredientes() {
         { value: "ingredientes", label: "Ingredientes" }
     ];
 
-    // Filtros disponíveis para ingredientes
-    const filters = [
-        { id: 'bolosTradicionais', label: 'Bolos Tradicionais', colorClass: 'bolosTradicionais' },
-        { id: 'bebidas', label: 'Bebidas', colorClass: 'bebidas' },
-        { id: 'salgados', label: 'Salgados', colorClass: 'salgados' },
-        { id: 'bolosPote', label: 'Bolos de pote', colorClass: 'bolosPote' },
-        { id: 'bolosFesta', label: 'Bolos de Festa', colorClass: 'bolosFesta' }
-    ];
-
     // Headers da tabela
     const tableHeaders = ["Ingrediente", "Categoria", "Custo de Produção", "Valor de Venda", "Lucro"];
-
-    const handleCategoriaChange = (categoria) => {
-        setCategoriasSelecionadas(prev => {
-            if (prev.includes(categoria)) {
-                return prev.filter(c => c !== categoria);
-            } else {
-                return [...prev, categoria];
-            }
-        });
-    };
 
     // Dados mockados da tabela para ingredientes
     const ingredientes = [
@@ -105,12 +84,9 @@ export function CatalogoIngredientes() {
                 placeholder="Pesquise um ingrediente"
             />
 
-            <FilterSection
-                filters={filters}
-                selectedCategories={categoriasSelecionadas}
-                onCategoryChange={handleCategoriaChange}
-                onAdvancedFilterChange={handleFilterChange}
-            />
+            <div className={styles.filterSection}>
+                <AdvancedFilter onFilterChange={handleFilterChange} />
+            </div>
 
             <DataTable
                 headers={tableHeaders}
