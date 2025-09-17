@@ -1,14 +1,15 @@
 @import '../styles/fonts/fonts.css';
 
-.container {
+.containerRegistroVendas {
     background-color: #F7F7F7;
 }
 
-.container h1 {
+.containerRegistroVendas h1 {
     font-family: 'DancingScript';
     font-size: 4rem;
     font-weight: bold;
     color: #663b2b;
+    margin-bottom: 10px;
 }
 
 h3{
@@ -63,6 +64,44 @@ h3{
         background-color: #896A56;
         cursor: not-allowed;
         opacity: 0.5;
+    }
+}
+
+.selecao {
+
+    background-color: #D1C8C2;
+    margin: 2% 10% 0% 10%;
+    padding-top: 0.2%;
+    border-radius: 20px;
+    padding-bottom: 1%;
+
+    h4 {
+        font-family: 'Montserrat';
+        font-size: 2rem;
+        color: #663b2b;
+        font-weight: normal;
+        margin-bottom: 1rem;
+        margin-top: 0.5rem;
+        text-align: left;
+        padding-left: 2.5%;
+    }
+
+    div {   
+
+        label {
+            font-family: 'Montserrat';
+            font-size: 1.5rem;
+            color: #663b2b;
+            font-weight: normal;
+            margin-right: 10px;
+            display: inline-flex;
+            flex-direction: row;
+
+            input {
+                margin-right: 15px;
+            }
+            
+        }
     }
 }
 

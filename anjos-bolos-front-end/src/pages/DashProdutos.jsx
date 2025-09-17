@@ -1,21 +1,11 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { FaRegCalendarAlt, FaSearch } from "react-icons/fa";
-import { Pie } from "react-chartjs-2";
-import {
-	Chart as ChartJS,
-	ArcElement,
-	Tooltip,
-	Legend
-} from "chart.js";
-import ChartDataLabels from 'chartjs-plugin-datalabels';
+import { useNavigate } from "react-router-dom";
 import styles from '../styles/DashProdutos.module.css';
 import '../styles/fonts/fonts.css';
 import { Navbar } from '../components/Navbar';
 import { DashSidebar } from '../components/DashSidebar';
 import { FaFilter } from "react-icons/fa";
-
-// Registrar apenas os módulos necessários para o gráfico de pizza nesta página
-ChartJS.register(ArcElement, Tooltip, Legend, ChartDataLabels);
 
 export function DashProdutos() {
 	// Estados para datas
@@ -23,39 +13,96 @@ export function DashProdutos() {
 	const [endDate, setEndDate] = useState("2025-06-12");
 	const startInputRef = useRef(null);
 	const endInputRef = useRef(null);
-
-	// Dados do gráfico de pizza (TOP 5 Recheios)
-	const pieData = {
-		labels: ["Brigadeiro", "Morango", "Ninho", "Prestígio", "Doce de Leite"],
-		datasets: [
-			{
-				data: [36.4, 18.2, 18.2, 18.2, 9.1],
-				backgroundColor: [
-					"#a86b32",
-					"#f7c873",
-					"#f9e7c2",
-					"#e6b07a",
-					"#d9a441"
-				],
-				borderColor: "#fff",
-				borderWidth: 2
-			}
-		]
+	
+	// Hook de navegação
+	const navigate = useNavigate();
+	
+	// Função para redirecionar para histórico de vendas
+	const handleSearchClick = () => {
+		navigate('/HistoricoVendas');
 	};
 
-	// Dados da tabela de recomendações
+	// Estados para filtros
+	const [showRecomendFilter, setShowRecomendFilter] = useState(false);
+	const [showCategoriasFilter, setShowCategoriasFilter] = useState(false);
+	const [selectedRecomendFilters, setSelectedRecomendFilters] = useState([
+		"Bolos Tradicionais",
+		"Bebidas", 
+		"Salgados",
+		"Bolos de Pote",
+		"Bolos de Festa"
+	]);
+	const [selectedCategoriaType, setSelectedCategoriaType] = useState("Categorias de Produtos");
+
+	// Opções de filtro para recomendações (múltipla seleção)
+	const recomendOptions = [
+		"Bolos Tradicionais",
+		"Bebidas", 
+		"Salgados",
+		"Bolos de Pote",
+		"Bolos de Festa"
+	];
+
+	// Opções para a tabela TOP 5 (seleção única)
+	const categoriaTypeOptions = [
+		"Categorias de Produtos",
+		"Bolos Tradicionais",
+		"Bebidas", 
+		"Salgados",
+		"Bolos de Pote",
+		"Bolos de Festa"
+	];
+
+	// Funções para gerenciar filtros de recomendação
+	const handleRecomendFilterChange = (option) => {
+		setSelectedRecomendFilters(prev => {
+			if (prev.includes(option)) {
+				return prev.filter(item => item !== option);
+			} else {
+				return [...prev, option];
+			}
+		});
+		// Filtro aplicado imediatamente - aqui você pode implementar a lógica de filtro
+	};
+
+	// Função para gerenciar filtro de categoria (seleção única)
+	const handleCategoriaTypeChange = (type) => {
+		setSelectedCategoriaType(type);
+		setShowCategoriasFilter(false);
+	};
+
+	// Função para gerar título dinâmico
+	const getTableTitle = () => {
+		if (selectedCategoriaType === "Categorias de Produtos") {
+			return "TOP 5 Categorias de produtos mais vendidos:";
+		} else if (selectedCategoriaType === "Bebidas") {
+			return `TOP 5 ${selectedCategoriaType} mais vendidas:`;
+		} else {
+			return `TOP 5 ${selectedCategoriaType} mais vendidos:`;
+		}
+	};
+
+	// Fechar filtros ao clicar fora
+	useEffect(() => {
+		const handleClickOutside = (event) => {
+			// Se clicou fora dos filtros, fechar
+			if (!event.target.closest(`.${styles.filterDropdown}`) && 
+				!event.target.closest('th')) {
+				setShowRecomendFilter(false);
+				setShowCategoriasFilter(false);
+			}
+		};
+
+		document.addEventListener('mousedown', handleClickOutside);
+		return () => {
+			document.removeEventListener('mousedown', handleClickOutside);
+		};
+	}, []);
+
+	// Dados das recomendações
 	const recomendacoes = [
 		{ data: "30/06/2025", feriado: "Festa Junina", categoria: "Bolo Tradicional", produto: "Bolo de Milho" },
 		{ data: "10/08/2025", feriado: "Dia dos Pais", categoria: "Salgado", produto: "Esfirra de Carne" }
-	];
-
-	// Dados das categorias mais vendidas
-	const categorias = [
-		"Bolos Tradicionais",
-		"Bolos de Pote",
-		"Bolos de Festa",
-		"Salgado",
-		"Bebida"
 	];
 
 	return (
@@ -65,15 +112,43 @@ export function DashProdutos() {
 				<DashSidebar activeItem="produto" />
 				<main className={styles.dashContent}>
 					{/* Tabela de recomendações */}
-					<section style={{ width: "100%", maxWidth: 900, margin: "0 auto 8px auto" }}>
+					<section style={{ width: "100%", maxWidth: 900, margin: "0 auto 8px auto", position: "relative" }}>
 						<h3 className={styles.sectionTitle}>Recomendação para produção e venda:</h3>
+						
+						{/* Filtro de Recomendações - fora da tabela */}
+						{showRecomendFilter && (
+							<div className={`${styles.filterDropdown} ${styles.filterDropdownRecomend}`}>
+								<div className={`${styles.filterTitle} ${styles.filterTitleRecomend}`}>
+									Filtrar por Categoria
+								</div>
+								<div className={styles.filterOptionsContainer}>
+									{recomendOptions.map((option, i) => (
+										<div key={i} className={styles.filterOption}>
+											<input
+												type="checkbox"
+												id={`recomend-${i}`}
+												checked={selectedRecomendFilters.includes(option)}
+												onChange={() => handleRecomendFilterChange(option)}
+											/>
+											<label htmlFor={`recomend-${i}`}>{option}</label>
+										</div>
+									))}
+								</div>
+							</div>
+						)}
+
 						<div style={{ overflowX: "auto" }}>
 							<table className={styles.recomendTable}>
 								<thead>
 									<tr>
 										<th>Data</th>
 										<th>Feriado</th>
-										<th>Categoria <FaFilter style={{ fontSize: 17, marginLeft: 4, verticalAlign: "middle" }} /></th>
+										<th 
+											style={{ cursor: "pointer" }}
+											onClick={() => setShowRecomendFilter(!showRecomendFilter)}
+										>
+											Categoria <FaFilter style={{ fontSize: 17, marginLeft: 4, verticalAlign: "middle" }} />
+										</th>
 										<th>Produto</th>
 									</tr>
 								</thead>
@@ -160,90 +235,94 @@ export function DashProdutos() {
 						</div>
 					</section>
 
-					{/* Cards de gráfico e categorias */}
-					<section className={styles.dashCards}>
-										{/* Card gráfico de pizza */}
-										<div className={styles.dashCard} style={{ background: "#4d2c0c", color: "#fff", minWidth: 320, maxWidth: 420, flex: 1 }}>
-											<div className={styles.dashCardTitle} style={{ background: "#4d2c0c", color: "#fff", borderRadius: "12px 12px 0 0" }}>
-												TOP 5 Recheios mais populares:
-											</div>
-											<div style={{ width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
-												<div style={{
-													background: '#fff',
-													borderRadius: '14px',
-													width: '100%',
-													maxWidth: 420,
-													minWidth: 320,
-													height: 145,
-													display: 'flex',
-													alignItems: 'center',
-													justifyContent: 'center',
-													boxShadow: '0 2px 8px #0001',
-													margin: '10px 0'
-												}}>
-													<Pie
-														data={pieData}
-														options={{
-															maintainAspectRatio: false,
-															responsive: true,
-															plugins: {
-																legend: {
-																	position: "bottom",
-																	labels: {
-																		color: "#4d2c0c",
-																		font: { family: 'Montserrat', size: 13, weight: 600 },
-																		usePointStyle: true
-																	}
-																},
-																tooltip: {
-																	callbacks: {
-																		label: function(context) {
-																			const label = context.label || '';
-																			const value = context.parsed;
-																			const total = context.chart._metasets[context.datasetIndex].total;
-																			const percent = ((value / total) * 100).toFixed(1);
-																			return `${label}: ${percent}%`;
-																		}
-																	}
-																},
-																datalabels: {
-																	color: '#4d2c0c',
-																	font: {
-																		family: 'Montserrat',
-																		size: 13,
-																		weight: 'bold'
-																	},
-																	formatter: (value, context) => {
-																		const label = context.chart.data.labels[context.dataIndex];
-																		const total = context.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
-																		const percent = ((value / total) * 100).toFixed(1);
-																		return `${label}\n${percent}%`;
-																	},
-																	align: 'center',
-																	anchor: 'center',
-																}
-															}
-														}}
-														width={220}
-														height={135}
-													/>
-												</div>
-											</div>
+					{/* Tabela TOP 5 Categorias */}
+					<section style={{ width: "100%", maxWidth: 900, margin: "0 auto 8px auto", position: "relative" }}>
+						<h3 className={styles.sectionTitle}>{getTableTitle()}</h3>
+						
+						{/* Filtro de Categorias - fora da tabela */}
+						{showCategoriasFilter && (
+							<div className={`${styles.filterDropdown} ${styles.filterDropdownCategorias}`}>
+								<div className={`${styles.filterTitle} ${styles.filterTitleCategorias}`}>
+									Filtrar por:
+								</div>
+								<div className={styles.filterOptionsContainer}>
+									{categoriaTypeOptions.map((option, i) => (
+										<div key={i} className={styles.filterOption}>
+											<input
+												type="radio"
+												id={`categoria-${i}`}
+												name="categoriaType"
+												checked={selectedCategoriaType === option}
+												onChange={() => handleCategoriaTypeChange(option)}
+											/>
+											<label htmlFor={`categoria-${i}`}>{option}</label>
 										</div>
-						{/* Card categorias */}
-						<div className={styles.dashCard} style={{ background: "rgb(77, 44, 12)", color: "#fff", minWidth: 320, maxWidth: 420, flex: 1 }}>
-							<div className={styles.dashCardTitle} style={{ background: "rgb(77, 44, 12)", color: "#fff", borderRadius: "12px 12px 0 0" }}>
-								TOP 5 Categorias de produtos mais vendidos:
-							</div>
-							<table className={styles.categoriasTable}>
-								<tbody>
-									{categorias.map((cat, idx) => (
-										<tr key={cat}>
-											<td style={{ width: 40 }}>{idx+1}º</td>
-											<td>{cat}</td>
-											<td style={{ textAlign: "center", width: 30 }}><FaSearch style={{ color: "#a86b32", fontSize: 16 }} /></td>
-										</tr>
 									))}
+								</div>
+							</div>
+						)}
+
+						<div style={{ overflowX: "auto" }}>
+							<table className={styles.categoriasTable}>
+								<thead>
+									<tr>
+										<th>Ranking</th>
+										<th 
+											style={{ cursor: "pointer" }}
+											onClick={() => setShowCategoriasFilter(!showCategoriasFilter)}
+										>
+											Categorias <FaFilter style={{ fontSize: 17, marginLeft: 4, verticalAlign: "middle" }} />
+										</th>
+										<th>Qtd.</th>
+										<th></th>
+									</tr>
+								</thead>
+								<tbody>
+									<tr>
+										<td>1º</td>
+										<td>Bolos Tradicionais</td>
+										<td>25</td>
+										<td><FaSearch 
+											style={{ color: "#4d2c0c", fontSize: 24, cursor: 'pointer' }} 
+											onClick={handleSearchClick}
+										/></td>
+									</tr>
+									<tr>
+										<td>2º</td>
+										<td>Bolos de Pote</td>
+										<td>10</td>
+										<td><FaSearch 
+											style={{ color: "#4d2c0c", fontSize: 24, cursor: 'pointer' }} 
+											onClick={handleSearchClick}
+										/></td>
+									</tr>
+									<tr>
+										<td>3º</td>
+										<td>Bolos de Festa</td>
+										<td>9</td>
+										<td><FaSearch 
+											style={{ color: "#4d2c0c", fontSize: 24, cursor: 'pointer' }} 
+											onClick={handleSearchClick}
+										/></td>
+									</tr>
+									<tr>
+										<td>4º</td>
+										<td>Salgado</td>
+										<td>8</td>
+										<td><FaSearch 
+											style={{ color: "#4d2c0c", fontSize: 24, cursor: 'pointer' }} 
+											onClick={handleSearchClick}
+										/></td>
+									</tr>
+									<tr>
+										<td>5º</td>
+										<td>Bebida</td>
+										<td>3</td>
+										<td><FaSearch 
+											style={{ color: "#4d2c0c", fontSize: 24, cursor: 'pointer' }} 
+											onClick={handleSearchClick}
+										/></td>
+									</tr>
 								</tbody>
 							</table>
 						</div>
