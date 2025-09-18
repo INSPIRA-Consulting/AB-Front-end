@@ -35,8 +35,8 @@ export function Login(props) {
     }
     return(
         <><Navbar />
-        <div className={styles.cadastro}>
-        <div className={styles.container} style={{ width: "640px" }}>
+        <div className={styles.login}>
+        <div className={styles.container} style={{ width: "580px" }}>
             <h1>{props.titulo}</h1>
 
             <div className={styles["input-grid"]}>

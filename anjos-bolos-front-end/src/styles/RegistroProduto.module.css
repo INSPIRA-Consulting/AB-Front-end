@@ -52,7 +52,7 @@ input[type=number] {
 }
 
 .voltarButton:hover {
-  background: #4d2200;
+  background: #56270B;
 }
 
 .pageTitle {
@@ -140,7 +140,7 @@ input[type=number] {
 
 .input:focus {
   outline: none;
-  border-color: #4d2200;
+  border-color: #56270B;
   background: #f9f7f4;
 }
 
@@ -159,7 +159,7 @@ input[type=number] {
 
 .select:focus {
   outline: none;
-  border-color: #4d2200;
+  border-color: #56270B;
 }
 
 .quantidadeContainer {
@@ -189,7 +189,7 @@ input[type=number] {
 }
 
 .quantidadeButton:hover {
-  background: #4d2200;
+  background: #56270B;
 }
 
 .quantidadeDisplay {
@@ -222,7 +222,7 @@ input[type=number] {
 }
 
 .adicionarButton:hover {
-  background: #4d2200;
+  background: #56270B;
   transform: translateY(-1px);
 }
 

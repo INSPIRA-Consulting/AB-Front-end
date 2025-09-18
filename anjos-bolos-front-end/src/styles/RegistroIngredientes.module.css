@@ -7,6 +7,7 @@
     align-items: center;
     justify-content: center;
     flex-direction: column;
+    margin-top: -40px;
 }
 
 .container {
@@ -108,11 +109,11 @@
 
 /* Estilos para o container do header e botão voltar */
 .headerContainer {
-  padding: 20px 0 0 0;
+  padding: 10px 0 0 0;
   width: 100%;
   display: flex;
   justify-content: flex-start;
-  margin-bottom: 0;
+  margin-bottom: -20px;
 }
 
 .voltarButton {

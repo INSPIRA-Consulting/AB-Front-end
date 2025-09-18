@@ -217,7 +217,7 @@
     -webkit-appearance: none;
     width: 24px;
     height: 24px;
-    border: 3px solid #8B6F47;
+    border: 3px solid #663b2b;
     border-radius: 5px;
     background-color: white;
     cursor: pointer;
@@ -226,8 +226,8 @@
 }
 
 .filterCheckbox:checked {
-    background-color: #8B6F47;
-    border-color: #8B6F47;
+    background-color: #663b2b;
+    border-color: #663b2b;
 }
 
 .filterCheckbox:checked::after {
@@ -252,53 +252,53 @@
 
 /* Cores específicas para cada categoria */
 .filterItem.bolosTradicionais .filterCheckbox {
-    border-color: #8B4513;
+    border-color: #663b2b;
     width: 26px;
     height: 26px;
 }
 
 .filterItem.bolosTradicionais .filterCheckbox:checked {
-    background-color: #8B4513;
+    background-color: #663b2b;
 }
 
 .filterItem.bebidas .filterCheckbox {
-    border-color: #4169E1;
+    border-color: #663b2b;
     width: 26px;
     height: 26px;
 }
 
 .filterItem.bebidas .filterCheckbox:checked {
-    background-color: #4169E1;
+    background-color: #663b2b;
 }
 
 .filterItem.salgados .filterCheckbox {
-    border-color: #FF6347;
+    border-color: #663b2b;
     width: 26px;
     height: 26px;
 }
 
 .filterItem.salgados .filterCheckbox:checked {
-    background-color: #FF6347;
+    background-color: #663b2b;
 }
 
 .filterItem.bolosPote .filterCheckbox {
-    border-color: #32CD32;
+    border-color: #663b2b;
     width: 26px;
     height: 26px;
 }
 
 .filterItem.bolosPote .filterCheckbox:checked {
-    background-color: #32CD32;
+    background-color: #663b2b;
 }
 
 .filterItem.bolosFesta .filterCheckbox {
-    border-color: #FF69B4;
+    border-color: #663b2b;
     width: 26px;
     height: 26px;
 }
 
 .filterItem.bolosFesta .filterCheckbox:checked {
-    background-color: #FF69B4;
+    background-color: #663b2b;
 }
 
 /* Responsividade */
