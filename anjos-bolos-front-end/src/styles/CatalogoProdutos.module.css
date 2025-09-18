@@ -19,6 +19,16 @@
     padding: 0 15px;
 }
 
+/* Container para o filtro avançado com posicionamento mais à esquerda */
+.filterAdvancedContainerLeft {
+    margin: 10px auto 20px auto;
+    width: 98%;
+    max-width: 1400px;
+    display: flex;
+    justify-content: flex-end;
+    padding: 0 120px 0 15px;
+}
+
 /* Título e botão registrar */
 .containerTitulo {
     margin: 0 auto;
@@ -68,9 +78,11 @@
     appearance: none;
     position: relative;
     padding-right: 50px;
-    padding-bottom: 8px;
+    padding-bottom: 12px;
+    padding-top: 4px;
     min-width: 300px;
     width: auto;
+    line-height: 1.2;
 }
 
 .titulo select:after {
@@ -303,6 +315,9 @@
     
     .titulo select {
         font-size: 3rem;
+        padding-bottom: 10px;
+        padding-top: 3px;
+        line-height: 1.2;
     }
     
     .searchSection,

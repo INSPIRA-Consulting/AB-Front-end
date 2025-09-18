@@ -5,7 +5,6 @@ import { SearchBar } from "../components/SearchBar";
 import { DataTable } from "../components/DataTable";
 import styles from "../styles/CatalogoProdutos.module.css";
 import axios from "axios";
-import { FilterSection } from "../components/FilterSection";
 import { AdvancedFilter } from "../components/AdvancedFilter";
 import { useEffect } from "react";
 
@@ -41,7 +40,6 @@ export function CatalogoIngredientes() {
         fetchIngredientes();
     }, []);
 
-    const [categoriasSelecionadas, setCategoriasSelecionadas] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
 
     // Opções do seletor
@@ -50,27 +48,8 @@ export function CatalogoIngredientes() {
         { value: "ingredientes", label: "Ingredientes" }
     ];
 
-    // Filtros disponíveis para ingredientes
-    const filters = [
-        { id: 'farinhas', label: 'Farinhas', colorClass: 'bolosTradicionais' },
-        { id: 'adocantes', label: 'Adoçantes', colorClass: 'bebidas' },
-        { id: 'proteinas', label: 'Proteínas', colorClass: 'salgados' },
-        { id: 'lacteos', label: 'Lácteos', colorClass: 'bolosPote' },
-        { id: 'essencias', label: 'Essências', colorClass: 'bolosFesta' }
-    ];
-
     // Headers da tabela
     const tableHeaders = ["Ingrediente", "Custo por Medida"];
-
-    const handleCategoriaChange = (categoria) => {
-        setCategoriasSelecionadas(prev => {
-            if (prev.includes(categoria)) {
-                return prev.filter(c => c !== categoria);
-            } else {
-                return [...prev, categoria];
-            }
-        });
-    };
 
     const handleSelectChange = (value) => {
         if (value === 'produtos') {
@@ -121,12 +100,9 @@ export function CatalogoIngredientes() {
                 placeholder="Pesquise um ingrediente"
             />
 
-            <FilterSection
-                filters={filters}
-                selectedCategories={categoriasSelecionadas}
-                onCategoryChange={handleCategoriaChange}
-                onAdvancedFilterChange={handleFilterChange}
-            />
+            <div className={styles.filterAdvancedContainerLeft}>
+                <AdvancedFilter onFilterChange={handleFilterChange} />
+            </div>
 
             <DataTable
                 headers={tableHeaders}

@@ -85,8 +85,7 @@ export function CatalogoProdutos() {
     };
 
     const handleButtonClick = () => {
-        // Função para o botão registrar
-        console.log('Registrar produto clicado');
+        window.location.href = '/RegistroProduto';
     };
 
     const handleFilterChange = (filtro) => {

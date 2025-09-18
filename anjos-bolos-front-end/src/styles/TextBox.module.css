@@ -1,28 +1,28 @@
 .input-container {
   position: relative;
   width: fit-content;
-  margin: 20px 0;
+  margin: 16px 0;
 }
 
 .input {
   width: 300px;
-  padding: 16px 12px 8px;
+  padding: 14px 12px 6px;
   font-size: 1rem;
   color: #663b2b;
   border: 2px solid #663b2b;
-  border-radius: 4px;
+  border-radius: 10px;
   outline: none;
-  background-color: #E6D5D5;
+  background-color: #fff;
 }
 
 .label {
   position: absolute;
   left: 12px;
-  top: 16px;
+  top: 14px;
   padding: 0 4px;
   color: #663b2b;
   font-size: 1rem;
-  background-color: #E6D5D5;
+  background-color: #fff;
   transition: all 0.2s ease-out;
   pointer-events: none;
 }
