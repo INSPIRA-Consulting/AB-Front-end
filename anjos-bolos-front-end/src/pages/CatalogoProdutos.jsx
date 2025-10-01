@@ -85,7 +85,7 @@ export function CatalogoProdutos() {
     };
 
     const handleButtonClick = () => {
-        window.location.href = '/RegistroProduto';
+        window.location.href = '/registro-produto';
     };
 
     const handleFilterChange = (filtro) => {

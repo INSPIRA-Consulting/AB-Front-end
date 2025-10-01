@@ -101,7 +101,7 @@ export function RegistroVendas() {
           if (!boloDeFesta) {
             setVendas((prevVendas) => [
               ...prevVendas,
-              { nome: "Bolo de festa", massa: produto.titulo, valorFinal: produto.valor },
+              { categoriaEntrega: tipoVenda, nome: "Bolo de festa", massa: produto.titulo, valorFinal: produto.valor },
             ]);
           } else {
             const updatedVendas = vendas.map((venda) => {
@@ -126,18 +126,18 @@ export function RegistroVendas() {
           if (!boloDeFesta) {
             setVendas((prevVendas) => [
               ...prevVendas,
-              { nome: "Bolo de festa", recheio: produto.titulo, valorFinal: produto.valor },
+              { categoriaEntrega: tipoVenda, nome: "Bolo de festa", recheio: produto.titulo, valorFinal: produto.valor },
             ]);
             console.log("Todas as vendas:", updatedVendas);
           } else {
             const updatedVendas = vendas.map((venda) => {
-              if (venda.nome === "Bolo de festa") {
+                if (venda.nome === "Bolo de festa") {
                 return {
                   ...venda,
-                  recheio: produto.titulo,
-                  valorFinal: (venda.valorFinal + produto.valor),
+                  recheio: venda.recheio ? `${venda.recheio} | ${produto.titulo}` : produto.titulo,
+                  valorFinal: venda.valorFinal + produto.valor,
                 };
-              }
+                }
               return venda;
             });
             setVendas(updatedVendas);
@@ -152,7 +152,7 @@ export function RegistroVendas() {
           if (!boloDeFesta) {
             setVendas((prevVendas) => [
               ...prevVendas,
-              { nome: "Bolo de festa", cobertura: produto.titulo, valorFinal: produto.valor },
+              { categoriaEntrega: tipoVenda, nome: "Bolo de festa", cobertura: produto.titulo, valorFinal: produto.valor },
             ]);
             console.log("Todas as vendas:", updatedVendas);
           } else {
@@ -176,7 +176,7 @@ export function RegistroVendas() {
       setVendas((prevVendas) => {
         const updatedVendas = [
           ...prevVendas,
-          { nome: produto.titulo, valorFinal: produto.valor },
+          { nome: produto.titulo, valorFinal: produto.valor, categoriaEntrega: tipoVenda },
         ];
         console.log("Produto selecionado:", produto.titulo);
         console.log("Todas as vendas:", updatedVendas);
@@ -194,6 +194,8 @@ export function RegistroVendas() {
       window.location.href = `/resumo-venda?data=${encodeURIComponent(JSON.stringify(vendas))}`;
     };
 
+    const [tipoVenda, setTipoVenda] = React.useState("Pronta-Entrega");
+
     return (
       <div className={styles.containerRegistroVendas}>
       <Navbar logado={true} />
@@ -201,9 +203,14 @@ export function RegistroVendas() {
       <div className={styles.labelFiltro}>
       <div>
       <h4>Tipo de venda</h4>
-      <select name="" id="">
-      <option value="">Pronta-Entrega</option>
-      <option value="">Encomenda</option>
+      <select
+      name=""
+      id=""
+      value={tipoVenda}
+      onChange={(e) => setTipoVenda(e.target.value)}
+      >
+      <option value="Pronta-Entrega">Pronta-Entrega</option>
+      <option value="Encomenda">Encomenda</option>
       </select>
       </div>
       <button
@@ -282,42 +289,54 @@ export function RegistroVendas() {
       </div>
       </div>
 
+
       <div className={styles.selecao}>
       <h4>Escolha o Recheio</h4>
-      <div className={styles.produtos}>
-      {produtos
-      .filter((produto) => produto.categoria === "recheio")
-      .map((produto) => (
-      <Produto
-      key={produto.titulo}
-      imagem={produto.imagem}
-      titulo={produto.titulo}
-      tipo="festa"
-      valor={produto.valor.toFixed(2).replace('.', ',')}
-      onAdd={() => handleProdutoClick(produto, "recheio")}
-      onRemove={() => handleProdutoRemove(produto, "recheio")}
-      />
-      ))}
+
+      {vendas.find((venda) => venda.massa) && (
+        
+        <div className={styles.produtos}>
+      
+        {produtos
+        .filter((produto) => produto.categoria === "recheio")
+        .map((produto) => (
+        <Produto
+        key={produto.titulo}
+        imagem={produto.imagem}
+        titulo={produto.titulo}
+        tipo="festa"
+        valor={produto.valor.toFixed(2).replace('.', ',')}
+        onAdd={() => handleProdutoClick(produto, "recheio")}
+        onRemove={() => handleProdutoRemove(produto, "recheio")}
+        />
+        ))}
+      
+        </div>
+
+      )}
       </div>
-      </div>
+      
 
       <div className={styles.selecao}>
       <h4>Escolha a cobertura</h4>
-      <div className={styles.produtos}>
-      {produtos
-      .filter((produto) => produto.categoria === "cobertura")
-      .map((produto) => (
-      <Produto
-      key={produto.titulo}
-      imagem={produto.imagem}
-      titulo={produto.titulo}
-      tipo="festa"
-      valor={produto.valor.toFixed(2).replace('.', ',')}
-      onAdd={() => handleProdutoClick(produto, "cobertura")}
-      onRemove={() => handleProdutoRemove(produto, "cobertura")}
-      />
-      ))}
-      </div>
+
+      {vendas.find((venda) => venda.recheio) && (
+        <div className={styles.produtos}>
+        {produtos
+        .filter((produto) => produto.categoria === "cobertura")
+        .map((produto) => (
+        <Produto
+        key={produto.titulo}
+        imagem={produto.imagem}
+        titulo={produto.titulo}
+        tipo="festa"
+        valor={produto.valor.toFixed(2).replace('.', ',')}
+        onAdd={() => handleProdutoClick(produto, "cobertura")}
+        onRemove={() => handleProdutoRemove(produto, "cobertura")}
+        />
+        ))}
+        </div>
+       )}
       </div>
       </div>
        )}

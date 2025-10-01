@@ -21,20 +21,20 @@
                 display: flex;
                 flex-direction: column;
                 align-items: center;
-                margin-bottom: 2rem;
+                margin-bottom: 1rem;
             }            
 
             .filtroRadio{
                 display: flex;
                 flex-direction: column;
-                margin-bottom: 2rem;
+                margin-bottom: 0rem;
                 margin-top: 1rem;
-                padding-left: 20px;
+                padding-left: 0px;
                 align-items: flex-start;
 
                 label {
                     font-family: 'Montserrat';
-                    font-size: 1.2rem;
+                    font-size: 1rem;
                     color: #56270B;
                     margin-bottom: 1rem;
                 }
@@ -85,7 +85,7 @@
 
             h1 {
                 font-family: 'DancingScript';
-                font-size: 3rem;
+                font-size: 2rem;
                 font-weight: bold;
                 color: #663b2b;
                 text-align: center;
@@ -102,7 +102,7 @@
                 width: 150px;
 
                 font-family: 'Montserrat';
-                font-size: 1.5rem;
+                font-size: 1rem;
                 color: #56270B;
                 text-align: center;
             }
@@ -111,26 +111,27 @@
                 background-color: #D9D9D9;
                 border: #76533E 2px solid;
                 border-radius: 3px;
-                height: 30px;
+                height: 22px;
                 width: 170px;
 
                 font-family: 'Montserrat';
-                font-size: 1.4rem;
+                font-size: 1rem;
                 color: #56270B;
                 text-align: center;
                 letter-spacing: 2px;
             }
 
             button{
+                width: 80%;
                 background-color: #663b2B;
                 color: #FFFFFF;
                 font-family: 'Montserrat';
-                font-size: 1.5rem;
+                font-size: 1rem;
                 border: none;
                 border-radius: 8px;
-                padding: 10px 20px;
+                padding: 10px 0px;
                 cursor: pointer;
-                box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.3);
+                /* box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.3); */
                 transition: all 0.3s ease-in-out;
                 margin-bottom: 20px;
             }
@@ -144,7 +145,7 @@
 
     h1 {
         font-family: 'DancingScript';
-        font-size: 4rem;
+        font-size: 3rem;
         font-weight: bold;
         color: #663b2b;
         text-align: center;
@@ -210,13 +211,13 @@
     }
     
     .btnDetalhes{
-        background-color: #ffffff00;
+        background-color: #D1C8C2;
     }
     
     .tabelaContainer table {
         width: 100%;
         font-family: 'Montserrat';
-        font-size: 1.4rem;
+        font-size: 1.1rem;
         border: #56270B 1px solid;
         border-radius: 10px;
         
@@ -236,7 +237,7 @@
 
     .tabelaContainer th,
     .tabelaContainer td {
-        padding: 8px 18px;
+        padding: 8px 10px;
         text-align: center;
         border-bottom: 1px solid #D1C8C2;
     }

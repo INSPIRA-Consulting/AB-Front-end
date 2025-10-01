@@ -41,23 +41,23 @@ export const router = createBrowserRouter([
         element: <Menu titulo="Menu" />
     },
     {
-        path: "/DashVendas",
+        path: "/dash-vendas",
         element: <DashVendas titulo="Dashboard de Vendas" />
     },
     {
-        path: "/DashProdutos",
+        path: "/dash-produtos",
         element: <DashProdutos titulo="Dashboard de Produtos" />
     },
     {
-        path: "/RegistroProduto",
+        path: "/registro-produto",
         element: <RegistroProduto titulo="Dashboard de Produtos" />
     },
     {
-        path: "/HistoricoVendas",
+        path: "/historico-vendas",
         element: <HistoricoVendas titulo="Historico de Vendas" />
     },
     {
-        path: "/DashFinancas",
+        path: "/dash-financas",
         element: <DashFinancas titulo="Dashboard de Finanças" />
     },
     {
