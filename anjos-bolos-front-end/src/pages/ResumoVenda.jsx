@@ -55,7 +55,7 @@ export function ResumoVenda() {
       <div className={styles.contentResumoVendas}>
 
         <div className={styles.leftContent}>
-                  <div className={styles.tabelaContainer}>
+              <div className={styles.tabelaContainer}>
                     <table className={styles.tabela}>
                       <thead>
                         <tr>
@@ -73,31 +73,39 @@ export function ResumoVenda() {
                             <td>{v.nome}</td>
                             <td>{v.massa || "Padrão"}</td>
                             <td>{v.peso || "Padrão"}</td>
-                            <td>{v.recheio || "Padrão"}</td>
+                            <td>{(v.recheio || "Padrão").replace(/\|/g, "\n")}</td>
                             <td>{v.cobertura || "Padrão"}</td>
                             <td>R$ {v.valorFinal || "Padrão"},00</td>
                           </tr>
                         ))}
                       </tbody>
                     </table>
-
-                  </div>
-                  {/* <button className={styles.btnDownload} onClick={handleDownload}>
-                    Fazer Download
-                  </button> */}
-        </div>
-
-          <div className={styles.filtros}>
-            <h1>Resumo</h1>
-            <div className={styles.filtroItem}>
-              <label>Itens: <br /> {vendas.length}</label>
-              <hr />
-              <label>Valor Total: <br /> R$ {vendas.reduce((total, v) => total + (v.valorFinal || 0), 0)},00</label>
-
-              {/* <label>Nome Cliente (opcional):</label>
-              <input type="text" /> */}
+              </div>
+                   {/* <button className={styles.btnDownload} onClick={handleDownload}>
+                            Fazer Download
+                            </button>  */}
           </div>
-
+          <div className={styles.rightContent}>
+            <div className={styles.filtros}>
+                        <h1>Resumo</h1>
+                        <div className={styles.filtroItem}>
+                          <div className={styles.qtdVendas}>
+                            <label>Itens: </label> <label> {vendas.length} </label> <br />
+                          </div>
+                          <div className={styles.tipoVenda}>
+                            <label>Tipo Venda: </label> <label> {vendas.length > 0 ? vendas[vendas.length - 1].categoriaEntrega : "N/A"}</label> <br />
+                          </div>
+                          <div className={styles.nomeCliente}>
+                            <label>Nome do cliente (Opcional):</label>
+                            <input type="text" />
+                          </div>
+                          <div className={styles.valorTotal}>
+                            <label>R$ {vendas.reduce((total, v) => total + (v.valorFinal || 0), 0)},00</label>
+                          </div>
+                          {/* <label>Nome Cliente (opcional):</label>
+                          <input type="text" /> */}
+                        </div>
+              </div>
           <button className={styles.btnPesquisar} onClick={console.log()}>
             Registrar
           </button>
