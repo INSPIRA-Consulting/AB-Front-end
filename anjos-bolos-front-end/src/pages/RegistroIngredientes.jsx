@@ -9,7 +9,7 @@ import erro from "../assets/error.svg"
 import { Navbar } from "../components/Navbar";
 
 export function RegistroIngredientes(props) {
-    
+    //  Teste
     const [nome, setNome] = useState("");
     const [medida, setMedida] = useState("");
     const [valor, setValor] = useState("");
