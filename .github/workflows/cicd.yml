@@ -20,28 +20,49 @@ jobs:
         with:
           node-version: '20'
           
-      # 3. Build da aplicação (Se for uma aplicação que precisa ser construída, ex: React, Angular, Vue)
+      # 3. Build da aplicação
       - name: FE - Instalar Dependências e Fazer Build
         run: |
              npm install
              npm install axios
              npm run build --if-present 
-             # Se sua app não precisar de build, remova esta etapa
         working-directory: ./anjos-bolos-front-end
 
-      # 4. Deploy (Transferência de arquivos e execução de comandos remotos)
-      - name: FE - Copiar arquivos e Deploy (Usando SSH com rsync)
+      # 4. Deploy dos arquivos do build (React)
+      - name: FE - Copiar arquivos do build
         uses: easingthemes/ssh-deploy@main
         with:
           SSH_PRIVATE_KEY: ${{ secrets.EC2_SSH_KEY }}
           REMOTE_HOST: ${{ secrets.REMOTE_HOST }}
           REMOTE_USER: ${{ secrets.REMOTE_USER }}
           TARGET: /home/${{ secrets.REMOTE_USER }}/frontend
-          # ARGS para rsync: -rltgoDzvO para cópia recursiva, compressão e outros
           ARGS: "-rltgoDzvO --delete" 
-          # SOURCE: O que será copiado. Pode ser o diretório de build (ex: ./dist)
           SOURCE: "./anjos-bolos-front-end/dist/"
-          # reininciando o servico 'api' via docker compose
-          SCRIPT: |
-            sudo docker compose restart api
-            echo "servico reiniciado via docker compose"
+
+      # 5. Deploy das configurações (nginx.conf e compose.yaml)
+      - name: FE - Copiar configurações do nginx e compose
+        uses: easingthemes/ssh-deploy@main
+        with:
+          SSH_PRIVATE_KEY: ${{ secrets.EC2_SSH_KEY }}
+          REMOTE_HOST: ${{ secrets.REMOTE_HOST }}
+          REMOTE_USER: ${{ secrets.REMOTE_USER }}
+          TARGET: /home/${{ secrets.REMOTE_USER }}/
+          ARGS: "-rltgoDzvO"
+          SOURCE: "./nginx.conf ./compose.yaml"
+
+      # 6. Reiniciar serviços
+      - name: FE - Reiniciar serviços Docker
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.REMOTE_HOST }}
+          username: ${{ secrets.REMOTE_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            cd /home/${{ secrets.REMOTE_USER }}/
+            echo "Parando containers..."
+            sudo docker compose down
+            echo "Iniciando containers com nova configuração..."
+            sudo docker compose up -d
+            echo "Verificando status dos containers..."
+            sudo docker compose ps
+            echo "Frontend e API reiniciados com sucesso!"
