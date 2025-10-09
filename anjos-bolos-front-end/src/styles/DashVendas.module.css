@@ -1,0 +1,211 @@
+
+/* Container principal */
+.dashContainer {
+	background: #f9f7f4;
+	min-height: 100vh;
+	font-family: 'Montserrat', Arial, sans-serif;
+	width: 100vw;
+	height: 100vh;
+	overflow: hidden;
+}
+
+.dashMain {
+	display: flex;
+	flex-direction: row;
+	margin-top: 0;
+	height: calc(100vh - 80px);
+	width: 100vw;
+	overflow: hidden;
+}
+
+/* Sidebar */
+/* Movido para DashSidebar.module.css */
+
+/* Conteúdo principal */
+.dashContent {
+	flex: 1;
+	padding: 32px 32px 0 32px;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: flex-start;
+	height: 100%;
+.dashMain {
+	overflow: hidden;
+}
+	overflow: hidden;
+}
+
+
+.dashGrafico {
+	box-sizing: border-box;
+	margin: 18px 0 10px 0;
+	width: 100%;
+	max-width: 1100px;
+}
+
+.dashPeriodo h2 {
+	font-size: 1.6rem;
+	color: #4d2c0c;
+	font-weight: 700;
+	margin-bottom: 8px;
+}
+.periodoInputs {
+	display: flex;
+	gap: 14px;
+}
+
+.periodoDate {
+	display: flex;
+	align-items: center;
+	background: #4d2c0c;
+	border: 1.5px solid #4d2c0c;
+	border-radius: 8px;
+	padding: 5px 18px 5px 14px;
+	font-size: 1.04rem;
+	color: #fff;
+	font-weight: 600;
+	margin-bottom: 6px;
+	min-width: 140px;
+	min-height: 32px;
+	position: relative;
+	cursor: pointer;
+}
+.calendarIcon {
+	font-size: 1.2rem;
+	margin-right: 7px;
+	color: #fff;
+	z-index: 1;
+}
+.datePlaceholder {
+	color: #fff;
+	opacity: 0.85;
+	font-size: 1.04rem;
+	font-weight: 600;
+	font-family: inherit;
+	pointer-events: none;
+	z-index: 1;
+}
+.dateValue {
+	color: #fff;
+	font-size: 1.08rem;
+	font-weight: 600;
+	font-family: inherit;
+	z-index: 1;
+}
+.invisibleDateInput {
+	position: absolute;
+	left: 0;
+	top: 0;
+	width: 100%;
+	height: 100%;
+	opacity: 0;
+	cursor: pointer;
+	z-index: 2;
+	border: none;
+	background: transparent;
+}
+
+/* Cards */
+.dashCards {
+	display: flex;
+	gap: 55px;
+	margin: 12px 0 12px 0;
+	width: 100%;
+	max-width: 1100px;
+}
+.dashCard {
+	background: #fff;
+	border: 2px solid #a86b32;
+	border-radius: 14px;
+	flex: 1;
+	min-width: 180px;
+	max-width: 320px;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	padding: 0;
+	box-shadow: 0 2px 8px #0001;
+}
+.dashCardTitle {
+	width: 100%;
+	text-align: center;
+	font-size: 1.rem;
+	font-weight: 700;
+	padding: 10px 0 7px 0;
+	border-radius: 12px 12px 0 0;
+	letter-spacing: 0.2px;
+}
+.dashCardTitleVendido {
+	background: #a86b32;
+	color: #fff;
+}
+.dashCardTitleTotal {
+	background: #4d2c0c;
+	color: #fff;
+}
+.dashCardTitleDia {
+	background: #a86b32;
+	color: #fff;
+}
+.dashCardContent {
+	font-size: 1.18rem;
+	font-weight: 700;
+	color: #6b3a13;
+	text-align: center;
+	padding: 18px 10px 18px 10px;
+	min-height: 48px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+/* Gráfico */
+.dashGrafico {
+	margin-top: 18px;
+	width: 100%;
+	max-width: 1100px;
+}
+.dashGrafico h2 {
+	font-size: 1.4rem;
+	color: #4d2c0c;
+	font-weight: 700;
+	margin-bottom: 8px;
+}
+.graficoPlaceholder {
+	background: #fff;
+	border: 2px solid #a86b32;
+	border-radius: 14px;
+	padding: 16px;
+	min-height: 140px;
+	height: 220px;
+	margin-bottom: 18px;
+	width: 100%;
+	max-width: 1080px;
+	box-sizing: border-box;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	overflow: hidden;
+}
+
+@media (max-width: 1100px) {
+	.dashCards {
+		flex-direction: column;
+		gap: 14px;
+	}
+	.dashMain {
+		flex-direction: column;
+		height: auto;
+	}
+	.dashContent {
+		padding: 18px 8px 0 8px;
+	}
+	.dashPeriodo, .dashCards, .dashGrafico {
+		max-width: 98vw;
+	}
+	.dashGrafico, .graficoPlaceholder {
+		max-width: 98vw;
+	}
+}

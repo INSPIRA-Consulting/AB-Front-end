@@ -15,6 +15,9 @@ export function RegistroIngredientes(props) {
     const [valor, setValor] = useState("");
     const [quantidade, setQuantidade] = useState("");
 
+    const handleVoltar = () => {
+        window.location.href = '/catalogo-ingredientes';
+    };
 
     const salvar = async e => {
         e.preventDefault();
@@ -42,11 +45,22 @@ export function RegistroIngredientes(props) {
 
    
     return(
-        <><Navbar logado={true} />
-        <div className={styles.registroIngredientes}>
-        <h1>{props.titulo}</h1>
+        <div className={styles.pageContainer}>
+            <Navbar logado={true} />
+            
+            <div className={styles.headerContainer}>
+                <button 
+                    className={styles.voltarButton}
+                    onClick={handleVoltar}
+                >
+                    {'< Voltar'}
+                </button>
+            </div>
+            
+            <div className={styles.registroIngredientes}>
+                <h1>{props.titulo}</h1>
         
-        <div className={styles.container} style={{ width: "640px" }}>
+        <div className={styles.container} style={{ width: "550px" }}>
 
             <div className={styles["input-grid"]}>
                 <div className={styles["input-group"]}>
@@ -95,6 +109,7 @@ export function RegistroIngredientes(props) {
                 <img src={erro} alt="" />
             </Modal> */}
             </div>
-        </div></>
+            </div>
+        </div>
     )
 }

@@ -1,0 +1,169 @@
+@import '../styles/fonts/fonts.css';
+
+.containerResumoVendas {
+  background-color: #F7F7F7;
+}
+
+/* ====== CONTEÚDO PRINCIPAL ====== */
+.contentResumoVendas {
+  display: flex;
+  flex-direction: row;
+  padding: 0 5%;
+  justify-content: center;
+  min-height: 70vh; /* flexível */
+  gap: 2rem;
+}
+
+.leftContent {
+  flex: 3; /* ocupa mais espaço */
+}
+
+.rightContent {
+  flex: 1; /* menor que a tabela */
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+/* ====== RESUMO / FILTROS ====== */
+.filtros {
+  background-color: #D1C8C2;
+  border-radius: 16px;
+  border: #56270B 2px solid;
+  padding: 1rem;
+  color: #56270B;
+}
+
+.filtroItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.qtdVendas,
+.tipoVenda {
+  width: 100%;
+  padding: 0.5rem 0;
+  border-bottom: #56270B 1px solid;
+  font-weight: bold;
+  display: flex;
+  justify-content: space-between;
+  font-size: 1.1rem;
+}
+
+.nomeCliente {
+  width: 100%;
+  border-bottom: #56270B 1px solid;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6rem;
+  font-weight: bold;
+  padding: 0.8rem 0;
+}
+
+.nomeCliente input {
+  color: #56270B;
+  font-size: 1rem;
+  width: 90%;
+  height: 2.2rem;
+  border: 2px solid #56270B;
+  border-radius: 3px;
+  padding: 0.3rem;
+  background-color: #F8F8F8;
+}
+
+.nomeCliente label {
+  font-size: 1.1rem;
+}
+
+.valorTotal {
+  text-align: center;
+}
+
+.valorTotal label {
+  font-size: 2rem; /* antes era 48px */
+  font-weight: bold;
+}
+
+/* ====== BOTÃO ====== */
+button {
+  width: 100%;
+  background-color: #663b2B;
+  color: #FFFFFF;
+  font-family: 'Montserrat';
+  font-size: 1.2rem;
+  border: none;
+  border-radius: 8px;
+  padding: 0.8rem;
+  cursor: pointer;
+  /* box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.3); */
+  transition: all 0.3s ease-in-out;
+}
+
+button:hover {
+  background-color: #56270B;
+}
+
+/* ====== TÍTULOS ====== */
+h1 {
+  font-family: 'DancingScript';
+  font-size: 2.5rem; /* antes era 4rem */
+  font-weight: bold;
+  color: #663b2b;
+  text-align: center;
+  margin: 1rem 0;
+}
+
+h3 {
+  font-family: 'DancingScript';
+  font-size: 1.8rem;
+  font-weight: bold;
+  color: #56270B;
+  margin-bottom: 1rem;
+  text-align: center;
+}
+
+/* ====== TABELA ====== */
+.tabelaContainer {
+  margin: 0 auto;
+  width: 95%;
+  max-height: 76%;
+  overflow-x: auto;
+  border-radius: 12px;
+  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);
+  background-color: #D1C8C2;
+
+  scrollbar-color: #56270B #D1C8C2;
+  scrollbar-width: thin
+}
+
+.tabelaContainer table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: 'Montserrat';
+  font-size: 1rem;
+}
+
+.tabelaContainer thead {
+  background-color: #56270B;
+  color: #FFFFFF;
+}
+
+.tabelaContainer th,
+.tabelaContainer td {
+  padding: 0.8rem 1rem;
+  text-align: center;
+  border-bottom: 1px solid #D1C8C2;
+  min-width: 120px; /* evita quebrar em zoom */
+}
+
+.tabelaContainer td {
+  color: #56270B;
+  border: #b49e92 1px solid;
+}
+
+.tabelaContainer tr:hover {
+  background-color: #F0E9E6;
+}
