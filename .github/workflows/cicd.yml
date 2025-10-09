@@ -1,0 +1,128 @@
+name: CI/CD para EC2 pública e privada
+
+on:
+  push:
+    branches:
+      - main # O branch que acionará o deploy
+
+jobs:
+  build_and_deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Checkout do código
+      - name: Checkout do Repositório
+        uses: actions/checkout@v4
+
+      # 2. Configuração do ambiente Node
+      - name: FE - Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          
+      # 3. Build da aplicação (Se for uma aplicação que precisa ser construída, ex: React, Angular, Vue)
+      - name: FE - Instalar Dependências e Fazer Build
+        run: |
+             npm install
+             npm run build --if-present 
+             # Se sua app não precisar de build, remova esta etapa
+        working-directory: ./frontend
+
+      # 4. Deploy (Transferência de arquivos e execução de comandos remotos)
+      - name: FE - Copiar arquivos e Deploy (Usando SSH com rsync)
+        uses: easingthemes/ssh-deploy@main
+        with:
+          SSH_PRIVATE_KEY: ${{ secrets.EC2_SSH_KEY }}
+          REMOTE_HOST: ${{ secrets.REMOTE_HOST }}
+          REMOTE_USER: ${{ secrets.REMOTE_USER }}
+          TARGET: /home/${{ secrets.REMOTE_USER }}/frontend
+          # ARGS para rsync: -rltgoDzvO para cópia recursiva, compressão e outros
+          ARGS: "-rltgoDzvO --delete" 
+          # SOURCE: O que será copiado. Pode ser o diretório de build (ex: ./dist)
+          SOURCE: "./frontend/dist/" 
+
+   # 5. Configuração do ambiente Java/Maven
+      - name: BE - Configurar JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin' # ou a distribuição que preferir
+          java-version: '21'
+          cache: 'maven' # Configura cache do Maven para acelerar builds futuros
+
+      # 6. Execução dos testes automatizados do projeto
+      - name: BE - Executar Testes automatizados
+        run: mvn clean test # comentei os tests por enquanto     
+        working-directory: ./backend
+
+      # 7. Geração do .jar
+      - name: BE - Gerar Artefato .JAR
+        run: mvn package -DskipTests=true # -DskipTests=true pq os testes foram executados no passo anterior
+        working-directory: ./backend
+
+      # 7. Dando o mesmo nome sempre ao .jar
+      - name: BE - Renomear JAR para app_loko.jar # ou o nome que preferir parta o jar
+        run: |
+          # Encontra o primeiro (e único) arquivo .jar gerado na pasta 'target'
+          # e o renomeia para o nome fixo.
+          # O comando 'ls target/*.jar' retorna o nome original.
+          
+          JAR_NAME=$(ls target/*.jar)
+          
+          # Renomeia o arquivo.
+          mv $JAR_NAME target/app_loko.jar
+          
+          echo "Renomeado para: target/app_loko.jar"
+        working-directory: ./backend
+
+      # 7. Deploy (Transferência de arquivos e execução de comandos remotos)
+      - name: BE - Copiar arquivos e Deploy (Usando SSH com rsync)
+        uses: easingthemes/ssh-deploy@main
+        with:
+          SSH_PRIVATE_KEY: ${{ secrets.EC2_SSH_KEY }}
+          REMOTE_HOST: ${{ secrets.REMOTE_HOST }}
+          REMOTE_USER: ${{ secrets.REMOTE_USER }}
+          TARGET: /home/${{ secrets.REMOTE_USER }}/backend
+          # ARGS para rsync: -rltgoDzvO para cópia recursiva, compressão e outros
+          ARGS: "-rltgoDzvO --delete" 
+          # SOURCE: O que será copiado. Pode ser o diretório de build (ex: ./target)
+          SOURCE: "./backend/target/*.jar" 
+          
+
+      # 8. Fazendo o envio do jar da ec2 pública para a privada
+      - name: BE - Executar Comando Shell na EC2
+        uses: appleboy/ssh-action@v1.0.3 # Action popular para SSH
+        with:
+          host: ${{ secrets.REMOTE_HOST }} 
+          username: ${{ secrets.REMOTE_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}  
+
+          # O Comando ou Script a ser Executado no EC2
+          # Use o pipe '|' para comandos de múltiplas linhas
+          script: |
+            set -e
+            # criando um .pem temporário, baseado no secret do github
+            ARQUIVO_PEM="/home/${{ secrets.REMOTE_USER }}/chavetmp.pem"
+            echo "Arquivo pem que sera criado: $ARQUIVO_PEM"
+
+            # excluindo o arquivo .pem, caso exista
+            rm $ARQUIVO_PEM -f
+            echo "Arquivo .pem excluído"
+            
+            echo "${{ secrets.EC2_SSH_KEY }}" > $ARQUIVO_PEM || true
+            echo "Arquivo pem criado"
+            chmod 400 $ARQUIVO_PEM || true
+            echo "Permissões ao pem concedidas"
+
+            # usuario e ip de destino:
+            USUARIO_IP=${{ secrets.REMOTE_USER }}@${{ secrets.REMOTE_HOST_PRIVADO }}
+            echo "usuario@ip configurado: $USUARIO_IP"
+
+                  
+            # enviando o arquivo .jar via scp para o ec2 privado (essa instância precisa ter o diretório /usr/share/api/)
+            echo "Tentando enviar arquivo /home/${{ secrets.REMOTE_USER }}/backend/app_loko.jar"
+            scp -o StrictHostKeyChecking=no -i $ARQUIVO_PEM /home/${{ secrets.REMOTE_USER }}/backend/app_loko.jar $USUARIO_IP:/usr/share/api/app_loko.jar
+            echo "Arquivo jar enviado ao ec2 privado"
+
+            # reininciando o servico 'api' via docker compose
+            ssh -i $ARQUIVO_PEM $USUARIO_IP 'sudo docker compose restart api'            
+            echo "servico reiniciado via docker compose"
