@@ -1,0 +1,205 @@
+@import '../styles/fonts/fonts.css';
+
+.containerRegistroVendas {
+    background-color: #F7F7F7;
+
+    h4 {
+        font-family: 'Montserrat';
+        font-size: 15px;
+        margin-bottom: 5%;
+    }
+
+    h5 {
+        font-family: 'Montserrat';
+        font-size: 15px;
+        margin-bottom: 5%;
+    }
+}
+
+.containerRegistroVendas h1 {
+    font-family: 'DancingScript';
+    font-size: 2.5rem;
+    font-weight: bold;
+    color: #663b2b;
+    margin-bottom: 0;
+}
+
+h3{
+    font-family: 'DancingScript';
+    font-size: 1rem;
+    font-weight: bold;
+    color: #56270B;
+}
+
+.labelFiltro{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-left: 10%;
+    padding-right: 10%;
+
+    h4 {
+        font-family: 'Montserrat';
+        font-size: 1.5rem;
+        color: #663b2b;
+        font-weight: normal;
+        margin-bottom: 0.5rem;
+        margin-top: 0.5rem;
+    }
+
+    select {
+        width: 100%;
+        padding: 12px 12px;
+        font-size: 1rem;
+        color: #FFFFFF;
+        border-radius: 8px;
+        outline: none;
+        background-color: #56270B;
+        box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.8);
+    }
+
+    button {
+        width: 150px;
+        padding: 12px 12px;
+        font-size: 1rem;
+        color: #FFFFFF;
+        border-radius: 8px;
+        outline: none;
+        background-color: #663b2B;
+        border: none;
+        cursor: pointer;
+        box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.8);
+        margin-top: 3.5%;
+    }
+
+    .inactiveButton{
+        background-color: #896A56;
+        cursor: not-allowed;
+        opacity: 0.5;
+    }
+}
+
+.selecao {
+
+    background-color: #D1C8C2;
+    margin: 2% 10% 0% 10%;
+    padding-top: 0.2%;
+    border-radius: 20px;
+    padding-bottom: 1%;
+
+    h4 {
+        font-family: 'Montserrat';
+        font-size: 1rem;
+        color: #663b2b;
+        font-weight: normal;
+        margin-bottom: 1rem;
+        margin-top: 0.5rem;
+        text-align: left;
+        padding-left: 2.5%;
+    }
+
+    div {   
+
+        label {
+            font-family: 'Montserrat';
+            font-size: 1rem;
+            color: #663b2b;
+            font-weight: normal;
+            margin-right: 10px;
+            display: inline-flex;
+            flex-direction: row;
+
+            input {
+                margin-right: 15px;
+            }
+            
+        }
+    }
+}
+
+.filtro {
+
+    background-color: #D1C8C2;
+    margin: 2% 10% 0% 10%;
+    padding-top: 0.2%;
+    border-radius: 20px;
+    padding-left: 2.5%;
+    padding-bottom: 1%;
+    
+
+    h4 {
+        font-family: 'Montserrat';
+        font-size: 1.2rem;
+        color: #663b2b;
+        font-weight: normal;
+        margin-bottom: 1rem;
+        margin-top: 0.5rem;
+        text-align: left;
+    }
+
+    div {
+
+        display: flex;
+        flex-direction: row;
+        justify-content: flex-start;
+        gap: 7%;
+
+        label {
+            font-family: 'Montserrat';
+            font-size: 1rem;
+            color: #663b2b;
+            font-weight: normal;
+            margin-right: 10px;
+            display: inline-flex;
+            flex-direction: row;
+
+            input {
+                margin-right: 15px;
+            }
+            
+        }
+    }
+
+    input[type="radio"] {
+        appearance: none;
+        -webkit-appearance: none;
+        width: 20px;
+        height: 20px;
+        border: 2px solid #56270B;
+        border-radius: 3px;
+        background-color: #B4A499;
+        cursor: pointer;
+        position: relative;
+    }
+
+    input[type="radio"]:checked {
+        background-color: #B4A499;
+    }
+
+    input[type="radio"]:checked::after {
+        content: 'X';
+        color: #56270B;
+        font-size: 1.5rem;
+        font-weight: normal;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+    }
+}
+
+.produtos {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 60px;
+    padding: 20px;
+    margin-left: 10%;
+    margin-right: 10%;
+    row-gap: 20px;
+}

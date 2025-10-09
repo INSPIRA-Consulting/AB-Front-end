@@ -1,21 +1,12 @@
+import { RouterProvider } from "react-router-dom"
 import "./App.css"
-import { Formulario } from "./components/Formulario"
-import { Formulario2 } from "./components/Formulario2"
+import { Cadastro } from "./pages/Cadastro"
+import { Login } from "./pages/Login"
 import { Navbar } from "./components/Navbar"
+import { router } from "./router"
 
 export function App() {
   return(
-    <div className="layout">
-      <Navbar />
-
-      <main style={{ display: "none" }}>
-        <Formulario titulo="Cadastro de Funcionário"/>
-      </main>
-
-      <main style={{ display: "flex" }}>
-        <Formulario2 titulo="Login"/>
-      </main>
-      
-    </div>
+    <RouterProvider router={router}/>
   )
 }

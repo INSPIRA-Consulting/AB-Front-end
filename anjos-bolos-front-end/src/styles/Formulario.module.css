@@ -1,16 +1,26 @@
 @import '../styles/fonts/fonts.css';
 
+.cadastro{
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
 .container {
-    width: 1280px;
+    width: 1000px;
     height: 480px;
-    padding: 32px 0;
+    padding: 20px 0;
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: space-between;
-    background-color: #B5757542;
-    border-radius: 10px;
-    border: 5px solid #B57575;
+    justify-content: flex-start;
+    background-color: #BAB1AB;
+    border-radius: 15px;
+    border: 1px solid #4d2200;
+    margin-top: 2%;
+    gap: 20px;
 }
 
 .container h1 {
@@ -18,6 +28,7 @@
     font-size: 4rem;
     font-weight: bold;
     color: #663b2b;
+    margin: 0 0 15px 0;
 }
 
 .input-grid {
@@ -25,7 +36,7 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 40px;
+    gap: 25px;
 }
 
 .input-group {
@@ -33,17 +44,48 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 0 20px;
-    gap: 40px;
+    padding: 0 15px;
+    gap: 25px;
 }
 
 select {
   width: 330px;
-  padding: 12px 12px;
+  padding: 8px 12px;
   font-size: 1rem;
   color: #663b2b;
   border: 2px solid #663b2b;
-  border-radius: 4px;
+  border-radius: 10px;
   outline: none;
-  background-color: #E6D5D5;
+  background-color: #fff;
+}
+
+/* Diminuir largura dos inputs dentro do formulário */
+.container .input {
+  width: 280px !important;
+}
+
+/* Diminuir um pouco o botão de cadastrar */
+.container button {
+  min-width: 150px !important;
+  padding: 10px 22px !important;
+  font-size: 1.3rem !important;
+}
+
+/* Altura específica para o card de login */
+.login {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 4%;
+}
+
+.login .container {
+  height: 400px !important;
+}
+
+/* Gap específico para input-grid na página de login */
+.login .input-grid {
+  gap: 5px !important;
 }
