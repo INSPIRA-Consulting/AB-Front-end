@@ -19,11 +19,11 @@ export function Menu() {
                         <img src={caixa} alt="Registrar Vendas" className={styles.cardIcon} />
                         <div className={styles.cardLabel1}>Registrar Vendas</div>
                     </div>
-                    <div className={styles.card2} onClick={() => navigate('/HistoricoVendas')} style={{cursor:'pointer'}}>
+                    <div className={styles.card2} onClick={() => navigate('/historico-vendas')} style={{cursor:'pointer'}}>
                         <img src={historico} alt="Histórico de Vendas" className={styles.cardIcon} />
                         <div className={styles.cardLabel2}>Histórico de Vendas</div>
                     </div>
-                    <div className={styles.card3} onClick={() => navigate('/DashVendas')} style={{cursor:'pointer'}}>
+                    <div className={styles.card3} onClick={() => navigate('/dash-vendas')} style={{cursor:'pointer'}}>
                         <img src={ganhar} alt="Painel de Métricas" className={styles.cardIcon} />
                         <div className={styles.cardLabel3}>Painel de Métricas</div>
                     </div>

@@ -19,7 +19,7 @@ export function DashProdutos() {
 	
 	// Função para redirecionar para histórico de vendas
 	const handleSearchClick = () => {
-		navigate('/HistoricoVendas');
+		navigate('/historico-vendas');
 	};
 
 	// Estados para filtros
