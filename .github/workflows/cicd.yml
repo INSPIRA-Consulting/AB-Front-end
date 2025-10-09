@@ -41,5 +41,6 @@ jobs:
           # SOURCE: O que será copiado. Pode ser o diretório de build (ex: ./dist)
           SOURCE: "./frontend/dist/"
           # reininciando o servico 'api' via docker compose
-            ssh -i $ARQUIVO_PEM $USUARIO_IP 'sudo docker compose restart api'            
+          SCRIPT: |
+            sudo docker compose restart api
             echo "servico reiniciado via docker compose"
