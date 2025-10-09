@@ -1,3 +1,5 @@
+@import '../styles/fonts/fonts.css';
+
 /* Container para os botões Voltar e Cadastrar na parte inferior */
 /* Remove setas do input type=number (Chrome, Safari, Edge) */
 input[type=number]::-webkit-inner-spin-button, 
@@ -16,7 +18,6 @@ input[type=number] {
   align-items: center;
   margin-top: 30px;
 }
-@import '../styles/fonts/fonts.css';
 
 .pageContainer {
   background: #f9f7f4;

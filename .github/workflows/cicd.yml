@@ -40,7 +40,7 @@ jobs:
           # ARGS para rsync: -rltgoDzvO para cópia recursiva, compressão e outros
           ARGS: "-rltgoDzvO --delete" 
           # SOURCE: O que será copiado. Pode ser o diretório de build (ex: ./dist)
-          SOURCE: "./frontend/dist/"
+          SOURCE: "./anjos-bolos-front-end/dist/"
           # reininciando o servico 'api' via docker compose
           SCRIPT: |
             sudo docker compose restart api
