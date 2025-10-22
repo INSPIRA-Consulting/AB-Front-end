@@ -29,19 +29,33 @@ jobs:
              # Se sua app não precisar de build, remova esta etapa
         working-directory: ./anjos-bolos-front-end
 
-      # 4. Deploy (Transferência de arquivos e execução de comandos remotos)
-      - name: FE - Copiar arquivos e Deploy (Usando SSH com rsync)
+      # 4. Deploy - Copiar arquivos do build do frontend
+      - name: FE - Copiar arquivos de build do frontend
         uses: easingthemes/ssh-deploy@main
         with:
           SSH_PRIVATE_KEY: ${{ secrets.EC2_SSH_KEY }}
           REMOTE_HOST: ${{ secrets.REMOTE_HOST }}
           REMOTE_USER: ${{ secrets.REMOTE_USER }}
+          # Diretório de destino para os arquivos estáticos do frontend
           TARGET: /home/${{ secrets.REMOTE_USER }}/frontend
-          # ARGS para rsync: -rltgoDzvO para cópia recursiva, compressão e outros
+          # Argumentos do rsync para cópia recursiva com compressão e exclusão de arquivos antigos
           ARGS: "-rltgoDzvO --delete" 
-          # SOURCE: O que será copiado. Pode ser o diretório de build (ex: ./dist)
+          # Copia apenas os arquivos compilados do frontend (dist)
           SOURCE: "./anjos-bolos-front-end/dist/"
-          # reininciando o servico 'api' via docker compose
+
+      # 5. Deploy - Copiar docker-compose.yaml para o servidor
+      - name: Copiar docker-compose.yaml
+        uses: easingthemes/ssh-deploy@main
+        with:
+          SSH_PRIVATE_KEY: ${{ secrets.EC2_SSH_KEY }}
+          REMOTE_HOST: ${{ secrets.REMOTE_HOST }}
+          REMOTE_USER: ${{ secrets.REMOTE_USER }}
+          # Diretório raiz do usuário onde ficará o compose
+          TARGET: /home/${{ secrets.REMOTE_USER }}/
+          # Copia apenas o arquivo compose (ajuste o caminho conforme necessário)
+          SOURCE: "./compose.yaml"
+          # Script para reiniciar o serviço após a cópia
           SCRIPT: |
+            # Reinicia o serviço 'api' usando docker compose
             sudo docker compose restart api
-            echo "servico reiniciado via docker compose"
+            echo "Serviço reiniciado via docker compose"

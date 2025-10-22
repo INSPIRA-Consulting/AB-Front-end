@@ -3,7 +3,6 @@ import styles from "../styles/CatalogoProdutos.module.css";
 
 export function SearchBar({ searchTerm, onSearchChange, placeholder }) {
     return (
-        // Teste
         <div className={styles.searchSection}>
             <div className={styles.searchContainer}>
                 <input 
