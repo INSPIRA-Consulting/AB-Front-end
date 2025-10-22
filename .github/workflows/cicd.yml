@@ -39,8 +39,18 @@ jobs:
           ARGS: "-rltgoDzvO --delete" 
           SOURCE: "./anjos-bolos-front-end/dist/"
 
-      # 5. Deploy das configurações (nginx.conf e compose.yaml)
-      - name: FE - Copiar configurações do nginx e compose
+      # 5. Verificar e listar arquivos antes de copiar
+      - name: FE - Verificar arquivos de configuração
+        run: |
+          echo "Listando arquivos na raiz do projeto:"
+          ls -la ./
+          echo "Verificando se nginx.conf existe:"
+          if [ -f "./nginx.conf" ]; then echo "✅ nginx.conf encontrado"; else echo "❌ nginx.conf NÃO encontrado"; fi
+          echo "Verificando se compose.yaml existe:"
+          if [ -f "./compose.yaml" ]; then echo "✅ compose.yaml encontrado"; else echo "❌ compose.yaml NÃO encontrado"; fi
+
+      # 6. Copiar nginx.conf individualmente
+      - name: FE - Copiar nginx.conf
         uses: easingthemes/ssh-deploy@main
         with:
           SSH_PRIVATE_KEY: ${{ secrets.EC2_SSH_KEY }}
@@ -48,9 +58,20 @@ jobs:
           REMOTE_USER: ${{ secrets.REMOTE_USER }}
           TARGET: /home/${{ secrets.REMOTE_USER }}/
           ARGS: "-rltgoDzvO"
-          SOURCE: "./nginx.conf ./compose.yaml"
+          SOURCE: "./nginx.conf"
 
-      # 6. Reiniciar serviços
+      # 7. Copiar compose.yaml individualmente
+      - name: FE - Copiar compose.yaml
+        uses: easingthemes/ssh-deploy@main
+        with:
+          SSH_PRIVATE_KEY: ${{ secrets.EC2_SSH_KEY }}
+          REMOTE_HOST: ${{ secrets.REMOTE_HOST }}
+          REMOTE_USER: ${{ secrets.REMOTE_USER }}
+          TARGET: /home/${{ secrets.REMOTE_USER }}/
+          ARGS: "-rltgoDzvO"
+          SOURCE: "./compose.yaml"
+
+      # 8. Reiniciar serviços
       - name: FE - Reiniciar serviços Docker
         uses: appleboy/ssh-action@v1.0.0
         with:
@@ -59,6 +80,8 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
             cd /home/${{ secrets.REMOTE_USER }}/
+            echo "Verificando arquivos copiados:"
+            ls -la nginx.conf compose.yaml
             echo "Parando containers..."
             sudo docker compose down
             echo "Iniciando containers com nova configuração..."
