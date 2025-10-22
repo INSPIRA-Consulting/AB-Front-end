@@ -190,12 +190,8 @@ export function RegistroVendas() {
 
     const navigateToResumoVendas = () => {
       console.log("Vendas registradas:", vendas);
-      try {
-        localStorage.setItem('vendas', JSON.stringify(vendas));
-      } catch (err) {
-        console.error('Erro ao salvar vendas no localStorage', err);
-      }
-      window.location.href = `/resumo-venda`;
+      // Navegar para a tela ResumoVendas passando vendas como propriedade
+      window.location.href = `/resumo-venda?data=${encodeURIComponent(JSON.stringify(vendas))}`;
     };
 
     const [tipoVenda, setTipoVenda] = React.useState("Pronta-Entrega");
