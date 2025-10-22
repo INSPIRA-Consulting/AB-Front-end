@@ -8,7 +8,7 @@ on:
 jobs:
   build_and_deploy:
     runs-on: ubuntu-latest
-
+#Teste
     steps:
       # 1. Checkout do código
       - name: Checkout do Repositório
