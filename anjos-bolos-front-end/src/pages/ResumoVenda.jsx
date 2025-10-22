@@ -4,26 +4,22 @@ import Footer from "../components/Footer";
 import styles from "../styles/ResumoVendas.module.css";
 import { DateInput } from 'rsuite';
 import { FaRegCalendarAlt } from "react-icons/fa";
-import { useSearchParams } from "react-router-dom";
+// using localStorage to receive vendas (set by RegistroVendas)
 
 export function ResumoVenda() {
 
-  const [searchParams] = useSearchParams();
-
-  const dataParam = searchParams.get("data");
   let vendas = [];
-
   try {
-    if (dataParam) {
-      vendas = JSON.parse(decodeURIComponent(dataParam));
-      console.log("Vendas recebidas:", vendas);
+    const raw = localStorage.getItem('vendas');
+    if (raw) {
+      vendas = JSON.parse(raw);
+      console.log('Vendas recebidas (localStorage):', vendas);
+      // remove after reading to avoid stale data
+      localStorage.removeItem('vendas');
     }
   } catch (error) {
-    console.error("Erro ao converter parâmetro:", error);
+    console.error('Erro ao ler vendas do localStorage:', error);
   }
-
-  // Agora você pode acessar a propriedade "titulo" de cada item
-  console.log(vendas[0].titulo);
 
   const [startDate, setStartDate] = useState("2025-06-01");
   const [endDate, setEndDate] = useState("2025-06-12");
