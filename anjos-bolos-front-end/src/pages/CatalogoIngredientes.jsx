@@ -27,7 +27,7 @@ export function CatalogoIngredientes() {
 
     const fetchIngredientes = async () => {
         try {
-            const response = await axios.get(`${import.meta.env.VITE_API_URL}/ingredientes`);
+            const response = await axios.get(`/api/ingredientes`);
             setIngredientes(response.data);
             console.log(response.data);
         } catch (error) {
