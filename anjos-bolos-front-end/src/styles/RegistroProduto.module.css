@@ -38,7 +38,7 @@ input[type=number] {
   color: #fff;
   border: none;
   border-radius: 8px;
-  padding: 8px 20px;
+  padding: 6px 12px;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   font-weight: 500;
   cursor: pointer;
@@ -49,6 +49,7 @@ input[type=number] {
   align-items: center;
   justify-content: center;
   text-align: center;
+  width: 7%;
 }
 
 .voltarButton:hover {
