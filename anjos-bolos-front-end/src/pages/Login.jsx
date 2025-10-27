@@ -7,8 +7,10 @@ import { Modal } from "../components/Modal";
 import sucesso from "../assets/success.svg";
 import erro from "../assets/error.svg"
 import { Navbar } from "../components/Navbar";
+import { useDocumentTitle } from "../hooks/useDocumentTitle";
 
 export function Login(props) {
+    useDocumentTitle(props.titulo);
     const [form, setForm] = useState({
         email:"",
         senha:""

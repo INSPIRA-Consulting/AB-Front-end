@@ -7,8 +7,10 @@ import { Modal } from "../components/Modal";
 import sucesso from "../assets/success.svg";
 import erro from "../assets/error.svg"
 import { Navbar } from "../components/Navbar";
+import { useDocumentTitle } from "../hooks/useDocumentTitle";
 
 export function Cadastro(props) {
+    useDocumentTitle(props.titulo);
     const [form, setForm] = useState({
         nome: "",
         email: "",
@@ -56,7 +58,7 @@ export function Cadastro(props) {
         e.preventDefault();
 
         try{
-            const response = await axios.post(`${import.meta.env.VITE_API_URL}/usuarios`, form)
+            const response = await axios.post(`${import.meta.env.IP_API}/usuarios`, form)
             setModalAberto(true)
         }
         catch(error) {

@@ -76,7 +76,7 @@ export function RegistroProduto() {
             quantidadeConvertida = quantidade * 1000;
         }
         
-        axios.post(`${import.meta.env.VITE_API_URL}/receitas`, {
+        axios.post(`${import.meta.env.IP_API}/receitas`, {
             nome: nomeProduto,
             receitas: listareceitas,
             quantidadeEmbalagem: quantidadeConvertida
