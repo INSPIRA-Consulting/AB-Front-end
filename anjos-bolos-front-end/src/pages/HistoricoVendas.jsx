@@ -4,8 +4,10 @@ import Footer from "../components/Footer";
 import styles from "../styles/HistoricoVendas.module.css";
 import { DateInput } from 'rsuite';
 import { FaRegCalendarAlt } from "react-icons/fa";
+import { useDocumentTitle } from "../hooks/useDocumentTitle";
 
-export function HistoricoVendas() {
+export function HistoricoVendas(props) {
+  useDocumentTitle(props.titulo);
 
   const [startDate, setStartDate] = useState("2025-06-01");
   const [endDate, setEndDate] = useState("2025-06-12");

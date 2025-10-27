@@ -30,7 +30,7 @@ export function RegistroIngredientes(props) {
             quantidadeConvertida = quantidade * 1000;
         }
         
-        axios.post(`${import.meta.env.IP_API}/ingredientes`, {
+        axios.post(`/api/ingredientes`, {
             nome: nome,
             valorEmbalagem: valor,
             quantidadeEmbalagem: quantidadeConvertida

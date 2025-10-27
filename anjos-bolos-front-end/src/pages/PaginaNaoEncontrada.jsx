@@ -2,8 +2,10 @@ import '../styles/PaginaNaoEncontrada.css';
 import '../styles/fonts/fonts.css';
 import { useNavigate } from 'react-router-dom';
 import errorImage from '../assets/error.svg';
+import { useDocumentTitle } from '../hooks/useDocumentTitle';
 
-export function PaginaNaoEncontrada() {
+export function PaginaNaoEncontrada(props) {
+    useDocumentTitle(props.titulo);
     const navigate = useNavigate();
     return (
         <div className="error-container">

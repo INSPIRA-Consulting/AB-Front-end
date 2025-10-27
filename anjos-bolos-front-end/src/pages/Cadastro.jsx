@@ -58,7 +58,7 @@ export function Cadastro(props) {
         e.preventDefault();
 
         try{
-            const response = await axios.post(`${import.meta.env.IP_API}/usuarios`, form)
+            const response = await axios.post(`/api/usuarios`, form)
             setModalAberto(true)
         }
         catch(error) {

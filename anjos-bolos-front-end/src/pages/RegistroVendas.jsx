@@ -4,8 +4,10 @@ import { Navbar } from "../components/Navbar";
 import styles from "../styles/RegistroVendas.module.css";
 import { Produto } from "../components/Produto";
 import Footer from "../components/Footer";
+import { useDocumentTitle } from "../hooks/useDocumentTitle";
 
-export function RegistroVendas() {
+export function RegistroVendas(props) {
+  useDocumentTitle(props.titulo);
 
     const produtos = [
     {

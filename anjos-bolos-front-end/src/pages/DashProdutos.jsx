@@ -6,8 +6,10 @@ import '../styles/fonts/fonts.css';
 import { Navbar } from '../components/Navbar';
 import { DashSidebar } from '../components/DashSidebar';
 import { FaFilter } from "react-icons/fa";
+import { useDocumentTitle } from '../hooks/useDocumentTitle';
 
-export function DashProdutos() {
+export function DashProdutos(props) {
+	useDocumentTitle(props.titulo);
 	// Estados para datas
 	const [startDate, setStartDate] = useState("2025-06-01");
 	const [endDate, setEndDate] = useState("2025-06-12");

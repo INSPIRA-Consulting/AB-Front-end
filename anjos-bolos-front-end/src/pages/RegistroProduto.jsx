@@ -5,8 +5,10 @@ import { FaTrashCan } from "react-icons/fa6";
 import { Navbar } from '../components/Navbar';
 import { Modal } from '../components/Modal';
 import styles from '../styles/RegistroProduto.module.css';
+import { useDocumentTitle } from '../hooks/useDocumentTitle';
 
-export function RegistroProduto() {
+export function RegistroProduto(props) {
+  useDocumentTitle(props.titulo);
   const [receita, setreceita] = useState('');
   const [quantidade, setQuantidade] = useState('');
   const [unidade, setUnidade] = useState('g');
