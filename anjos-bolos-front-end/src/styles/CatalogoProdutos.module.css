@@ -111,7 +111,7 @@
 .registrarButton {
     background-color: #663b2b;
     color: white;
-    padding: 16px 32px;
+    padding: 16px 16px;
     border: none;
     border-radius: 10px;
     font-family: 'Montserrat', sans-serif;
@@ -120,6 +120,7 @@
     cursor: pointer;
     transition: background-color 0.3s;
     white-space: nowrap;
+    width: 250px;
 }
 
 .registrarButton:hover {

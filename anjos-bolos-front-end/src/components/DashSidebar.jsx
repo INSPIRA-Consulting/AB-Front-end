@@ -15,7 +15,7 @@ export function DashSidebar({ activeItem = 'vendas' }) {
             <ul className={styles.sidebarMenu}>
                 <li
                     className={activeItem === 'vendas' ? styles.active : ''}
-                    onClick={() => navigate('/DashVendas')}
+                    onClick={() => navigate('/dash-vendas')}
                     style={{ cursor: 'pointer' }}
                 >
                     {/* Ícone vendas */}
@@ -24,7 +24,7 @@ export function DashSidebar({ activeItem = 'vendas' }) {
                 </li>
                 <li
                     className={activeItem === 'produto' ? styles.active : ''}
-                    onClick={() => navigate('/DashProdutos')}
+                    onClick={() => navigate('/dash-produtos')}
                     style={{ cursor: 'pointer' }}
                 >
                     {/* Ícone produto */}
@@ -33,7 +33,7 @@ export function DashSidebar({ activeItem = 'vendas' }) {
                 </li>
                 <li 
                     className={activeItem === 'financas' ? styles.active : ''}
-                    onClick={() => navigate('/DashFinancas')}
+                    onClick={() => navigate('/dash-financas')}
                     style={{ cursor: 'pointer' }}
                 >
                     {/* Ícone finanças */}
