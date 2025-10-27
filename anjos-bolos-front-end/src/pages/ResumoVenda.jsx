@@ -5,8 +5,10 @@ import styles from "../styles/ResumoVendas.module.css";
 import { DateInput } from 'rsuite';
 import { FaRegCalendarAlt } from "react-icons/fa";
 import { useSearchParams } from "react-router-dom";
+import { useDocumentTitle } from "../hooks/useDocumentTitle";
 
-export function ResumoVenda() {
+export function ResumoVenda(props) {
+  useDocumentTitle(props.titulo);
 
   const [searchParams] = useSearchParams();
 

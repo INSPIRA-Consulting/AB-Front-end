@@ -7,8 +7,10 @@ import styles from "../styles/CatalogoProdutos.module.css";
 import axios from "axios";
 import { AdvancedFilter } from "../components/AdvancedFilter";
 import { useEffect } from "react";
+import { useDocumentTitle } from "../hooks/useDocumentTitle";
 
-export function CatalogoIngredientes() {
+export function CatalogoIngredientes(props) {
+    useDocumentTitle(props.titulo);
     const [ingredientes, setIngredientes] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [currentPage, setCurrentPage] = useState(0);
