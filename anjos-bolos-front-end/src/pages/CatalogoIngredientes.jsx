@@ -9,38 +9,32 @@ import { AdvancedFilter } from "../components/AdvancedFilter";
 import { useEffect } from "react";
 
 export function CatalogoIngredientes() {
-    // Dados mockados da tabela para ingredientes
-    // const ingredientes = [
-    //     { produto: "Farinha de Trigo", categoria: "Farinhas", custoProducao: "R$ 5,00", valorVenda: "R$ 8,00", lucro: "R$ 3,00" },
-    //     { produto: "Açúcar Cristal", categoria: "Adoçantes", custoProducao: "R$ 3,00", valorVenda: "R$ 5,00", lucro: "R$ 2,00" },
-    //     { produto: "Ovos", categoria: "Proteínas", custoProducao: "R$ 8,00", valorVenda: "R$ 12,00", lucro: "R$ 4,00" },
-    //     { produto: "Manteiga", categoria: "Gorduras", custoProducao: "R$ 6,00", valorVenda: "R$ 10,00", lucro: "R$ 4,00" },
-    //     { produto: "Leite", categoria: "Lácteos", custoProducao: "R$ 4,00", valorVenda: "R$ 6,00", lucro: "R$ 2,00" },
-    //     { produto: "Fermento", categoria: "Agentes", custoProducao: "R$ 2,00", valorVenda: "R$ 4,00", lucro: "R$ 2,00" },
-    //     { produto: "Chocolate em Pó", categoria: "Saborizantes", custoProducao: "R$ 12,00", valorVenda: "R$ 18,00", lucro: "R$ 6,00" },
-    //     { produto: "Baunilha", categoria: "Essências", custoProducao: "R$ 15,00", valorVenda: "R$ 25,00", lucro: "R$ 10,00" },
-    //     { produto: "Creme de Leite", categoria: "Lácteos", custoProducao: "R$ 5,50", valorVenda: "R$ 8,50", lucro: "R$ 3,00" },
-    //     { produto: "Açúcar Impalpável", categoria: "Adoçantes", custoProducao: "R$ 4,00", valorVenda: "R$ 7,00", lucro: "R$ 3,00" }
-    // ];
-
     const [ingredientes, setIngredientes] = useState([]);
+    const [searchTerm, setSearchTerm] = useState('');
+    const [currentPage, setCurrentPage] = useState(0);
+    const [totalPages, setTotalPages] = useState(0);
+    const [loading, setLoading] = useState(false);
+    const pageSize = 10;
 
-    const fetchIngredientes = async () => {
+    const fetchIngredientes = async (page = 0) => {
+        setLoading(true);
         try {
-            const response = await axios.get(`/api/ingredientes`);
-            setIngredientes(response.data);
+            const response = await axios.get(`/api/ingredientes?page=${page}&size=${pageSize}&sort=nome,asc`);
+            setIngredientes(response.data.content);
+            setTotalPages(response.data.totalPages);
+            setCurrentPage(page);
             console.log(response.data);
         } catch (error) {
             console.error("Erro ao buscar ingredientes:", error);
             setIngredientes([]);
+        } finally {
+            setLoading(false);
         }
     };
 
     useEffect(() => {
-        fetchIngredientes();
+        fetchIngredientes(0);
     }, []);
-
-    const [searchTerm, setSearchTerm] = useState('');
 
     // Opções do seletor
     const selectOptions = [
@@ -64,9 +58,24 @@ export function CatalogoIngredientes() {
     };
 
     const handleFilterChange = (filtro) => {
-        setFiltroOrdenacao(filtro);
         console.log('Filtro selecionado:', filtro);
         // Aqui você pode implementar a lógica de ordenação
+    };
+
+    const handlePreviousPage = () => {
+        if (currentPage > 0) {
+            fetchIngredientes(currentPage - 1);
+        }
+    };
+
+    const handleNextPage = () => {
+        if (currentPage < totalPages - 1) {
+            fetchIngredientes(currentPage + 1);
+        }
+    };
+
+    const handlePageClick = (page) => {
+        fetchIngredientes(page);
     };
 
     const renderTableRow = (ingrediente) => {
@@ -108,7 +117,19 @@ export function CatalogoIngredientes() {
                 headers={tableHeaders}
                 data={ingredientes}
                 renderRow={renderTableRow}
+                currentPage={currentPage}
+                totalPages={totalPages}
+                loading={loading}
+                onPreviousPage={handlePreviousPage}
+                onNextPage={handleNextPage}
+                onPageClick={handlePageClick}
             />
+
+            {loading && (
+                <div className={styles.loadingContainer}>
+                    <p>Carregando ingredientes...</p>
+                </div>
+            )}
         </div>
     )
 }

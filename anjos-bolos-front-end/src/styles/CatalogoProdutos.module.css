@@ -351,25 +351,28 @@
 
 /* Tabela de produtos */
 .tableSection {
-    flex: 1;
-    margin: 20px auto 0 auto;
+    margin: 20px auto;
     max-width: 1400px;
-    width: 98%;
-    overflow: hidden;
+    width: 100%;
     display: flex;
     flex-direction: column;
-    padding-bottom: 20px;
+    padding-bottom: 0;
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
 }
 
 .table {
     width: 100%;
     background: white;
-    border-radius: 10px;
+    border-radius: 0;
     overflow: hidden;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    box-shadow: none;
     display: flex;
     flex-direction: column;
-    height: 100%;
+    min-height: 420px;
+    max-height: 480px;
 }
 
 .tableHeader {
@@ -389,10 +392,11 @@
 }
 
 .tableHeaderCell {
-    padding: 15px;
+    padding: 12px 20px;
     text-align: center;
     font-size: 1.1rem;
     flex: 1;
+    font-weight: 600;
 }
 
 .tableBody {
@@ -420,15 +424,115 @@
 }
 
 .tableCell {
-    padding: 12px 15px;
+    padding: 12px 20px;
     font-family: 'Montserrat', sans-serif;
     color: #4a4a4a;
     text-align: center;
     flex: 1;
-    font-size: 0.95rem;
+    font-size: 1rem;
+    min-height: 45px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .tableCell:first-child {
     text-align: left;
+    justify-content: flex-start;
     font-weight: 600;
+}
+
+/* Container para centralização da paginação */
+.paginationWrapper {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 12px 0;
+    background: white;
+    border-top: 1px solid #eee;
+}
+
+/* Estilos de Paginação */
+.paginationContainer {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+    padding: 0;
+}
+
+.paginationButton {
+    background: #663b2b;
+    color: white;
+    border: none;
+    width: 35px;
+    height: 35px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 500;
+    font-size: 1.1rem;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.paginationButton:hover:not(:disabled) {
+    background: #56270B;
+}
+
+.paginationButton:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+}
+
+.paginationInfo {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    margin: 0;
+}
+
+.paginationNumber {
+    width: 35px;
+    height: 35px;
+    border: 1px solid #663b2b;
+    background: white;
+    color: #663b2b;
+    border-radius: 6px;
+    cursor: pointer;
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 500;
+    font-size: 0.95rem;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.paginationNumber:hover:not(:disabled) {
+    background: #663b2b;
+    color: white;
+}
+
+.paginationNumber.active {
+    background: #663b2b;
+    color: white;
+}
+
+.paginationNumber:disabled {
+    border-color: #ccc;
+    color: #ccc;
+    cursor: not-allowed;
+}
+
+.loadingContainer {
+    text-align: center;
+    padding: 15px;
+    color: #663b2b;
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 500;
+    font-size: 0.9rem;
 }
