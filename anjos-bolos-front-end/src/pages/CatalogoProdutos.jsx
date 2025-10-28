@@ -27,7 +27,7 @@ export function CatalogoProdutos(props) {
         setLoading(true);
         try {
             // Buscar TODOS os produtos para permitir filtros locais
-            let url = `http://localhost:8080/produtos`;
+            let url = `/api/produtos`;
             
             // Adicionar ordenação
             if (ordenacao) {
