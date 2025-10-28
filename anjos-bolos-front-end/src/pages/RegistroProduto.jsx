@@ -20,7 +20,12 @@ export function RegistroProduto(props) {
   const [receitaSelecionadaId, setReceitaSelecionadaId] = useState('');
   const [nomeProduto, setNomeProduto] = useState('');
   const [categoria, setCategoria] = useState('');
+  // Lista de categorias vindo do backend
+  const [categorias, setCategorias] = useState([]);
+  const [carregandoCategorias, setCarregandoCategorias] = useState(false);
+  const [erroCategorias, setErroCategorias] = useState('');
   const [valor, setValor] = useState('');
+  const [custo, setCusto] = useState('');
   const [imagem, setImagem] = useState('/src/assets/bolinho15.png');
   const [imagemFile, setImagemFile] = useState(null);
   const imagemObjectUrlRef = useRef(null);
@@ -90,11 +95,16 @@ export function RegistroProduto(props) {
       setErrors({});
       // Preparar e validar campos
       const precoFinal = typeof valor === 'string' ? Number(String(valor).replace(/\./g, '').replace(',', '.')) : Number(valor);
-      const categoriaProduto = mapCategoriaProdutoToApi(categoria);
+      const custoProducao = typeof custo === 'string' ? Number(String(custo).replace(/\./g, '').replace(',', '.')) : Number(custo);
+
+      // Se `categoria` contém um id (quando populado a partir do backend), buscamos o objeto.
+      // Caso o usuário já tenha o id como string no state, também aceitamos.
+      const categoriaSelecionada = categorias.find(c => String(c.id) === String(categoria));
+      const categoriaIdValue = categoriaSelecionada ? categoriaSelecionada.id : (categoria || null);
 
       const newErrors = {};
       if (!nomeProduto || !String(nomeProduto).trim()) newErrors.nomeProduto = 'Informe o nome do produto.';
-      if (!categoriaProduto) newErrors.categoria = 'Selecione a categoria do produto.';
+      if (!categoriaIdValue) newErrors.categoria = 'Selecione a categoria do produto.';
       if (!Number.isFinite(precoFinal) || precoFinal <= 0) newErrors.valor = 'Informe um valor válido (maior que 0).';
 
       if (Object.keys(newErrors).length > 0) {
@@ -105,11 +115,12 @@ export function RegistroProduto(props) {
 
       setSalvando(true);
       // Sanitiza e mapeia campos conforme o modelo Produto do backend
+      // Backend espera: { nome, precoFinal, custoProducao, categoriaProdutoId }
       const payload = {
         nome: nomeProduto || '',
         precoFinal: Number.isFinite(precoFinal) ? precoFinal : 0,
-        custoProducao: null, // opcional: backend pode calcular a partir de receitas
-        categoriaProduto
+        custoProducao: Number.isFinite(custoProducao) ? custoProducao : 0,
+        categoriaProdutoId: Number(categoriaIdValue)
       };
 
       const resp = await api.post('/produtos', payload);
@@ -136,6 +147,27 @@ export function RegistroProduto(props) {
       setSalvando(false);
     }
   };
+
+  // Buscar categorias do backend para popular o select de categoria
+  useEffect(() => {
+    const fetchCategorias = async () => {
+      setCarregandoCategorias(true);
+      setErroCategorias('');
+      try {
+        // Ajuste a rota abaixo conforme seu backend: /categorias é um exemplo
+        const resp = await api.get('/categorias-produtos');
+        const dados = Array.isArray(resp.data) ? resp.data : [];
+        setCategorias(dados);
+      } catch (err) {
+        console.error('Erro ao buscar categorias:', err);
+        setErroCategorias('Não foi possível carregar as categorias.');
+        setCategorias([]);
+      } finally {
+        setCarregandoCategorias(false);
+      }
+    };
+    fetchCategorias();
+  }, []);
 
   // Abrir modal de criação de receita
   function criarreceita() {
@@ -466,21 +498,6 @@ export function RegistroProduto(props) {
                 
                 <div className={styles.inputRow}>
                   <div className={styles.inputGroup}>
-                    <label className={styles.label}>Categoria:</label>
-                    <select
-                      value={categoria}
-                      onChange={e => setCategoria(e.target.value)}
-                      className={`${styles.select} ${errors.categoria ? styles.inputError : ''}`}
-                    >
-                      <option value="Recheio">Recheio</option>
-                      <option value="Massa">Massa</option>
-                      <option value="Cobertura">Cobertura</option>
-                      <option value="Decoração">Decoração</option>
-                    </select>
-                    {errors.categoria && <div className={styles.errorMessage}>{errors.categoria}</div>}
-                  </div>
-                  
-                  <div className={styles.inputGroup}>
                     <label className={styles.label}>Valor:</label>
                     <input
                       type="text"
@@ -489,6 +506,36 @@ export function RegistroProduto(props) {
                       className={`${styles.input} ${errors.valor ? styles.inputError : ''}`}
                     />
                     {errors.valor && <div className={styles.errorMessage}>{errors.valor}</div>}
+                  </div>
+
+                  <div className={styles.inputGroup}>
+                    <label className={styles.label}>Custo de Produção:</label>
+                    <input
+                      type="text"
+                      value={custo}
+                      onChange={e => setCusto(e.target.value)}
+                      className={`${styles.input} ${errors.custo ? styles.inputError : ''}`}
+                    />
+                    {errors.custo && <div className={styles.errorMessage}>{errors.custo}</div>}
+                  </div>
+                </div>
+
+                <div className={styles.inputRow}>
+                  <div className={styles.inputGroup}>
+                    <label className={styles.label}>Categoria:</label>
+                    <select
+                      value={categoria}
+                      onChange={e => setCategoria(e.target.value)}
+                      className={`${styles.select} ${errors.categoria ? styles.inputError : ''}`}
+                    >
+                      <option value="" disabled>{carregandoCategorias ? 'Carregando...' : 'Selecione a categoria'}</option>
+                      {erroCategorias && <option value="" disabled>{erroCategorias}</option>}
+                      {!carregandoCategorias && !erroCategorias && categorias.map((c) => (
+                        // Espera { id, nome }
+                        <option key={c.id} value={c.id}>{c.nome}</option>
+                      ))}
+                    </select>
+                    {errors.categoria && <div className={styles.errorMessage}>{errors.categoria}</div>}
                   </div>
                 </div>
               </div>
