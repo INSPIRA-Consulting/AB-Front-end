@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - master # O branch que acionará o deploy
-
+# Teste
 jobs:
   build_and_deploy:
     runs-on: ubuntu-latest
@@ -36,7 +36,7 @@ jobs:
           SSH_PRIVATE_KEY: ${{ secrets.EC2_SSH_KEY }}
           REMOTE_HOST: ${{ secrets.REMOTE_HOST }}
           REMOTE_USER: ${{ secrets.REMOTE_USER }}
-          TARGET: /home/${{ secrets.REMOTE_USER }}/frontend
+          TARGET: /home/${{ secrets.REMOTE_USER }}/frontend/anjos-bolos-front-end
           # ARGS para rsync: -rltgoDzvO para cópia recursiva, compressão e outros
           ARGS: "-rltgoDzvO --delete" 
           # SOURCE: O que será copiado. Pode ser o diretório de build (ex: ./dist)
@@ -45,3 +45,21 @@ jobs:
           SCRIPT: |
             sudo docker compose restart api
             echo "servico reiniciado via docker compose"
+      # 5. Atualizando o IP privado da API e reininciado o docker do Ngnix
+      - name: FE - Executar Comando Shell na EC2
+        uses: appleboy/ssh-action@v1.0.3 # Action popular para SSH
+        with:
+          host: ${{ secrets.REMOTE_HOST }} 
+          username: ${{ secrets.REMOTE_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}  
+          # O Comando ou Script a ser Executado no EC2
+          # Use o pipe '|' para comandos de múltiplas linhas
+          script: |
+            set -e
+
+            cd /home/${{ secrets.REMOTE_USER }}/frontend/anjos-bolos-front-end
+            echo "IP_API=${{ secrets.REMOTE_HOST_PRIVADO }}" > .env
+            echo "Arquivo .env criado com IP_API valor do IP privado"
+
+            echo "Configuração do frontend concluída"
+

@@ -6,8 +6,10 @@ import { Produto } from "../components/Produto";
 import { Modal } from "../components/Modal";
 import axios from 'axios';
 import Footer from "../components/Footer";
+import { useDocumentTitle } from "../hooks/useDocumentTitle";
 
-export function RegistroVendas() {
+export function RegistroVendas(props) {
+  useDocumentTitle(props.titulo);
 
     // fallback products (used until API responds)
     const initialProdutos = [

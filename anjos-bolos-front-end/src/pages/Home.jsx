@@ -3,8 +3,10 @@ import '../styles/fonts/fonts.css';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { HelpModal } from '../components/HelpModal';
+import { useDocumentTitle } from '../hooks/useDocumentTitle';
 
-export function Home() {
+export function Home(props) {
+    useDocumentTitle(props.titulo);
     const navigate = useNavigate();
     const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
 

@@ -7,8 +7,10 @@ import { Modal } from "../components/Modal";
 import sucesso from "../assets/success.svg";
 import erro from "../assets/error.svg"
 import { Navbar } from "../components/Navbar";
+import { useDocumentTitle } from "../hooks/useDocumentTitle";
 
 export function RegistroIngredientes(props) {
+    useDocumentTitle(props.titulo);
     
     const [nome, setNome] = useState("");
     const [medida, setMedida] = useState("");
@@ -28,7 +30,7 @@ export function RegistroIngredientes(props) {
             quantidadeConvertida = quantidade * 1000;
         }
         
-        axios.post(`${import.meta.env.VITE_API_URL}/ingredientes`, {
+        axios.post(`/api/ingredientes`, {
             nome: nome,
             valorEmbalagem: valor,
             quantidadeEmbalagem: quantidadeConvertida

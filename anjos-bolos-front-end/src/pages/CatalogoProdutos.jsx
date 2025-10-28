@@ -8,24 +8,137 @@ import { AdvancedFilter } from "../components/AdvancedFilter";
 import styles from "../styles/CatalogoProdutos.module.css";
 import { useEffect } from "react";
 import axios from "axios";
+import { useDocumentTitle } from "../hooks/useDocumentTitle";
 
 
-export function CatalogoProdutos() {
+export function CatalogoProdutos(props) {
+    useDocumentTitle(props.titulo);
     const [produtos, setProdutos] = useState([]);
+    const [produtosOriginais, setProdutosOriginais] = useState([]);
+    const [searchTerm, setSearchTerm] = useState('');
+    const [currentPage, setCurrentPage] = useState(0);
+    const [totalPages, setTotalPages] = useState(0);
+    const [loading, setLoading] = useState(false);
+    const [categoriasSelecionadas, setCategoriasSelecionadas] = useState([]);
+    const [filtroOrdenacao, setFiltroOrdenacao] = useState('');
+    const pageSize = 10;
 
-    const fetchProdutos = async () => {
+    const fetchProdutos = async (ordenacao = filtroOrdenacao) => {
+        setLoading(true);
         try {
-            const response = await axios.get("http://localhost:8080/produtos");
-            setProdutos(response.data);
+            // Buscar TODOS os produtos para permitir filtros locais
+            let url = `/api/produtos`;
+            
+            // Adicionar ordenação
+            if (ordenacao) {
+                url += `?sort=${ordenacao}`;
+            } else {
+                url += `?sort=nome,asc`;
+            }
+            
+            const response = await axios.get(url);
+            
+            // Verificar se é um array ou objeto com propriedade content
+            let dadosRecebidos;
+            if (Array.isArray(response.data)) {
+                dadosRecebidos = response.data;
+            } else if (response.data.content && Array.isArray(response.data.content)) {
+                dadosRecebidos = response.data.content;
+            } else {
+                dadosRecebidos = [];
+            }
+            
+            setProdutosOriginais(dadosRecebidos);
+            setProdutos(dadosRecebidos);
+            setTotalPages(Math.ceil(dadosRecebidos.length / pageSize));
+            setCurrentPage(0);
+            console.log('Produtos carregados:', dadosRecebidos);
         } catch (error) {
             console.error("Erro ao buscar produtos:", error);
             setProdutos([]);
+            setProdutosOriginais([]);
+            setTotalPages(0);
+        } finally {
+            setLoading(false);
         }
     };
 
     useEffect(() => {
         fetchProdutos();
     }, []);
+
+    // Função para filtrar produtos localmente
+    const filtrarProdutosLocalmente = (termo, categorias) => {
+        let produtosFiltrados = produtosOriginais;
+
+        // Filtrar por termo de busca
+        if (termo && termo.trim() !== '') {
+            const termoLower = termo.toLowerCase().trim();
+            produtosFiltrados = produtosFiltrados.filter(produto =>
+                produto.nome.toLowerCase().includes(termoLower)
+            );
+        }
+
+        // Filtrar por categorias selecionadas
+        if (categorias && categorias.length > 0) {
+            produtosFiltrados = produtosFiltrados.filter(produto => {
+                const categoriaProduto = produto.categoriaProduto || produto.categoria || '';
+                return categorias.some(categoria => {
+                    // Mapear IDs dos filtros para nomes das categorias
+                    const mapeamento = {
+                        'bolosTradicionais': 'Bolos Tradicionais',
+                        'bebidas': 'Bebidas',
+                        'salgados': 'Salgados',
+                        'bolosPote': 'Bolos de pote',
+                        'bolosFesta': 'Bolos de Festa'
+                    };
+                    return categoriaProduto === mapeamento[categoria];
+                });
+            });
+        }
+        
+        setProdutos(produtosFiltrados);
+        const novoTotalPages = Math.ceil(produtosFiltrados.length / pageSize);
+        setTotalPages(novoTotalPages);
+        
+        // Se a página atual for maior que o total de páginas, voltar para a primeira
+        if (currentPage >= novoTotalPages && novoTotalPages > 0) {
+            setCurrentPage(0);
+        } else if (novoTotalPages === 0) {
+            setCurrentPage(0);
+        }
+    };
+
+    // Função para obter produtos da página atual
+    const getProdutosPaginados = () => {
+        if (!produtos || produtos.length === 0) {
+            return [];
+        }
+        
+        const startIndex = currentPage * pageSize;
+        const endIndex = startIndex + pageSize;
+        return produtos.slice(startIndex, endIndex);
+    };
+
+    // useEffect para busca e filtros locais em tempo real
+    useEffect(() => {
+        const timeoutId = setTimeout(() => {
+            filtrarProdutosLocalmente(searchTerm, categoriasSelecionadas);
+        }, 150); // 150ms de delay para evitar muitas execuções
+
+        return () => clearTimeout(timeoutId);
+    }, [searchTerm, categoriasSelecionadas, produtosOriginais]);
+
+    // useEffect para reaplicar ordenação após filtros
+    useEffect(() => {
+        if (filtroOrdenacao && produtos.length > 0) {
+            const timeoutId = setTimeout(() => {
+                aplicarOrdenacaoLocal(filtroOrdenacao);
+            }, 200); // Pequeno delay para dar tempo do filtro terminar
+
+            return () => clearTimeout(timeoutId);
+        }
+    }, [filtroOrdenacao]); // Removida dependência produtos.length para evitar loop
 
     // Dados mockados da tabela para produtos
     // const produtos = [
@@ -44,10 +157,6 @@ export function CatalogoProdutos() {
     //     { produto: "Bolo de Cenoura", categoria: "Bolo da Vovó", custoProducao: "R$ 10,00", valorVenda: "R$ 10,00", lucro: "R$ 10,00" }
     // ];
 
-    const [categoriasSelecionadas, setCategoriasSelecionadas] = useState([]);
-    const [searchTerm, setSearchTerm] = useState('');
-    const [filtroOrdenacao, setFiltroOrdenacao] = useState('');
-
     // Opções do seletor
     const selectOptions = [
         { value: "produtos", label: "Produtos" },
@@ -64,15 +173,16 @@ export function CatalogoProdutos() {
     ];
 
     // Headers da tabela
-    const tableHeaders = ["Produto", "Categoria", "Custo de Produção", "Valor de Venda", "Lucro"];
+    const tableHeaders = ["Produto", "Categoria", "Custo de Produção", "Preço Final", "Lucro"];
 
     const handleCategoriaChange = (categoria) => {
         setCategoriasSelecionadas(prev => {
-            if (prev.includes(categoria)) {
-                return prev.filter(c => c !== categoria);
-            } else {
-                return [...prev, categoria];
-            }
+            const novasCategorias = prev.includes(categoria)
+                ? prev.filter(c => c !== categoria)
+                : [...prev, categoria];
+            
+            // O filtro será aplicado pelo useEffect
+            return novasCategorias;
         });
     };
    
@@ -91,17 +201,105 @@ export function CatalogoProdutos() {
     const handleFilterChange = (filtro) => {
         setFiltroOrdenacao(filtro);
         console.log('Filtro selecionado:', filtro);
-        // Aqui você pode implementar a lógica de ordenação
+        
+        // Aplicar ordenação localmente primeiro
+        aplicarOrdenacaoLocal(filtro);
+    };
+
+    // Função para aplicar ordenação localmente
+    const aplicarOrdenacaoLocal = (filtro) => {
+        setProdutos(produtosAtuais => {
+            let produtosOrdenados = [...produtosAtuais];
+            
+            switch(filtro) {
+                case 'alfabetica-asc':
+                    produtosOrdenados.sort((a, b) => a.nome.localeCompare(b.nome));
+                    break;
+                case 'alfabetica-desc':
+                    produtosOrdenados.sort((a, b) => b.nome.localeCompare(a.nome));
+                    break;
+                case 'preco-baixo':
+                    produtosOrdenados.sort((a, b) => (a.precoFinal || 0) - (b.precoFinal || 0));
+                    break;
+                case 'preco-alto':
+                    produtosOrdenados.sort((a, b) => (b.precoFinal || 0) - (a.precoFinal || 0));
+                    break;
+                case 'lucro-baixo':
+                    produtosOrdenados.sort((a, b) => {
+                        const lucroA = (a.precoFinal || 0) - (a.custoProducao || 0);
+                        const lucroB = (b.precoFinal || 0) - (b.custoProducao || 0);
+                        return lucroA - lucroB;
+                    });
+                    break;
+                case 'lucro-alto':
+                    produtosOrdenados.sort((a, b) => {
+                        const lucroA = (a.precoFinal || 0) - (a.custoProducao || 0);
+                        const lucroB = (b.precoFinal || 0) - (b.custoProducao || 0);
+                        return lucroB - lucroA;
+                    });
+                    break;
+                default:
+                    produtosOrdenados.sort((a, b) => a.nome.localeCompare(b.nome));
+            }
+            
+            // Recalcular paginação após ordenação
+            const novoTotalPages = Math.ceil(produtosOrdenados.length / pageSize);
+            setTotalPages(novoTotalPages);
+            
+            return produtosOrdenados;
+        });
+        
+        setCurrentPage(0); // Voltar para primeira página após ordenação
+    };
+
+    const handlePreviousPage = () => {
+        if (currentPage > 0) {
+            setCurrentPage(currentPage - 1);
+        }
+    };
+
+    const handleNextPage = () => {
+        if (currentPage < totalPages - 1) {
+            setCurrentPage(currentPage + 1);
+        }
+    };
+
+    const handlePageClick = (page) => {
+        setCurrentPage(page);
+    };
+
+    const handleSearchChange = (termo) => {
+        setSearchTerm(termo);
+        // O filtro será aplicado pelo useEffect
     };
 
     const renderTableRow = (produto) => {
+        // Calculando o lucro baseado nos dados do banco (precoFinal - custoProducao)
+        const lucro = produto.precoFinal && produto.custoProducao 
+            ? produto.precoFinal - produto.custoProducao 
+            : 0;
+
         return (
             <>
-                <div className={styles.tableCell}>{produto.produto}</div>
-                <div className={styles.tableCell}>{produto.categoria}</div>
-                <div className={styles.tableCell}>{produto.custoProducao}</div>
-                <div className={styles.tableCell}>{produto.valorVenda}</div>
-                <div className={styles.tableCell}>{produto.lucro}</div>
+                <div className={styles.tableCell}>{produto.nome}</div>
+                <div className={styles.tableCell}>
+                    {produto.categoriaProduto || produto.categoria || "-"}
+                </div>
+                <div className={styles.tableCell}>
+                    {produto.custoProducao !== undefined
+                        ? `R$ ${Number(produto.custoProducao).toFixed(2).replace('.', ',')}`
+                        : "-"}
+                </div>
+                <div className={styles.tableCell}>
+                    {produto.precoFinal !== undefined
+                        ? `R$ ${Number(produto.precoFinal).toFixed(2).replace('.', ',')}`
+                        : "-"}
+                </div>
+                <div className={styles.tableCell}>
+                    {lucro !== undefined
+                        ? `R$ ${Number(lucro).toFixed(2).replace('.', ',')}`
+                        : "-"}
+                </div>
             </>
         );
     };
@@ -120,7 +318,7 @@ export function CatalogoProdutos() {
 
             <SearchBar
                 searchTerm={searchTerm}
-                onSearchChange={setSearchTerm}
+                onSearchChange={handleSearchChange}
                 placeholder="Pesquise um produto"
             />
 
@@ -133,9 +331,26 @@ export function CatalogoProdutos() {
 
             <DataTable
                 headers={tableHeaders}
-                data={produtos}
+                data={getProdutosPaginados()}
                 renderRow={renderTableRow}
+                currentPage={currentPage}
+                totalPages={totalPages}
+                loading={loading}
+                onPreviousPage={handlePreviousPage}
+                onNextPage={handleNextPage}
+                onPageClick={handlePageClick}
             />
+            
+            {/* Debug info temporário */}
+            <div style={{padding: '10px', background: '#f0f0f0', margin: '10px 0', fontSize: '12px'}}>
+                Debug: Produtos: {produtos.length} | Total Pages: {totalPages} | Current Page: {currentPage} | Page Size: {pageSize}
+            </div>
+
+            {loading && (
+                <div className={styles.loadingContainer}>
+                    <p>Carregando produtos...</p>
+                </div>
+            )}
         </div>
     )
 }

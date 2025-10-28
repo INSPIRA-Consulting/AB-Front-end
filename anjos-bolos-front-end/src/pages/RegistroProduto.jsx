@@ -1,11 +1,14 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import axios from 'axios';
+import api, { uploadImagemProduto } from '../provider/api';
 import { FaTrashCan } from "react-icons/fa6";
 import { Navbar } from '../components/Navbar';
 import { Modal } from '../components/Modal';
 import styles from '../styles/RegistroProduto.module.css';
+import { useDocumentTitle } from '../hooks/useDocumentTitle';
 
-export function RegistroProduto() {
+export function RegistroProduto(props) {
+  useDocumentTitle(props.titulo);
   const [receita, setreceita] = useState('');
   const [quantidade, setQuantidade] = useState('');
   const [unidade, setUnidade] = useState('g');
@@ -17,8 +20,15 @@ export function RegistroProduto() {
   const [receitaSelecionadaId, setReceitaSelecionadaId] = useState('');
   const [nomeProduto, setNomeProduto] = useState('');
   const [categoria, setCategoria] = useState('');
+  // Lista de categorias vindo do backend
+  const [categorias, setCategorias] = useState([]);
+  const [carregandoCategorias, setCarregandoCategorias] = useState(false);
+  const [erroCategorias, setErroCategorias] = useState('');
   const [valor, setValor] = useState('');
+  const [custo, setCusto] = useState('');
   const [imagem, setImagem] = useState('/src/assets/bolinho15.png');
+  const [imagemFile, setImagemFile] = useState(null);
+  const imagemObjectUrlRef = useRef(null);
 
   // Estado do modal de criação de receita
   const [modalAberto, setModalAberto] = useState(false);
@@ -33,6 +43,8 @@ export function RegistroProduto() {
   // Detalhes da receita
   const [detalheAberto, setDetalheAberto] = useState(false);
   const [receitaDetalhe, setReceitaDetalhe] = useState(null);
+  const [errors, setErrors] = useState({});
+  const [salvando, setSalvando] = useState(false);
 
   // Mapeia a medida da API para uma unidade curta para exibição
   function getUnidadeFromMedida(medidaApi) {
@@ -67,29 +79,95 @@ export function RegistroProduto() {
     return 'UNIDADE';
   }
 
-  const salvarReceita = async e => {
-        e.preventDefault();
+  // Mapeia categoria do UI para enum esperado pelo backend
+  function mapCategoriaProdutoToApi(cat) {
+    const c = String(cat || '').toLowerCase();
+    if (c === 'massa') return 'MASSA';
+    if (c === 'recheio') return 'RECHEIO';
+    if (c === 'cobertura') return 'COBERTURA';
+    if (c === 'decoração' || c === 'decoracao') return 'DECORACAO';
+    return undefined;
+  }
 
-        let quantidadeConvertida = quantidade;
+  const salvarReceita = async (e) => {
+    e.preventDefault();
+    try {
+      setErrors({});
+      // Preparar e validar campos
+      const precoFinal = typeof valor === 'string' ? Number(String(valor).replace(/\./g, '').replace(',', '.')) : Number(valor);
+      const custoProducao = typeof custo === 'string' ? Number(String(custo).replace(/\./g, '').replace(',', '.')) : Number(custo);
 
-        if (medida === "quilograma" || medida === "mililitro") {
-            quantidadeConvertida = quantidade * 1000;
+      // Se `categoria` contém um id (quando populado a partir do backend), buscamos o objeto.
+      // Caso o usuário já tenha o id como string no state, também aceitamos.
+      const categoriaSelecionada = categorias.find(c => String(c.id) === String(categoria));
+      const categoriaIdValue = categoriaSelecionada ? categoriaSelecionada.id : (categoria || null);
+
+      const newErrors = {};
+      if (!nomeProduto || !String(nomeProduto).trim()) newErrors.nomeProduto = 'Informe o nome do produto.';
+      if (!categoriaIdValue) newErrors.categoria = 'Selecione a categoria do produto.';
+      if (!Number.isFinite(precoFinal) || precoFinal <= 0) newErrors.valor = 'Informe um valor válido (maior que 0).';
+
+      if (Object.keys(newErrors).length > 0) {
+        setErrors(newErrors);
+        alert('Corrija os campos destacados.');
+        return;
+      }
+
+      setSalvando(true);
+      // Sanitiza e mapeia campos conforme o modelo Produto do backend
+      // Backend espera: { nome, precoFinal, custoProducao, categoriaProdutoId }
+      const payload = {
+        nome: nomeProduto || '',
+        precoFinal: Number.isFinite(precoFinal) ? precoFinal : 0,
+        custoProducao: Number.isFinite(custoProducao) ? custoProducao : 0,
+        categoriaProdutoId: Number(categoriaIdValue)
+      };
+
+      const resp = await api.post('/produtos', payload);
+      const produtoId = resp?.data?.id || resp?.data?.produtoId || resp?.data?.idProduto;
+
+      // Se houver imagem selecionada e tivermos o ID, faz o upload
+      if (imagemFile && produtoId) {
+        const uploadResp = await uploadImagemProduto(produtoId, imagemFile);
+        if (uploadResp.status === 201 || uploadResp.status === 200) {
+          alert('Produto e imagem enviados com sucesso.');
+        } else {
+          alert('Produto criado, mas houve um problema ao enviar a imagem.');
         }
-        
-        axios.post(`${import.meta.env.VITE_API_URL}/receitas`, {
-            nome: nomeProduto,
-            receitas: listareceitas,
-            quantidadeEmbalagem: quantidadeConvertida
-        })
-        .then((response)=>{
-            console.log(response.data);
-            setNome("");
-            setMedida("");
-            setValor("");
-            quantidade("");
-            alert("receita cadastrado com sucesso!");
-        })        
+      } else if (imagemFile && !produtoId) {
+        alert('Produto criado, mas não foi possível obter o ID para enviar a imagem.');
+      } else {
+        alert('Produto cadastrado com sucesso.');
+      }
+    } catch (err) {
+      console.error('Erro ao cadastrar produto ou enviar imagem:', err);
+      alert('Não foi possível cadastrar o produto.');
     }
+    finally {
+      setSalvando(false);
+    }
+  };
+
+  // Buscar categorias do backend para popular o select de categoria
+  useEffect(() => {
+    const fetchCategorias = async () => {
+      setCarregandoCategorias(true);
+      setErroCategorias('');
+      try {
+        // Ajuste a rota abaixo conforme seu backend: /categorias é um exemplo
+        const resp = await api.get('/categorias-produtos');
+        const dados = Array.isArray(resp.data) ? resp.data : [];
+        setCategorias(dados);
+      } catch (err) {
+        console.error('Erro ao buscar categorias:', err);
+        setErroCategorias('Não foi possível carregar as categorias.');
+        setCategorias([]);
+      } finally {
+        setCarregandoCategorias(false);
+      }
+    };
+    fetchCategorias();
+  }, []);
 
   // Abrir modal de criação de receita
   function criarreceita() {
@@ -288,10 +366,28 @@ export function RegistroProduto() {
   }
 
   function handleImagem(e) {
-    if (e.target.files[0]) {
-      setImagem(URL.createObjectURL(e.target.files[0]));
+    const file = e.target.files && e.target.files[0];
+    if (file) {
+      setImagemFile(file);
+      // Libera URL anterior se existir
+      if (imagemObjectUrlRef.current) {
+        URL.revokeObjectURL(imagemObjectUrlRef.current);
+        imagemObjectUrlRef.current = null;
+      }
+      const url = URL.createObjectURL(file);
+      imagemObjectUrlRef.current = url;
+      setImagem(url);
     }
   }
+
+  // Cleanup do ObjectURL ao desmontar
+  useEffect(() => {
+    return () => {
+      if (imagemObjectUrlRef.current) {
+        URL.revokeObjectURL(imagemObjectUrlRef.current);
+      }
+    };
+  }, []);
 
   function incrementarQuantidade() {
     setQuantidade(q => {
@@ -395,33 +491,51 @@ export function RegistroProduto() {
                     type="text"
                     value={nomeProduto}
                     onChange={e => setNomeProduto(e.target.value)}
-                    className={styles.input}
+                    className={`${styles.input} ${errors.nomeProduto ? styles.inputError : ''}`}
                   />
+                  {errors.nomeProduto && <div className={styles.errorMessage}>{errors.nomeProduto}</div>}
                 </div>
                 
                 <div className={styles.inputRow}>
-                  <div className={styles.inputGroup}>
-                    <label className={styles.label}>Categoria:</label>
-                    <select
-                      value={categoria}
-                      onChange={e => setCategoria(e.target.value)}
-                      className={styles.select}
-                    >
-                      <option value="Recheio">Recheio</option>
-                      <option value="Massa">Massa</option>
-                      <option value="Cobertura">Cobertura</option>
-                      <option value="Decoração">Decoração</option>
-                    </select>
-                  </div>
-                  
                   <div className={styles.inputGroup}>
                     <label className={styles.label}>Valor:</label>
                     <input
                       type="text"
                       value={valor}
                       onChange={e => setValor(e.target.value)}
-                      className={styles.input}
+                      className={`${styles.input} ${errors.valor ? styles.inputError : ''}`}
                     />
+                    {errors.valor && <div className={styles.errorMessage}>{errors.valor}</div>}
+                  </div>
+
+                  <div className={styles.inputGroup}>
+                    <label className={styles.label}>Custo de Produção:</label>
+                    <input
+                      type="text"
+                      value={custo}
+                      onChange={e => setCusto(e.target.value)}
+                      className={`${styles.input} ${errors.custo ? styles.inputError : ''}`}
+                    />
+                    {errors.custo && <div className={styles.errorMessage}>{errors.custo}</div>}
+                  </div>
+                </div>
+
+                <div className={styles.inputRow}>
+                  <div className={styles.inputGroup}>
+                    <label className={styles.label}>Categoria:</label>
+                    <select
+                      value={categoria}
+                      onChange={e => setCategoria(e.target.value)}
+                      className={`${styles.select} ${errors.categoria ? styles.inputError : ''}`}
+                    >
+                      <option value="" disabled>{carregandoCategorias ? 'Carregando...' : 'Selecione a categoria'}</option>
+                      {erroCategorias && <option value="" disabled>{erroCategorias}</option>}
+                      {!carregandoCategorias && !erroCategorias && categorias.map((c) => (
+                        // Espera { id, nome }
+                        <option key={c.id} value={c.id}>{c.nome}</option>
+                      ))}
+                    </select>
+                    {errors.categoria && <div className={styles.errorMessage}>{errors.categoria}</div>}
                   </div>
                 </div>
               </div>
@@ -477,7 +591,7 @@ export function RegistroProduto() {
             </div>
             
             <div className={styles.buttonContainer}>
-              <button className={styles.cadastrarButton} onClick={salvarReceita} type="button">
+              <button className={styles.cadastrarButton} onClick={salvarReceita} type="button" disabled={salvando}>
                 Cadastrar
               </button>
             </div>

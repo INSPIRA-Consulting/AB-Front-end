@@ -5,36 +5,115 @@ import { SearchBar } from "../components/SearchBar";
 import { DataTable } from "../components/DataTable";
 import styles from "../styles/CatalogoProdutos.module.css";
 import axios from "axios";
-import { AdvancedFilter } from "../components/AdvancedFilter";
+import { AdvancedFilterIngredientes } from "../components/AdvancedFilterIngredientes";
 import { useEffect } from "react";
+import { useDocumentTitle } from "../hooks/useDocumentTitle";
 
-export function CatalogoIngredientes() {
+export function CatalogoIngredientes(props) {
+    useDocumentTitle(props.titulo);
     const [ingredientes, setIngredientes] = useState([]);
+    const [ingredientesOriginais, setIngredientesOriginais] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [currentPage, setCurrentPage] = useState(0);
     const [totalPages, setTotalPages] = useState(0);
     const [loading, setLoading] = useState(false);
+    const [filtroOrdenacao, setFiltroOrdenacao] = useState('');
     const pageSize = 10;
 
-    const fetchIngredientes = async (page = 0) => {
+    const fetchIngredientes = async (ordenacao = filtroOrdenacao) => {
         setLoading(true);
         try {
-            const response = await axios.get(`/api/ingredientes?page=${page}&size=${pageSize}&sort=nome,asc`);
-            setIngredientes(response.data.content);
-            setTotalPages(response.data.totalPages);
-            setCurrentPage(page);
-            console.log(response.data);
+            // Buscar TODOS os ingredientes para permitir filtros locais
+            let url = `/api/ingredientes`;
+            
+            // Adicionar ordenação
+            if (ordenacao) {
+                url += `?sort=${ordenacao}`;
+            } else {
+                url += `?sort=nome,asc`;
+            }
+            
+            const response = await axios.get(url);
+            
+            // Verificar se é um array ou objeto com propriedade content
+            let dadosRecebidos;
+            if (Array.isArray(response.data)) {
+                dadosRecebidos = response.data;
+            } else if (response.data.content && Array.isArray(response.data.content)) {
+                dadosRecebidos = response.data.content;
+            } else {
+                dadosRecebidos = [];
+            }
+            
+            setIngredientesOriginais(dadosRecebidos);
+            setIngredientes(dadosRecebidos);
+            setTotalPages(Math.ceil(dadosRecebidos.length / pageSize));
+            setCurrentPage(0);
+            console.log('Ingredientes carregados:', dadosRecebidos);
         } catch (error) {
             console.error("Erro ao buscar ingredientes:", error);
             setIngredientes([]);
+            setIngredientesOriginais([]);
+            setTotalPages(0);
         } finally {
             setLoading(false);
         }
     };
 
     useEffect(() => {
-        fetchIngredientes(0);
+        fetchIngredientes();
     }, []);
+
+    // Função para filtrar ingredientes localmente
+    const filtrarIngredientesLocalmente = (termo) => {
+        let ingredientesFiltrados = ingredientesOriginais;
+
+        // Filtrar por termo de busca se houver
+        if (termo && termo.trim() !== '') {
+            const termoLower = termo.toLowerCase().trim();
+            ingredientesFiltrados = ingredientesOriginais.filter(ingrediente =>
+                ingrediente.nome.toLowerCase().includes(termoLower)
+            );
+        }
+        
+        setIngredientes(ingredientesFiltrados);
+        const novoTotalPages = Math.ceil(ingredientesFiltrados.length / pageSize);
+        setTotalPages(novoTotalPages);
+        
+        // Resetar para primeira página sempre que aplicar filtro
+        setCurrentPage(0);
+    };
+
+    // Função para obter ingredientes da página atual
+    const getIngredientesPaginados = () => {
+        if (!ingredientes || ingredientes.length === 0) {
+            return [];
+        }
+        
+        const startIndex = currentPage * pageSize;
+        const endIndex = startIndex + pageSize;
+        return ingredientes.slice(startIndex, endIndex);
+    };
+
+    // useEffect para busca local em tempo real com pequeno debounce
+    useEffect(() => {
+        const timeoutId = setTimeout(() => {
+            filtrarIngredientesLocalmente(searchTerm);
+        }, 150); // 150ms de delay para evitar muitas execuções
+
+        return () => clearTimeout(timeoutId);
+    }, [searchTerm, ingredientesOriginais]);
+
+    // useEffect para reaplicar ordenação após filtros
+    useEffect(() => {
+        if (filtroOrdenacao && ingredientes.length > 0) {
+            const timeoutId = setTimeout(() => {
+                aplicarOrdenacaoLocal(filtroOrdenacao);
+            }, 200); // Pequeno delay para dar tempo do filtro terminar
+
+            return () => clearTimeout(timeoutId);
+        }
+    }, [ingredientes.length, filtroOrdenacao]);
 
     // Opções do seletor
     const selectOptions = [
@@ -58,24 +137,60 @@ export function CatalogoIngredientes() {
     };
 
     const handleFilterChange = (filtro) => {
+        setFiltroOrdenacao(filtro);
         console.log('Filtro selecionado:', filtro);
-        // Aqui você pode implementar a lógica de ordenação
+        
+        // Aplicar ordenação localmente aos dados atuais (filtrados)
+        aplicarOrdenacaoLocal(filtro);
+    };
+
+    // Função para aplicar ordenação localmente
+    const aplicarOrdenacaoLocal = (filtro) => {
+        setIngredientes(ingredientesAtuais => {
+            let ingredientesOrdenados = [...ingredientesAtuais];
+            
+            switch(filtro) {
+                case 'alfabetica-asc':
+                    ingredientesOrdenados.sort((a, b) => a.nome.localeCompare(b.nome));
+                    break;
+                case 'alfabetica-desc':
+                    ingredientesOrdenados.sort((a, b) => b.nome.localeCompare(a.nome));
+                    break;
+                case 'preco-baixo':
+                    ingredientesOrdenados.sort((a, b) => (a.custoMedida || 0) - (b.custoMedida || 0));
+                    break;
+                case 'preco-alto':
+                    ingredientesOrdenados.sort((a, b) => (b.custoMedida || 0) - (a.custoMedida || 0));
+                    break;
+                default:
+                    ingredientesOrdenados.sort((a, b) => a.nome.localeCompare(b.nome));
+            }
+            
+            return ingredientesOrdenados;
+        });
+        
+        setCurrentPage(0); // Voltar para primeira página após ordenação
+    };
+
+    const handleSearchChange = (termo) => {
+        setSearchTerm(termo);
+        // A busca será executada pelo useEffect com debounce
     };
 
     const handlePreviousPage = () => {
         if (currentPage > 0) {
-            fetchIngredientes(currentPage - 1);
+            setCurrentPage(currentPage - 1);
         }
     };
 
     const handleNextPage = () => {
         if (currentPage < totalPages - 1) {
-            fetchIngredientes(currentPage + 1);
+            setCurrentPage(currentPage + 1);
         }
     };
 
     const handlePageClick = (page) => {
-        fetchIngredientes(page);
+        setCurrentPage(page);
     };
 
     const renderTableRow = (ingrediente) => {
@@ -105,17 +220,17 @@ export function CatalogoIngredientes() {
 
             <SearchBar
                 searchTerm={searchTerm}
-                onSearchChange={setSearchTerm}
+                onSearchChange={handleSearchChange}
                 placeholder="Pesquise um ingrediente"
             />
 
             <div className={styles.filterAdvancedContainerLeft}>
-                <AdvancedFilter onFilterChange={handleFilterChange} />
+                <AdvancedFilterIngredientes onFilterChange={handleFilterChange} />
             </div>
 
             <DataTable
                 headers={tableHeaders}
-                data={ingredientes}
+                data={getIngredientesPaginados()}
                 renderRow={renderTableRow}
                 currentPage={currentPage}
                 totalPages={totalPages}

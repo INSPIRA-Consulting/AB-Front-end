@@ -6,8 +6,10 @@ import historico from '../assets/historico-de-pedidos.png';
 import ganhar from '../assets/ganhar-dinheiro.png';
 import catalogo from '../assets/catalogo.png';
 import { useNavigate } from 'react-router-dom';
+import { useDocumentTitle } from '../hooks/useDocumentTitle';
 
-export function Menu() {
+export function Menu(props) {
+    useDocumentTitle(props.titulo);
     const navigate = useNavigate();
     return (
         <div className={styles.MenuContainer}>

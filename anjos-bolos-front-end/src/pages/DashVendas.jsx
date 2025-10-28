@@ -4,6 +4,7 @@ import styles from '../styles/DashVendas.module.css';
 import '../styles/fonts/fonts.css';
 import { Navbar } from '../components/Navbar';
 import { DashSidebar } from '../components/DashSidebar';
+import { useDocumentTitle } from '../hooks/useDocumentTitle';
 
 
 import {
@@ -30,7 +31,8 @@ ChartJS.register(
 );
 
 
-export function DashVendas() {
+export function DashVendas(props) {
+	useDocumentTitle(props.titulo);
 	// Estados para datas
 	const [startDate, setStartDate] = useState("");
 	const [endDate, setEndDate] = useState("");

@@ -5,6 +5,7 @@ import styles from '../styles/DashFinancas.module.css';
 import '../styles/fonts/fonts.css';
 import { Navbar } from '../components/Navbar';
 import { DashSidebar } from '../components/DashSidebar';
+import { useDocumentTitle } from '../hooks/useDocumentTitle';
 
 
 import {
@@ -31,7 +32,8 @@ ChartJS.register(
 );
 
 
-export function DashFinancas() {
+export function DashFinancas(props) {
+    useDocumentTitle(props.titulo);
     // Estados para datas
     const [startDate, setStartDate] = useState("");
     const [endDate, setEndDate] = useState("");
