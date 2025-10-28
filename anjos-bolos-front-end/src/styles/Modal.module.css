@@ -4,7 +4,7 @@
     left: 0;
     width: 100vw;
     height: 100vh;
-    background-color: rgba(0, 0, 0, 0.5);
+    background-color: rgba(0, 0, 0, 0.65);
     display: flex;
     justify-content: center;
     align-items: center;
@@ -15,15 +15,23 @@
     position: relative;
     min-width: 320px;
     max-width: 90%;
-    padding: 24px;
-    background-color: #E6D5D5;
-    border: 5px solid #B57575;
-    border-radius: 8px;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+    padding: 20px 22px;
+    background-color: #56270B; /* fundo do modal */
+    color: #FFFFFF; /* texto em branco */
+    border-radius: 10px;
+    box-shadow: 0 6px 30px rgba(0,0,0,0.35);
     display: flex;
     flex-direction: column;
-    align-items: center;
-    justify-content: space-between;
+    align-items: stretch;
+    gap: 8px;
+
+    h2 {
+        color: #F7EDE6;
+    }
+
+    h3 {
+        color: #F7EDE6;
+    }
 }
 
 .button-fechar {
@@ -35,20 +43,71 @@
     right: 12px;
     background: red;
     border: none;
-    border-radius: 5px;
     cursor: pointer;
     display: flex;
-    place-items: center;
+    align-items: center;
+    gap: 6px;
 }
 
 .modal img {
-    width: 72px;
-    height: 72px;
+    width: 48px;
+    height: 48px;
 }
 
 .modal h1 {
-    margin: 30px 0 0 0;
-    font-size: 3.5rem;
+    margin: 6px 0 0 0;
+    font-size: 1.8rem;
+    color: #FFFFFF;
+}
+
+/* estilos aplicados aos inputs/select/labels dentro do modal */
+.modal label {
+    display: block;
+    font-size: 0.95rem;
+    color: #F7EDE6;
+    margin-bottom: 6px;
+}
+
+.modal input,
+.modal select,
+.modal textarea {
+    width: 100%;
+    padding: 8px 10px;
+    border-radius: 6px;
+    border: 1px solid rgba(255,255,255,0.12);
+    background-color: #F7F4F2; /* input claro (não preto) */
+    color: #56270B; /* texto escuro dentro do input */
+    font-size: 0.95rem;
+}
+
+/* colorir o ícone do date-picker (Chrome/Edge/Safari) dentro do modal */
+.modal input[type="date"]::-webkit-calendar-picker-indicator {
+    /* filter aproximado para transformar o ícone em marrom (#56270B) */
+    filter: invert(19%) sepia(45%) saturate(540%) hue-rotate(325deg) brightness(92%) contrast(88%);
+    opacity: 0.95;
+    cursor: pointer;
+}
+
+/* tentativa para Firefox (quando suportado) */
+.modal input[type="date"]::-moz-calendar-picker-indicator {
+    filter: invert(19%) sepia(45%) saturate(540%) hue-rotate(325deg) brightness(92%) contrast(88%);
+    opacity: 0.95;
+    cursor: pointer;
+}
+
+.modal button {
+    background-color: #B57575;
+    color: #ffffff;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.modal .actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
 }
 
 .button-fechar img {

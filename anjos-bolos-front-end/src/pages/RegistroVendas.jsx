@@ -3,78 +3,59 @@ import { Button } from "../components/Button";
 import { Navbar } from "../components/Navbar";
 import styles from "../styles/RegistroVendas.module.css";
 import { Produto } from "../components/Produto";
+import { Modal } from "../components/Modal";
+import axios from 'axios';
 import Footer from "../components/Footer";
 
 export function RegistroVendas() {
 
-    const produtos = [
-    {
-      imagem: "https://s2-receitas.glbimg.com/wJmq1MqeOZZ-VSLlDxRLdL2zj60=/0x0:1280x800/984x0/smart/filters:strip_icc()/i.s3.glbimg.com/v1/AUTH_1f540e0b94d8437dbbc39d567a1dee68/internal_photos/bs/2022/1/N/aQD0fhQs2qW7qlFw0bTA/bolo-de-chocolate-facil.jpg",
-      titulo: "Bolo de Chocolate",
-      valor: 25.00,
-      categoria: "tradicionais"
-    },
-    {
-      imagem: "https://cozinha365.com.br/wp-content/uploads/2025/02/Bolo-de-cenoura-S.webp",
-      titulo: "Bolo de Cenoura",
-      valor: 25.00,
-      categoria: "tradicionais"
-    },
-    {
-      imagem: "https://inspira-hml.s3.us-east-1.amazonaws.com/bolo.png",
-      titulo: "Bolo de Mentira",
-      valor: 25.00,
-      categoria: "tradicionais"
-    },
-    {
-      imagem: "https://s2-receitas.glbimg.com/5rvytTYCmTaPYu8yCsaya0GaA08=/0x0:1000x667/984x0/smart/filters:strip_icc()/i.s3.glbimg.com/v1/AUTH_1f540e0b94d8437dbbc39d567a1dee68/internal_photos/bs/2022/Q/C/2DeqRTSI2oR5wVBFVVOw/delicious-cornmeal-cake-traditional-brazilian-cake.jpg",
-      titulo: "Bolo de Fubá",
-      valor: 25.00,
-      categoria: "tradicionais"
-    },
-    {
-      imagem: "https://prezunic.vtexassets.com/arquivos/ids/210693/66db573a62edc14e790f8550.jpg?v=638612475473130000",
-      titulo: "Coca-cola 350ml",
-      valor: 25.00,
-      categoria: "bebidas"
-    },
-    {
-      imagem: "https://chaparadois.com.br/wp-content/uploads/2024/12/Receita-de-Massa-de-Chocolate-Profissional-Perfeito-para-os-seus-Bolos.webp",
-      titulo: "Massa de Chocolate",
-      valor: 30.00,
-      categoria: "massa"
-    },
-    {
-      imagem: "https://www.gabriellfreitass.com.br/wp-content/uploads/2018/03/bolo.jpg",
-      titulo: "Massa Branca",
-      valor: 30.00,
-      categoria: "massa"
-    },
-    {
-      imagem: "https://bolosparavender.com/wp-content/uploads/2019/11/bolo-de-pote-de-prest%C3%ADgio-recheio.jpg",
-      titulo: "Prestígio",
-      valor: 20.00,
-      categoria: "recheio"
-    },
-    {
-      imagem: "https://panelaterapia.com/wp-content/uploads/2020/04/brigs.jpg",
-      titulo: "Brigadeiro",
-      valor: 20.00,
-      categoria: "recheio"
-    },
-    {
-      imagem: "https://images.tcdn.com.br/img/img_prod/1298299/chocolate_granulado_crocante_1_05kg_da_casa_12693_2_7886a4277021754917186d346be0aecc.jpg",
-      titulo: "Granulado",
-      valor: 1.00,
-      categoria: "cobertura"
-    },
-    {
-      imagem: "https://s2-receitas.glbimg.com/M3nykJqlSXkWqr8sEJ-0_3wMhJI=/0x0:1200x675/984x0/smart/filters:strip_icc()/i.s3.glbimg.com/v1/AUTH_1f540e0b94d8437dbbc39d567a1dee68/internal_photos/bs/2024/b/S/n0uHQSQuqfrqjXYm5kbg/creme-de-leite-e-chantili-caseiros.jpg",
-      titulo: "Chantilly",
-      valor: 1.00,
-      categoria: "cobertura"
-    }
-  ];
+    // fallback products (used until API responds)
+    const initialProdutos = [
+      { imagem: 'https://inspira-hml.s3.us-east-1.amazonaws.com/bolo.png', titulo: 'Bolo de Mentira', valor: 25.0, categoria: 'tradicionais' },
+      { imagem: 'https://prezunic.vtexassets.com/arquivos/ids/210693/66db573a62edc14e790f8550.jpg?v=638612475473130000', titulo: 'Coca-cola 350ml', valor: 25.0, categoria: 'bebidas' }
+    ];
+
+    const [produtos, setProdutos] = React.useState(initialProdutos);
+
+    React.useEffect(() => {
+      let mounted = true;
+
+      const categoryMap = {
+        'Bolo Tradicional': 'tradicionais',
+        'Bolo de Festa': 'festa',
+        'Bolo de Pote': 'pote',
+        'Bebidas': 'bebidas',
+        'Bebida': 'bebidas',
+        'Massa': 'massa',
+        'Recheio': 'recheio',
+        'Cobertura': 'cobertura',
+        'Salgados': 'salgados',
+        'Salgado': 'salgados'
+      };
+
+      async function loadProdutos() {
+        try {
+          const resp = await axios.get(`/api/produtos`);
+          const content = resp && resp.data && resp.data.content ? resp.data.content : [];
+          const mapped = content.map(p => {
+            const imagem = p.nomeImagem ? `https://bucket-raw-anjos-bolos-1.s3.us-east-1.amazonaws.com/bolos/${p.nomeImagem}` : '';
+            const categoria = categoryMap[p.categoriaProduto] || 'tradicionais';
+            return {
+              imagem,
+              titulo: p.nome,
+              valor: Number(p.precoFinal) || 0,
+              categoria
+            };
+          });
+          if (mounted && mapped.length) setProdutos(mapped);
+        } catch (err) {
+          console.error('Erro ao carregar produtos:', err);
+        }
+      }
+
+      loadProdutos();
+      return () => { mounted = false };
+    }, []);
 
     const limitador = 24;
 
@@ -190,11 +171,177 @@ export function RegistroVendas() {
 
     const navigateToResumoVendas = () => {
       console.log("Vendas registradas:", vendas);
-      // Navegar para a tela ResumoVendas passando vendas como propriedade
-      window.location.href = `/resumo-venda?data=${encodeURIComponent(JSON.stringify(vendas))}`;
+      // Se tiver bolo de festa selecionado, abrir modal de detalhes do bolo
+      const hasBoloFesta = vendas.find(v => v.nome === 'Bolo de festa');
+      if (hasBoloFesta) {
+        setShowBoloFestaModal(true);
+        return;
+      }
+
+      // Salvar vendas e tipoVenda no localStorage e navegar para resumo
+      try {
+        const payload = { vendas, tipoVenda };
+        // incluir detalhes da encomenda se houver
+        if (tipoVenda === 'Encomenda' && orderDetails) {
+          payload.orderDetails = orderDetails;
+        }
+        // incluir detalhes do bolo de festa se preenchidos
+        if (festaDetails && (festaDetails.peso || festaDetails.preco || festaDetails.observacao)) {
+          payload.festaDetails = festaDetails;
+        }
+        localStorage.setItem('resumoVendas', JSON.stringify(payload));
+      } catch (err) {
+        console.error('Erro ao salvar no localStorage:', err);
+      }
+      window.location.href = '/resumo-venda';
     };
 
     const [tipoVenda, setTipoVenda] = React.useState("Pronta-Entrega");
+    const [showEncomendaModal, setShowEncomendaModal] = React.useState(false);
+    const [orderDetails, setOrderDetails] = React.useState({
+      date: '',
+      time: '',
+      cpf: '',
+      clientName: '',
+      phone: '',
+      clientId: null
+    });
+    const [showBoloFestaModal, setShowBoloFestaModal] = React.useState(false);
+    const [festaDetails, setFestaDetails] = React.useState({
+      peso: '',
+      preco: '',
+      observacao: ''
+    });
+
+    const cpfDebounceRef = React.useRef(null);
+
+    function normalizeDigits(str = '') {
+      return String(str).replace(/\D/g, '');
+    }
+
+    async function fetchClientByCpf(cpf) {
+      try {
+        const resp = await axios.get(`/api/clientes`);
+        const list = Array.isArray(resp.data) ? resp.data : [];
+        const found = list.find(c => normalizeDigits(c.cpf) === normalizeDigits(cpf));
+        if (found) {
+          setOrderDetails(prev => ({ ...prev, clientId: found.id, clientName: found.nome, phone: found.telefone }));
+        } else {
+          // não encontrado: limpar id, manter cpf for user to fill name/phone
+          setOrderDetails(prev => ({ ...prev, clientId: null, clientName: prev.clientName || '', phone: prev.phone || '' }));
+        }
+      } catch (err) {
+        console.error('Erro ao buscar cliente por CPF:', err);
+      }
+    }
+
+    function handleCpfChange(e) {
+      const val = e.target.value;
+      setOrderDetails(prev => ({ ...prev, cpf: val, clientId: null }));
+      // debounce a chamada à API
+      if (cpfDebounceRef.current) clearTimeout(cpfDebounceRef.current);
+      cpfDebounceRef.current = setTimeout(() => {
+        if (normalizeDigits(val).length >= 11) {
+          fetchClientByCpf(val);
+        }
+      }, 500);
+    }
+
+    function generateTimeOptions() {
+      const options = [];
+      const start = 8 * 60; // minutes
+      const end = 20 * 60; // 20:00
+      for (let t = start; t <= end; t += 30) {
+        const h = Math.floor(t / 60).toString().padStart(2, '0');
+        const m = (t % 60).toString().padStart(2, '0');
+        options.push(`${h}:${m}`);
+      }
+      return options;
+    }
+
+    const timeOptions = generateTimeOptions();
+
+    const handleTipoVendaChange = (e) => {
+      const value = e.target.value;
+      setTipoVenda(value);
+      if (value === 'Encomenda') {
+        // Abrir modal para detalhes da encomenda
+        setShowEncomendaModal(true);
+      }
+    };
+
+    const handleConfirmEncomenda = async () => {
+      // simples validação mínima
+      if (!orderDetails.date || !orderDetails.time || !orderDetails.clientName) {
+        alert('Por favor, preencha data, horário e nome do cliente.');
+        return;
+      }
+      if (!orderDetails.clientId && !orderDetails.cpf) {
+        alert('Por favor, informe o CPF do cliente ou selecione um cliente cadastrado.');
+        return;
+      }
+
+      // se não houver clientId, cadastrar cliente
+      if (!orderDetails.clientId) {
+        try {
+          const payload = {
+            nome: orderDetails.clientName,
+            cpf: orderDetails.cpf,
+            telefone: orderDetails.phone
+          };
+          const resp = await axios.post(`/api/clientes`, payload);
+          // tentar obter id retornado
+          const newClient = resp && resp.data ? resp.data : null;
+          if (newClient && newClient.id) {
+            setOrderDetails(prev => ({ ...prev, clientId: newClient.id }));
+          }
+        } catch (err) {
+          console.error('Erro ao cadastrar cliente:', err);
+          alert('Não foi possível cadastrar o cliente. Tente novamente.');
+          return;
+        }
+      }
+
+      setShowEncomendaModal(false);
+    };
+
+    const handleCancelEncomenda = () => {
+      // volta para Pronta-Entrega se o usuário cancelar
+      setShowEncomendaModal(false);
+      setTipoVenda('Pronta-Entrega');
+      setOrderDetails({ date: '', time: '', cpf: '', clientName: '', phone: '', clientId: null });
+    };
+
+    const handleConfirmBoloFesta = () => {
+      // validações simples
+      const pesoNum = parseFloat(String(festaDetails.peso).replace(',', '.'));
+      const precoNum = parseFloat(String(festaDetails.preco).replace(',', '.'));
+      if (Number.isNaN(pesoNum) || pesoNum <= 0) {
+        alert('Informe um peso válido para o bolo (kg).');
+        return;
+      }
+      if (Number.isNaN(precoNum) || precoNum <= 0) {
+        alert('Informe um preço válido para o bolo.');
+        return;
+      }
+
+      // salvar junto ao payload e navegar
+      try {
+        const payload = { vendas, tipoVenda };
+        if (tipoVenda === 'Encomenda' && orderDetails) payload.orderDetails = orderDetails;
+        payload.festaDetails = { peso: pesoNum, preco: precoNum, observacao: festaDetails.observacao };
+        localStorage.setItem('resumoVendas', JSON.stringify(payload));
+      } catch (err) {
+        console.error('Erro ao salvar festaDetails no localStorage:', err);
+      }
+      setShowBoloFestaModal(false);
+      window.location.href = '/resumo-venda';
+    };
+
+    const handleCancelBoloFesta = () => {
+      setShowBoloFestaModal(false);
+      // não navegar — usuário pode revisar seleção
+    };
 
     return (
       <div className={styles.containerRegistroVendas}>
@@ -203,12 +350,12 @@ export function RegistroVendas() {
       <div className={styles.labelFiltro}>
       <div>
       <h4>Tipo de venda</h4>
-      <select
-      name=""
-      id=""
-      value={tipoVenda}
-      onChange={(e) => setTipoVenda(e.target.value)}
-      >
+  <select
+  name=""
+  id=""
+  value={tipoVenda}
+  onChange={handleTipoVendaChange}
+  >
       <option value="Pronta-Entrega">Pronta-Entrega</option>
       <option value="Encomenda">Encomenda</option>
       </select>
@@ -221,6 +368,107 @@ export function RegistroVendas() {
       Registrar
       </button>
       </div>
+      {/* Modal de detalhes da encomenda */}
+      <Modal isOpen={showEncomendaModal} onClose={handleCancelEncomenda}>
+        <div style={{ padding: 20, maxWidth: 480 }}>
+          <h3>Detalhes da Encomenda</h3>
+          <div style={{ marginBottom: 12 }}>
+            <label>Data de retirada</label>
+            <input
+              type="date"
+              value={orderDetails.date}
+              onChange={e => setOrderDetails(prev => ({ ...prev, date: e.target.value }))}
+              style={{ width: '100%', padding: 8, marginTop: 6 }}
+            />
+          </div>
+          <div style={{ marginBottom: 12 }}>
+            <label>CPF do cliente</label>
+            <input
+              type="text"
+              value={orderDetails.cpf}
+              onChange={handleCpfChange}
+              placeholder="000.000.000-00"
+              style={{ width: '100%', padding: 8, marginTop: 6 }}
+            />
+          </div>
+          <div style={{ marginBottom: 12 }}>
+            <label>Horário previsto</label>
+            <select
+              value={orderDetails.time}
+              onChange={e => setOrderDetails(prev => ({ ...prev, time: e.target.value }))}
+              style={{ width: '100%', padding: 8, marginTop: 6 }}
+            >
+              <option value="">-- selecione --</option>
+              {timeOptions.map(t => (
+                <option key={t} value={t}>{t}</option>
+              ))}
+            </select>
+          </div>
+          <div style={{ marginBottom: 12 }}>
+            <label>Nome do cliente</label>
+            <input
+              type="text"
+              value={orderDetails.clientName}
+              onChange={e => setOrderDetails(prev => ({ ...prev, clientName: e.target.value }))}
+              placeholder="Nome do cliente"
+              style={{ width: '100%', padding: 8, marginTop: 6 }}
+            />
+          </div>
+          <div style={{ marginBottom: 12 }}>
+            <label>Telefone do cliente</label>
+            <input
+              type="tel"
+              value={orderDetails.phone}
+              onChange={e => setOrderDetails(prev => ({ ...prev, phone: e.target.value }))}
+              placeholder="(xx) xxxxx-xxxx"
+              style={{ width: '100%', padding: 8, marginTop: 6 }}
+            />
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 8 }}>
+            <button onClick={handleCancelEncomenda} style={{ padding: '8px 12px' }}>Cancelar</button>
+            <button onClick={handleConfirmEncomenda} style={{ padding: '8px 12px' }}>Confirmar</button>
+          </div>
+        </div>
+      </Modal>
+      {/* Modal de detalhes do Bolo de Festa */}
+      <Modal isOpen={showBoloFestaModal} onClose={handleCancelBoloFesta}>
+        <div style={{ padding: 20, maxWidth: 480 }}>
+          <h3>Detalhes do Bolo de Festa</h3>
+          <div style={{ marginBottom: 12 }}>
+            <label>Peso do Bolo (kg)</label>
+            <input
+              type="text"
+              value={festaDetails.peso}
+              onChange={e => setFestaDetails(prev => ({ ...prev, peso: e.target.value }))}
+              placeholder="Ex: 2.5"
+              style={{ width: '100%', padding: 8, marginTop: 6 }}
+            />
+          </div>
+          <div style={{ marginBottom: 12 }}>
+            <label>Preço (R$)</label>
+            <input
+              type="text"
+              value={festaDetails.preco}
+              onChange={e => setFestaDetails(prev => ({ ...prev, preco: e.target.value }))}
+              placeholder="Ex: 150.00"
+              style={{ width: '100%', padding: 8, marginTop: 6 }}
+            />
+          </div>
+          <div style={{ marginBottom: 12 }}>
+            <label>Observação (Opcional)</label>
+            <textarea
+              value={festaDetails.observacao}
+              onChange={e => setFestaDetails(prev => ({ ...prev, observacao: e.target.value }))}
+              placeholder="Observações sobre o bolo"
+              style={{ width: '100%', padding: 8, marginTop: 6, minHeight: 80 }}
+            />
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 8 }}>
+            <button onClick={handleCancelBoloFesta} style={{ padding: '8px 12px' }}>Cancelar</button>
+            <button onClick={handleConfirmBoloFesta} style={{ padding: '8px 12px' }}>Confirmar</button>
+          </div>
+        </div>
+      </Modal>
       <div className={styles.filtro}>
       <h4>Filtrar por categorias</h4>
       <div>

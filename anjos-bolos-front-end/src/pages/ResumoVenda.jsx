@@ -4,26 +4,31 @@ import Footer from "../components/Footer";
 import styles from "../styles/ResumoVendas.module.css";
 import { DateInput } from 'rsuite';
 import { FaRegCalendarAlt } from "react-icons/fa";
-import { useSearchParams } from "react-router-dom";
+import { useEffect } from "react";
 
 export function ResumoVenda() {
 
-  const [searchParams] = useSearchParams();
+  const [vendas, setVendas] = React.useState([]);
 
-  const dataParam = searchParams.get("data");
-  let vendas = [];
-
-  try {
-    if (dataParam) {
-      vendas = JSON.parse(decodeURIComponent(dataParam));
-      console.log("Vendas recebidas:", vendas);
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem('resumoVendas');
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        // parsed may contain { vendas, tipoVenda }
+        if (Array.isArray(parsed.vendas)) {
+          setVendas(parsed.vendas);
+          console.log('Vendas carregadas do localStorage:', parsed.vendas);
+        } else if (Array.isArray(parsed)) {
+          // backward compatibility if only array was saved
+          setVendas(parsed);
+          console.log('Vendas carregadas do localStorage (array):', parsed);
+        }
+      }
+    } catch (error) {
+      console.error('Erro ao ler vendas do localStorage:', error);
     }
-  } catch (error) {
-    console.error("Erro ao converter parâmetro:", error);
-  }
-
-  // Agora você pode acessar a propriedade "titulo" de cada item
-  console.log(vendas[0].titulo);
+  }, []);
 
   const [startDate, setStartDate] = useState("2025-06-01");
   const [endDate, setEndDate] = useState("2025-06-12");
@@ -39,12 +44,22 @@ export function ResumoVenda() {
 
   const handlePesquisar = () => {
     console.log("Filtros aplicados:", filtros);
-    // aqui entraria lógica de filtro no backend ou no estado
   };
 
   const handleDownload = () => {
     console.log("Download solicitado");
-    // aqui você gera o CSV/Excel com base nas vendas filtradas
+  };
+
+  const handleConfirmRegister = () => {
+    try {
+      localStorage.removeItem('resumoVendas');
+      setVendas([]);
+      alert('Registro confirmado. Dados temporários removidos do localStorage.');
+      window.location.href = '/registro-vendas';
+    } catch (err) {
+      console.error('Erro ao limpar localStorage:', err);
+      alert('Ocorreu um erro ao confirmar. Veja o console para detalhes.');
+    }
   };
 
   return (
@@ -106,7 +121,7 @@ export function ResumoVenda() {
                           <input type="text" /> */}
                         </div>
               </div>
-          <button className={styles.btnPesquisar} onClick={console.log()}>
+          <button className={styles.btnPesquisar} onClick={handleConfirmRegister}>
             Registrar
           </button>
         </div>
