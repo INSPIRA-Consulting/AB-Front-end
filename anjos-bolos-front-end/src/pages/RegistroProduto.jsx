@@ -123,7 +123,7 @@ export function RegistroProduto(props) {
         categoriaProdutoId: Number(categoriaIdValue)
       };
 
-      const resp = await api.post('/produtos', payload);
+      const resp = await axios.post('/produtos', payload);
       const produtoId = resp?.data?.id || resp?.data?.produtoId || resp?.data?.idProduto;
 
       // Se houver imagem selecionada e tivermos o ID, faz o upload
@@ -155,7 +155,7 @@ export function RegistroProduto(props) {
       setErroCategorias('');
       try {
         // Ajuste a rota abaixo conforme seu backend: /categorias é um exemplo
-        const resp = await api.get('/categorias-produtos');
+        const resp = await axios.get('/api/categorias-produtos');
         const dados = Array.isArray(resp.data) ? resp.data : [];
         setCategorias(dados);
       } catch (err) {
