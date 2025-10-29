@@ -123,7 +123,7 @@ export function RegistroProduto(props) {
         categoriaProdutoId: Number(categoriaIdValue)
       };
 
-      const resp = await axios.post('/produtos', payload);
+      const resp = await axios.post('/api/produtos', payload);
       const produtoId = resp?.data?.id || resp?.data?.produtoId || resp?.data?.idProduto;
 
       // Se houver imagem selecionada e tivermos o ID, faz o upload
@@ -181,7 +181,7 @@ export function RegistroProduto(props) {
       setCarregandoIngredientes(true);
       setErroIngredientes('');
       try {
-        const resp = await axios.get('https://682cf6724fae188947546f88.mockapi.io/inspira/ingredientes');
+        const resp = await axios.get('/api/ingredientes');
         const dados = Array.isArray(resp.data) ? resp.data : [];
         setIngredientes(dados);
 
@@ -202,7 +202,7 @@ export function RegistroProduto(props) {
       setCarregandoReceitas(true);
       setErroReceitas('');
       try {
-        const resp = await axios.get('https://682cf6724fae188947546f88.mockapi.io/inspira/receitas');
+        const resp = await axios.get('/api/receitas');
         const dados = Array.isArray(resp.data) ? resp.data : [];
         setReceitasBanco(dados);
       } catch (err) {
@@ -249,7 +249,7 @@ export function RegistroProduto(props) {
       }))
     };
 
-    axios.post('https://682cf6724fae188947546f88.mockapi.io/inspira/receitas', payloadApi)
+    axios.post('/api/receitas', payloadApi)
       .then(() => {
         alert('Receita registrada com sucesso!');
       })
