@@ -44,10 +44,6 @@ jobs:
           ARGS: "-rltgDzvpO --delete" 
           # SOURCE: O que será copiado. Pode ser o diretório de build (ex: ./dist)
           SOURCE: "./anjos-bolos-front-end/dist/"
-          # reininciando o servico 'api' via docker compose
-          SCRIPT: |
-            sudo docker compose restart api
-            echo "servico reiniciado via docker compose"
       # 5. Configurar ambiente e reiniciar Docker Nginx
       - name: FE - Executar Comando Shell na EC2
         uses: appleboy/ssh-action@v1.0.3 # Action popular para SSH
