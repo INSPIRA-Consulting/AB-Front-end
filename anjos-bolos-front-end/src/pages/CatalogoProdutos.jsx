@@ -26,7 +26,7 @@ export function CatalogoProdutos(props) {
     const fetchProdutos = async (ordenacao = filtroOrdenacao) => {
         setLoading(true);
         try {
-            // Buscar TODOS os produtos para permitir filtros locais
+            
             let url = `/produtos`;
             
             // Adicionar ordenação
