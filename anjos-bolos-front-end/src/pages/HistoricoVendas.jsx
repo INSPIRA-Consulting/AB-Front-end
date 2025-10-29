@@ -5,7 +5,7 @@ import styles from "../styles/HistoricoVendas.module.css";
 import { DateInput } from 'rsuite';
 import { FaRegCalendarAlt } from "react-icons/fa";
 import { useDocumentTitle } from "../hooks/useDocumentTitle";
-import axios from 'axios';
+import api from '../provider/api';
 import { Modal } from '../components/Modal';
 
 export function HistoricoVendas(props) {
@@ -34,20 +34,11 @@ export function HistoricoVendas(props) {
 
     async function loadPedidosEItens() {
       try {
-        // tentar endpoints com /api primeiro, fallback sem /api
         let pedidosResp;
-        try {
-          pedidosResp = await axios.get('/api/pedidos');
-        } catch (err) {
-          pedidosResp = await axios.get('/pedidos');
-        }
+        pedidosResp = await api.get('/pedidos');
 
         let itensResp;
-        try {
-          itensResp = await axios.get('/api/itens-pedido');
-        } catch (err) {
-          itensResp = await axios.get('/itens-pedido');
-        }
+        itensResp = await api.get('/itens-pedido');
 
         const pedidos = Array.isArray(pedidosResp.data) ? pedidosResp.data : (pedidosResp.data && pedidosResp.data.content) ? pedidosResp.data.content : [];
         const itens = Array.isArray(itensResp.data) ? itensResp.data : (itensResp.data && itensResp.data.content) ? itensResp.data.content : [];

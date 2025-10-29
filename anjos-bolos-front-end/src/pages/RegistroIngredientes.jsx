@@ -1,6 +1,6 @@
 import styles from "../styles/RegistroIngredientes.module.css";
 import { useState } from "react";
-import axios from "axios";
+import api from "../provider/api";
 import { TextBox } from "../components/TextBox";
 import { Button } from "../components/Button";
 import { Modal } from "../components/Modal";
@@ -30,7 +30,7 @@ export function RegistroIngredientes(props) {
             quantidadeConvertida = quantidade * 1000;
         }
         
-        axios.post(`/api/ingredientes`, {
+        api.post(`/ingredientes`, {
             nome: nome,
             valorEmbalagem: valor,
             quantidadeEmbalagem: quantidadeConvertida

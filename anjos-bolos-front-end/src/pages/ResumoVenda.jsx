@@ -5,7 +5,7 @@ import styles from "../styles/ResumoVendas.module.css";
 import { DateInput } from 'rsuite';
 import { FaRegCalendarAlt } from "react-icons/fa";
 import { useEffect } from "react";
-import axios from 'axios';
+import api from '../provider/api';
 
 export function ResumoVenda() {
 
@@ -91,7 +91,7 @@ export function ResumoVenda() {
 
         let respPedido;
         try {
-          respPedido = await axios.post('/api/pedidos', pedidoPayload);
+          respPedido = await api.post('/pedidos', pedidoPayload);
         } catch (errPost) {
           console.error('Erro ao criar pedido:', errPost);
           alert('Erro ao criar pedido. Veja o console para mais detalhes.');
@@ -104,11 +104,7 @@ export function ResumoVenda() {
         if (pedidoId) {
           try {
             let listaResp;
-            try {
-              listaResp = await axios.get('/api/pedidos');
-            } catch (e1) {
-              listaResp = await axios.get('/pedidos');
-            }
+            listaResp = await api.get('/pedidos');
 
             const lista = Array.isArray(listaResp.data)
               ? listaResp.data
@@ -155,7 +151,7 @@ export function ResumoVenda() {
 
           // enviar item (usa /api/itens-pedido)
           try {
-            await axios.post('/api/itens-pedido', itemPayload);
+            await api.post('/itens-pedido', itemPayload);
           } catch (err) {
             console.error('Erro ao criar item do pedido:', err, 'payload:', itemPayload);
             // continuar com os próximos itens mesmo se um falhar

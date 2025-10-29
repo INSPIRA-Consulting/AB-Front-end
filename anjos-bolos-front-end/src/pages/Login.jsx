@@ -1,6 +1,6 @@
 import styles from "../styles/Formulario.module.css";
 import { useState } from "react";
-import axios from "axios";
+import api from "../provider/api";
 import { TextBox } from "../components/TextBox";
 import { Button } from "../components/Button";
 import { Modal } from "../components/Modal";
@@ -27,7 +27,7 @@ export function Login(props) {
         e.preventDefault();
 
         try{
-            const response = await axios.post("http://localhost:8080/usuarios/login", form)
+            const response = await api.post("/usuarios/login", form)
             setModalAberto(true)
         }
         catch(error) {

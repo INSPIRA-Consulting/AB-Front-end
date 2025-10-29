@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from 'react';
-import axios from 'axios';
 import api from '../provider/api';
 import { FaTrashCan } from "react-icons/fa6";
 import { Navbar } from '../components/Navbar';
@@ -12,7 +11,7 @@ async function uploadImagemProduto(id, file) {
   if (!id || !file) throw new Error("ID e arquivo são obrigatórios");
   const formData = new FormData();
   formData.append('imagem', file);
-  return axios.patch(`/api/produtos/${id}/imagem`, formData, {
+  return api.patch(`/produtos/${id}/imagem`, formData, {
     headers: { 'Content-Type': 'multipart/form-data' }
   });
 }
@@ -156,7 +155,7 @@ export function RegistroProduto(props) {
         categoriaProdutoId: Number(categoriaIdValue)
       };
 
-      const resp = await axios.post('/api/produtos', payload);
+      const resp = await api.post('/produtos', payload);
       const produtoId = resp?.data?.id || resp?.data?.produtoId || resp?.data?.idProduto;
 
       // Se houver imagem selecionada e tivermos o ID, faz o upload
@@ -192,7 +191,7 @@ export function RegistroProduto(props) {
       setErroCategorias('');
       try {
         // Ajuste a rota abaixo conforme seu backend: /categorias é um exemplo
-        const resp = await axios.get('/api/categorias-produtos');
+        const resp = await api.get('/categorias-produtos');
         const dados = Array.isArray(resp.data) ? resp.data : [];
         setCategorias(dados);
       } catch (err) {
@@ -218,7 +217,7 @@ export function RegistroProduto(props) {
       setCarregandoIngredientes(true);
       setErroIngredientes('');
       try {
-        const resp = await axios.get('/api/ingredientes');
+        const resp = await api.get('/ingredientes');
         const dados = Array.isArray(resp.data) ? resp.data : [];
         setIngredientes(dados);
 
@@ -239,7 +238,7 @@ export function RegistroProduto(props) {
       setCarregandoReceitas(true);
       setErroReceitas('');
       try {
-        const resp = await axios.get('/api/receitas');
+        const resp = await api.get('/receitas');
         const dados = Array.isArray(resp.data) ? resp.data : [];
         setReceitasBanco(dados);
       } catch (err) {
@@ -285,7 +284,7 @@ export function RegistroProduto(props) {
       }))
     };
 
-    axios.post('/api/receitas', payloadApi)
+    api.post('/receitas', payloadApi)
       .then(() => {
         toast.success('Receita registrada com sucesso!');
       })

@@ -1,6 +1,6 @@
 import styles from "../styles/Formulario.module.css";
 import { useState } from "react";
-import axios from "axios";
+import api from "../provider/api";
 import { TextBox } from "../components/TextBox";
 import { Button } from "../components/Button";
 import { Modal } from "../components/Modal";
@@ -58,7 +58,7 @@ export function Cadastro(props) {
         e.preventDefault();
 
         try{
-            const response = await axios.post(`/api/usuarios`, form)
+            const response = await api.post(`/usuarios`, form)
             setModalAberto(true)
         }
         catch(error) {

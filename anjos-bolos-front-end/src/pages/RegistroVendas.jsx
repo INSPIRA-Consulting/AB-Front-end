@@ -4,7 +4,7 @@ import { Navbar } from "../components/Navbar";
 import styles from "../styles/RegistroVendas.module.css";
 import { Produto } from "../components/Produto";
 import { Modal } from "../components/Modal";
-import axios from 'axios';
+import api from '../provider/api';
 import Footer from "../components/Footer";
 import { useDocumentTitle } from "../hooks/useDocumentTitle";
 
@@ -41,7 +41,7 @@ export function RegistroVendas(props) {
 
       async function loadProdutos() {
         try {
-          const resp = await axios.get(`/api/produtos`);
+          const resp = await api.get(`/produtos`);
           const content = resp && resp.data && resp.data.content ? resp.data.content : [];
           const mapped = content.map(p => {
             const imagem = p.nomeImagem ? `https://bucket-raw-anjos-bolos-1.s3.us-east-1.amazonaws.com/bolos/${p.nomeImagem}` : '';
@@ -70,12 +70,7 @@ export function RegistroVendas(props) {
         async function loadReceitas() {
           try {
             let resp;
-            try {
-              resp = await axios.get(`/api/receitas`);
-            } catch (err) {
-              // fallback para rota sem /api
-              resp = await axios.get(`/receitas`);
-            }
+            resp = await api.get(`/receitas`);
             const list = resp && resp.data ? resp.data : [];
             if (!mounted) return;
             const m = list.filter(r => String(r.tipoReceita || '').toLowerCase().startsWith('massa')).map(r => ({ id: r.id, nome: r.nome }));
@@ -259,7 +254,7 @@ export function RegistroVendas(props) {
 
     async function fetchClientByCpf(cpf) {
       try {
-        const resp = await axios.get(`/api/clientes`);
+        const resp = await api.get(`/clientes`);
         const list = Array.isArray(resp.data) ? resp.data : [];
         const found = list.find(c => normalizeDigits(c.cpf) === normalizeDigits(cpf));
         if (found) {
@@ -327,7 +322,7 @@ export function RegistroVendas(props) {
             cpf: orderDetails.cpf,
             telefone: orderDetails.phone
           };
-          const resp = await axios.post(`/api/clientes`, payload);
+          const resp = await api.post(`/clientes`, payload);
           // tentar obter id retornado
           const newClient = resp && resp.data ? resp.data : null;
           if (newClient && newClient.id) {
