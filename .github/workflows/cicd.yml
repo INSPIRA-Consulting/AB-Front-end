@@ -13,79 +13,72 @@ jobs:
       - name: Checkout do Repositório
         uses: actions/checkout@v4
 
-      # 2. Deploy (Transferência de código fonte)
-      - name: FE - Copiar código fonte para EC2
+      # 2. Configuração do ambiente Node
+      - name: FE - Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          
+      # 3. Build da aplicação (Se for uma aplicação que precisa ser construída, ex: React, Angular, Vue)
+      - name: FE - Instalar Dependências e Fazer Build
+        run: |
+          # Criar arquivo .env com o IP privado
+          echo "VITE_IP_API=${{ secrets.REMOTE_HOST_PRIVADO }}" > .env
+          echo "Arquivo .env criado com IP_API valor do IP privado"
+          npm install
+          npm install axios
+          npm run build --if-present 
+          # Se sua app não precisar de build, remova esta etapa
+        working-directory: ./anjos-bolos-front-end
+
+      # 4. Deploy (Transferência de arquivos e execução de comandos remotos)
+      - name: FE - Copiar arquivos e Deploy (Usando SSH com rsync)
         uses: easingthemes/ssh-deploy@main
         with:
           SSH_PRIVATE_KEY: ${{ secrets.EC2_SSH_KEY }}
           REMOTE_HOST: ${{ secrets.REMOTE_HOST }}
           REMOTE_USER: ${{ secrets.REMOTE_USER }}
-          TARGET: /home/${{ secrets.REMOTE_USER }}/frontend-build
-          ARGS: "-rltgDzvp --delete"
-          SOURCE: "./anjos-bolos-front-end/"
-          EXCLUDE: "/node_modules/, /dist/, /.git/"
-      # 3. Build no servidor e configurar ambiente
+          TARGET: /home/${{ secrets.REMOTE_USER }}/frontend/anjos-bolos-front-end
+          # ARGS para rsync: -rltgoDzvO para cópia recursiva, compressão e outros
+          ARGS: "-rltgoDzvO --delete" 
+          # SOURCE: O que será copiado. Pode ser o diretório de build (ex: ./dist)
+          SOURCE: "./anjos-bolos-front-end/dist/"
+          # reininciando o servico 'api' via docker compose
+          SCRIPT: |
+            sudo docker compose restart api
+            echo "servico reiniciado via docker compose"
+      # 5. Atualizando o IP privado da API e reininciado o docker do Ngnix
       - name: FE - Executar Comando Shell na EC2
-        uses: appleboy/ssh-action@v1.0.3
+        uses: appleboy/ssh-action@v1.0.3 # Action popular para SSH
         with:
           host: ${{ secrets.REMOTE_HOST }} 
           username: ${{ secrets.REMOTE_USER }}
-          key: ${{ secrets.EC2_SSH_KEY }}
+          key: ${{ secrets.EC2_SSH_KEY }}  
+          # O Comando ou Script a ser Executado no EC2
+          # Use o pipe '|' para comandos de múltiplas linhas
           script: |
             set -e
 
-            # Verificar e instalar Node.js se não estiver instalado
-            if ! command -v node &> /dev/null; then
-              echo "Node.js não encontrado. Instalando..."
-              curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
-              sudo apt-get install -y nodejs
-              echo "Node.js instalado com sucesso"
-            else
-              echo "Node.js já está instalado: $(node -v)"
+            # Remover index.html da pasta frontend (se existir)
+            if [ -f /home/${{ secrets.REMOTE_USER }}/frontend/index.html ]; then
+              rm /home/${{ secrets.REMOTE_USER }}/frontend/index.html
+              echo "index.html removido da pasta /frontend"
             fi
 
-            # Verificar npm
-            if ! command -v npm &> /dev/null; then
-              echo "npm não encontrado. Instalando..."
-              sudo apt-get install -y npm
-            else
-              echo "npm já está instalado: $(npm -v)"
-            fi
-
-            # Criar arquivo .env com o IP privado ANTES do build
-            cd /home/${{ secrets.REMOTE_USER }}/frontend-build
+            cd /home/${{ secrets.REMOTE_USER }}/frontend/anjos-bolos-front-end
+            
+            # Criar arquivo .env com o IP privado
             echo "IP_API=${{ secrets.REMOTE_HOST_PRIVADO }}" > .env
-            echo "Arquivo .env criado com IP_API=${{ secrets.REMOTE_HOST_PRIVADO }}"
+            echo "Arquivo .env criado com IP_API valor do IP privado"
 
-            # Instalar dependências e buildar com o .env correto
-            echo "Instalando dependências..."
-            npm install
-            echo "Executando build..."
-            npm run build
-            echo "Build concluído com variáveis de ambiente corretas"
-
-            # Copiar build para pasta do Nginx
-            sudo rm -rf /home/${{ secrets.REMOTE_USER }}/frontend/*
-            sudo cp -r dist/* /home/${{ secrets.REMOTE_USER }}/frontend/
-            echo "Arquivos copiados para /frontend"
-
-            # Corrigir permissões
-            sudo chmod -R 755 /home/${{ secrets.REMOTE_USER }}/frontend
-            sudo find /home/${{ secrets.REMOTE_USER }}/frontend -type f -exec chmod 644 {} \;
+            # Corrigir permissões dos arquivos (777 para evitar problemas com Docker)
+            sudo chmod -R 755 /home/${{ secrets.REMOTE_USER }}/frontend/anjos-bolos-front-end
+            sudo find /home/${{ secrets.REMOTE_USER }}/frontend/anjos-bolos-front-end -type f -exec chmod 644 {} \;
             echo "Permissões corrigidas"
 
-            # Reiniciar API (se o docker-compose estiver na raiz)
-            if [ -f /home/${{ secrets.REMOTE_USER }}/docker-compose.yml ]; then
-              cd /home/${{ secrets.REMOTE_USER }}
-              sudo docker compose restart api
-              echo "API reiniciada"
-            fi
+            # Reiniciar o Docker Compose do frontend
+            sudo docker compose down
+            sudo docker compose up -d
+            echo "Docker Compose reiniciado"
 
-            # Reiniciar Nginx
-            if [ -f /home/${{ secrets.REMOTE_USER }}/frontend/docker-compose.yml ]; then
-              cd /home/${{ secrets.REMOTE_USER }}/frontend
-              sudo docker compose restart web_server
-              echo "Nginx reiniciado"
-            fi
-
-            echo "Deploy concluído com sucesso!"
+            echo "Configuração do frontend concluída"
