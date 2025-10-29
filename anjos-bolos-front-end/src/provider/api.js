@@ -16,13 +16,4 @@ api.interceptors.response.use(
     }
 );
 
-export async function uploadImagemProduto(id, file) {
-    if (!id || !file) throw new Error("ID e arquivo são obrigatórios");
-    const formData = new FormData();
-    formData.append('imagem', file);
-    return api.patch(`/produtos/${id}/imagem`, formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-    });
-}
-
 export default api;
