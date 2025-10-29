@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - master # O branch que acionará o deploy
+# Deploy
 jobs:
   build_and_deploy:
     runs-on: ubuntu-latest
