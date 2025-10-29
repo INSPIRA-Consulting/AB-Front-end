@@ -22,6 +22,12 @@ jobs:
       # 3. Build da aplicação (Se for uma aplicação que precisa ser construída, ex: React, Angular, Vue)
       - name: FE - Instalar Dependências e Fazer Build
         run: |
+             # Criar arquivo .env com o IP privado ANTES do build
+             echo "VITE_IP_API=${{ secrets.REMOTE_HOST_PRIVADO }}" > .env
+
+             echo "📋 Conteúdo do arquivo .env:"
+             cat .env
+
              npm install
              npm install axios
              
@@ -29,8 +35,6 @@ jobs:
              npm run build
              
              echo "✅ Build concluído!"
-             echo "📁 Verificando arquivos buildados:"
-             ls -la dist/
         working-directory: ./anjos-bolos-front-end
 
       # 4. Deploy (Transferência de arquivos e execução de comandos remotos)
@@ -45,47 +49,21 @@ jobs:
           ARGS: "-rltgDzvpO --delete" 
           # SOURCE: O que será copiado. Pode ser o diretório de build (ex: ./dist)
           SOURCE: "./anjos-bolos-front-end/dist/"
-      # 5. Atualizando o IP privado da API e reiniciando o docker do Nginx
+      # 5. Reiniciar Nginx
       - name: FE - Executar Comando Shell na EC2
-        uses: appleboy/ssh-action@v1.0.3 # Action popular para SSH
+        uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.REMOTE_HOST }} 
           username: ${{ secrets.REMOTE_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}  
-
-          # O Comando ou Script a ser Executado no EC2
-          # Use o pipe '|' para comandos de múltiplas linhas
           script: |
             set -e
-
-                  export IP_PORTA_API=${{ secrets.REMOTE_HOST_PRIVADO }}:8080
-                  echo "Variável de IP e porta da API criada: $IP_PORTA_API"
-                  
-                  cat > /home/${{ secrets.REMOTE_USER }}/nginx-config/default.conf << 'EOF'
-                  server {
-                    listen 80;
-                    server_name _;
-
-                    location / {
-                      root /usr/share/nginx/html;
-                      try_files $uri $uri/ /index.html;
-                    }
-
-                    location /api/ {
-                      proxy_pass http://${IP_PORTA_API}/;
-                      proxy_set_header Host $host;
-                      proxy_set_header X-Real-IP $remote_addr;
-                      proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-                      proxy_set_header X-Forwarded-Proto $scheme;
-                    }
-                  }
-                  EOF
-                  envsubst '${IP_PORTA_API}' < /home/${{ secrets.REMOTE_USER }}/nginx-config/default.conf > /home/${{ secrets.REMOTE_USER }}/nginx-config/default.conf.tmp
-                  mv /home/${{ secrets.REMOTE_USER }}/nginx-config/default.conf.tmp /home/${{ secrets.REMOTE_USER }}/nginx-config/default.conf
-                  echo "Arquivo default.conf do nginx criado"
-
-                  docker compose -f /home/${{ secrets.REMOTE_USER }}/compose.yaml down
-                  echo "Docker compose do Nginx parado"
-                  
-                  docker compose -f /home/${{ secrets.REMOTE_USER }}/compose.yaml up -d --build
-                  echo "Docker compose do Nginx reiniciado"
+            cd /home/${{ secrets.REMOTE_USER }}/frontend
+            
+            # Corrigir permissões
+            sudo chmod -R 755 /home/${{ secrets.REMOTE_USER }}/frontend
+            sudo find /home/${{ secrets.REMOTE_USER }}/frontend -type f -exec chmod 644 {} \;
+            
+            # Reiniciar Nginx
+            docker compose -f /home/${{ secrets.REMOTE_USER }}/compose.yaml restart web_server || true
+            echo "Nginx reiniciado"
