@@ -35,16 +35,16 @@ jobs:
           SSH_PRIVATE_KEY: ${{ secrets.EC2_SSH_KEY }}
           REMOTE_HOST: ${{ secrets.REMOTE_HOST }}
           REMOTE_USER: ${{ secrets.REMOTE_USER }}
-          TARGET: /home/${{ secrets.REMOTE_USER }}/frontend/anjos-bolos-front-end
+          TARGET: /home/${{ secrets.REMOTE_USER }}/frontend
           # ARGS para rsync: removido -o para não preservar owner
-          ARGS: "-rltgDzvp --delete" 
+          ARGS: "-rltgDzvpO --delete" 
           # SOURCE: O que será copiado. Pode ser o diretório de build (ex: ./dist)
           SOURCE: "./anjos-bolos-front-end/dist/"
           # reininciando o servico 'api' via docker compose
           SCRIPT: |
             sudo docker compose restart api
             echo "servico reiniciado via docker compose"
-      # 5. Configurar Nginx e subir Docker
+      # 5. Configurar ambiente e reiniciar Docker Nginx
       - name: FE - Executar Comando Shell na EC2
         uses: appleboy/ssh-action@v1.0.3 # Action popular para SSH
         with:
@@ -56,48 +56,22 @@ jobs:
           script: |
             set -e
 
-            # Remover index.html da pasta frontend (se existir)
-            if [ -f /home/${{ secrets.REMOTE_USER }}/frontend/index.html ]; then
-              rm /home/${{ secrets.REMOTE_USER }}/frontend/index.html
-              echo "index.html removido da pasta /frontend"
-            fi
-
-            cd /home/${{ secrets.REMOTE_USER }}/frontend/anjos-bolos-front-end
+            cd /home/${{ secrets.REMOTE_USER }}/frontend
             
             # Criar arquivo .env com o IP privado
             echo "IP_API=${{ secrets.REMOTE_HOST_PRIVADO }}" > .env
             echo "Arquivo .env criado com IP_API valor do IP privado"
 
-            # Configurar Nginx para servir o frontend
-            sudo tee /etc/nginx/sites-available/frontend > /dev/null <<EOF
-            server {
-                listen 80;
-                server_name _;
-
-                root /home/${{ secrets.REMOTE_USER }}/frontend/anjos-bolos-front-end;
-                index index.html;
-
-                location / {
-                    try_files \$uri /index.html;
-                }
-            }
-            EOF
-
-            # Habilitar o site e remover default
-            sudo rm -f /etc/nginx/sites-enabled/default
-            sudo ln -sf /etc/nginx/sites-available/frontend /etc/nginx/sites-enabled/
-            echo "Configuração do Nginx criada"
-
-            # Testar configuração do Nginx
-            sudo nginx -t
-
-            # Corrigir permissões
-            sudo chmod -R 755 /home/${{ secrets.REMOTE_USER }}/frontend/anjos-bolos-front-end
-            sudo find /home/${{ secrets.REMOTE_USER }}/frontend/anjos-bolos-front-end -type f -exec chmod 644 {} \;
+            # Corrigir permissões para o Docker acessar
+            sudo chmod -R 755 /home/${{ secrets.REMOTE_USER }}/frontend
+            sudo find /home/${{ secrets.REMOTE_USER }}/frontend -type f -exec chmod 644 {} \;
             echo "Permissões corrigidas"
 
-            # Reiniciar Nginx
-            sudo systemctl restart nginx
-            echo "Nginx reiniciado"
+            # Navegar para pasta do docker-compose do Nginx
+            cd /home/${{ secrets.REMOTE_USER }}/frontend
+
+            # Reiniciar o container do Nginx para recarregar os arquivos
+            sudo docker compose restart web_server
+            echo "Container Nginx reiniciado"
 
             echo "Configuração do frontend concluída"
