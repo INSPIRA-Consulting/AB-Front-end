@@ -5,6 +5,7 @@ import styles from "../styles/ResumoVendas.module.css";
 import { DateInput } from 'rsuite';
 import { FaRegCalendarAlt } from "react-icons/fa";
 import { useEffect } from "react";
+import axios from 'axios';
 
 export function ResumoVenda() {
 
@@ -51,15 +52,126 @@ export function ResumoVenda() {
   };
 
   const handleConfirmRegister = () => {
-    try {
-      localStorage.removeItem('resumoVendas');
-      setVendas([]);
-      alert('Registro confirmado. Dados temporários removidos do localStorage.');
-      window.location.href = '/registro-vendas';
-    } catch (err) {
-      console.error('Erro ao limpar localStorage:', err);
-      alert('Ocorreu um erro ao confirmar. Veja o console para detalhes.');
-    }
+    // registrar pedido e itens no backend
+    (async () => {
+      try {
+        const raw = localStorage.getItem('resumoVendas');
+        if (!raw) {
+          alert('Nenhuma venda encontrada no resumo.');
+          return;
+        }
+
+        const parsed = JSON.parse(raw);
+        const vendasPayload = Array.isArray(parsed.vendas) ? parsed.vendas : (Array.isArray(parsed) ? parsed : []);
+
+        // montar payload do pedido
+        const now = new Date();
+        const formatDateTime = (dt) => {
+          const yyyy = dt.getFullYear();
+          const mm = String(dt.getMonth() + 1).padStart(2, '0');
+          const dd = String(dt.getDate()).padStart(2, '0');
+          const hh = String(dt.getHours()).padStart(2, '0');
+          const min = String(dt.getMinutes()).padStart(2, '0');
+          const ss = String(dt.getSeconds()).padStart(2, '0');
+          return `${yyyy}-${mm}-${dd} ${hh}:${min}:${ss}`;
+        };
+
+        const clienteId = parsed.orderDetails?.clientId || parsed.clienteId || null;
+
+        const pedidoPayload = {
+          dataPedido: formatDateTime(now),
+          dataRetirada: formatDateTime(now),
+          dataPagamento: formatDateTime(now),
+          formaPagamento: parsed.formaPagamento || 'VOUCHER',
+          status: 'CONFIRMADO',
+          observacao: parsed.observacao || 'Sem observação',
+          usuarioId: parsed.usuarioId || 1,
+          clienteId: clienteId || 1
+        };
+
+        let respPedido;
+        try {
+          respPedido = await axios.post('/api/pedidos', pedidoPayload);
+        } catch (errPost) {
+          console.error('Erro ao criar pedido:', errPost);
+          alert('Erro ao criar pedido. Veja o console para mais detalhes.');
+          return;
+        }
+
+        let pedidoId = true;
+
+        // se o POST não retornou id, buscar o pedido mais recente via GET /api/pedidos (fallback /pedidos)
+        if (pedidoId) {
+          try {
+            let listaResp;
+            try {
+              listaResp = await axios.get('/api/pedidos');
+            } catch (e1) {
+              listaResp = await axios.get('/pedidos');
+            }
+
+            const lista = Array.isArray(listaResp.data)
+              ? listaResp.data
+              : (listaResp.data && listaResp.data.content) ? listaResp.data.content : [];
+
+              console.log('Lista de pedidos obtida para busca do mais recente:', lista);
+            if (lista.length > 0) {
+              // escolher o pedido mais recente: prefere maior id numérico, senão pela data mais recente
+              const hasNumericId = lista.every(p => p && p.id !== undefined && !isNaN(Number(p.id)));
+              let maisRecente = null;
+              if (hasNumericId) {
+                maisRecente = lista.reduce((a, b) => (Number(a.id) > Number(b.id) ? a : b));
+              } else {
+                maisRecente = lista.reduce((a, b) => {
+                  const da = new Date(a.dataPedido || a.dataPedidoString || a.dataPedidoAt || 0);
+                  const db = new Date(b.dataPedido || b.dataPedidoString || b.dataPedidoAt || 0);
+                  return da > db ? a : b;
+                });
+              }
+
+              pedidoId = maisRecente.id || maisRecente.pedidoId || maisRecente.idPedido;
+            }
+          } catch (errBusca) {
+            console.error('Erro ao buscar pedidos para obter id mais recente:', errBusca);
+          }
+        }
+
+        if (!pedidoId) {
+          console.error('Não foi possível determinar o id do pedido (nem pelo POST, nem pelo GET).', respPedido);
+          alert('Pedido criado, mas não foi possível obter o id do pedido. Confira o console.');
+          return;
+        }
+
+        // postar itens do pedido
+        // tentativa de mapear produtoId quando disponível em cada venda
+        for (const v of vendasPayload) {
+          const isBolo = v.nome && String(v.nome).toLowerCase().includes('bolo');
+          const itemPayload = {
+            pedidoId: pedidoId,
+            produtoId: v.produtoId || v.produto?.id || null,
+            quantidade: Number(v.quantidade || 1),
+            peso: isBolo ? (Number(v.peso) || 0) : (Number(v.peso) || 1000.0)
+          };
+
+          // enviar item (usa /api/itens-pedido)
+          try {
+            await axios.post('/api/itens-pedido', itemPayload);
+          } catch (err) {
+            console.error('Erro ao criar item do pedido:', err, 'payload:', itemPayload);
+            // continuar com os próximos itens mesmo se um falhar
+          }
+        }
+
+        // sucesso
+        localStorage.removeItem('resumoVendas');
+        setVendas([]);
+        alert('Pedido e itens registrados com sucesso.');
+        window.location.href = '/registro-vendas';
+      } catch (err) {
+        console.error('Erro ao registrar pedido:', err);
+        alert('Ocorreu um erro ao registrar o pedido. Veja o console para detalhes.');
+      }
+    })();
   };
 
   return (
