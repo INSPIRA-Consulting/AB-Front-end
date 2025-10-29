@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - master # O branch que acionará o deploy
-# Deploy
 jobs:
   build_and_deploy:
     runs-on: ubuntu-latest
@@ -57,9 +56,22 @@ jobs:
           script: |
             set -e
 
+            # Remover index.html da pasta frontend (se existir)
+            if [ -f /home/${{ secrets.REMOTE_USER }}/frontend/index.html ]; then
+              rm /home/${{ secrets.REMOTE_USER }}/frontend/index.html
+              echo "index.html removido da pasta /frontend"
+            fi
+
+            # Navegar para a pasta do projeto
             cd /home/${{ secrets.REMOTE_USER }}/frontend/anjos-bolos-front-end
+            
+            # Criar arquivo .env com o IP privado
             echo "IP_API=${{ secrets.REMOTE_HOST_PRIVADO }}" > .env
             echo "Arquivo .env criado com IP_API valor do IP privado"
+
+            # Executar docker compose na pasta anjos-bolos-front-end
+            sudo docker compose up -d
+            echo "Docker compose executado na pasta anjos-bolos-front-end"
 
             echo "Configuração do frontend concluída"
 
