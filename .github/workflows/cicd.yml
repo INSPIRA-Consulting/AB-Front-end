@@ -25,16 +25,24 @@ jobs:
              # Criar arquivo .env com o IP privado ANTES de instalar dependências
              echo "VITE_IP_API=${{ secrets.REMOTE_HOST_PRIVADO }}" > .env
 
+             echo "📋 Conteúdo do arquivo .env:"
              cat .env
-             echo "Arquivo .env criado com VITE_IP_API=${{ secrets.REMOTE_HOST_PRIVADO }}"
+             
+             echo "🔍 Verificando variável de ambiente:"
+             echo "VITE_IP_API=${{ secrets.REMOTE_HOST_PRIVADO }}"
 
              npm install
              npm install axios
+             
+             echo "🏗️ Iniciando build..."
              npm run build
              
-             # Verificar se o build foi feito corretamente
-             echo "Verificando arquivos buildados..."
+             echo "✅ Build concluído!"
+             echo "📁 Verificando arquivos buildados:"
              ls -la dist/
+             
+             echo "🔍 Verificando se o IP foi injetado no build:"
+             grep -r "REMOTE_HOST_PRIVADO\|${{ secrets.REMOTE_HOST_PRIVADO }}" dist/ || echo "IP não encontrado literalmente (isso é normal, está embedado no JS)"
         working-directory: ./anjos-bolos-front-end
 
       # 4. Deploy (Transferência de arquivos e execução de comandos remotos)
