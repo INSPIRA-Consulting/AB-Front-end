@@ -36,15 +36,15 @@ jobs:
           REMOTE_HOST: ${{ secrets.REMOTE_HOST }}
           REMOTE_USER: ${{ secrets.REMOTE_USER }}
           TARGET: /home/${{ secrets.REMOTE_USER }}/frontend/anjos-bolos-front-end
-          # ARGS para rsync: -rltgoDzvO para cópia recursiva, compressão e outros
-          ARGS: "-rltgoDzvO --delete" 
+          # ARGS para rsync: removido -o para não preservar owner
+          ARGS: "-rltgDzvp --delete" 
           # SOURCE: O que será copiado. Pode ser o diretório de build (ex: ./dist)
           SOURCE: "./anjos-bolos-front-end/dist/"
           # reininciando o servico 'api' via docker compose
           SCRIPT: |
             sudo docker compose restart api
             echo "servico reiniciado via docker compose"
-      # 5. Atualizando o IP privado da API e reininciado o docker do Ngnix
+      # 5. Atualizando o IP privado da API e corrigindo permissões
       - name: FE - Executar Comando Shell na EC2
         uses: appleboy/ssh-action@v1.0.3 # Action popular para SSH
         with:
@@ -67,5 +67,15 @@ jobs:
             # Criar arquivo .env com o IP privado
             echo "IP_API=${{ secrets.REMOTE_HOST_PRIVADO }}" > .env
             echo "Arquivo .env criado com IP_API valor do IP privado"
+
+            # Corrigir permissões - arquivos devem ter leitura para todos
+            sudo chmod -R 755 .
+            sudo find . -type f -exec chmod 644 {} \;
+            echo "Permissões corrigidas (755 diretórios, 644 arquivos)"
+
+            # Reiniciar Docker Compose para aplicar mudanças
+            sudo docker compose down
+            sudo docker compose up -d
+            echo "Docker Compose reiniciado"
 
             echo "Configuração do frontend concluída"
