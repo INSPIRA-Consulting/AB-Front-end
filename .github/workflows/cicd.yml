@@ -23,9 +23,10 @@ jobs:
       - name: FE - Instalar Dependências e Fazer Build
         run: |
              # Criar arquivo .env com o IP privado ANTES de instalar dependências
-             echo "IP_API=${{ secrets.REMOTE_HOST_PRIVADO }}" > .env
+             echo "VITE_IP_API=${{ secrets.REMOTE_HOST_PRIVADO }}" > .env
+
              cat .env
-             echo "Arquivo .env criado com IP_API=${{ secrets.REMOTE_HOST_PRIVADO }}"
+             echo "Arquivo .env criado com VITE_IP_API=${{ secrets.REMOTE_HOST_PRIVADO }}"
 
              npm install
              npm install axios

@@ -10,7 +10,7 @@ export default defineConfig(({ mode }) => {
     server: {
       proxy: {
         '/api': {
-          target: `http://${env.IP_API}:8080`,
+          target: `http://${env.VITE_IP_API}:8080`,
           changeOrigin: true,
           rewrite: (path) => path.replace(/^\/api/, '')
         }
