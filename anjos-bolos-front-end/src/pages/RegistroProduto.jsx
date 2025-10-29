@@ -1,11 +1,20 @@
 import { useEffect, useRef, useState } from 'react';
 import axios from 'axios';
-import api, { uploadImagemProduto } from '../provider/api';
+import api from '../provider/api';
 import { FaTrashCan } from "react-icons/fa6";
 import { Navbar } from '../components/Navbar';
 import { Modal } from '../components/Modal';
 import styles from '../styles/RegistroProduto.module.css';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
+
+async function uploadImagemProduto(id, file) {
+  if (!id || !file) throw new Error("ID e arquivo são obrigatórios");
+  const formData = new FormData();
+  formData.append('imagem', file);
+  return axios.patch(`/api/produtos/${id}/imagem`, formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  });
+}
 
 export function RegistroProduto(props) {
   useDocumentTitle(props.titulo);
@@ -57,7 +66,6 @@ export function RegistroProduto(props) {
     return '';
   }
 
-  // Converte unidade da API de receitas para sufixo curto
   function mapUnidadeFromApi(unidadeApi) {
     const u = String(unidadeApi || '').toUpperCase();
     if (u === 'GRAMA') return 'g';
@@ -68,7 +76,6 @@ export function RegistroProduto(props) {
     return '';
   }
 
-  // Converte a unidade curta para o formato esperado pela API de receitas
   function mapUnidadeToApi(unidadeCurta) {
     const u = String(unidadeCurta || '').toLowerCase();
     if (u === 'g') return 'GRAMA';
@@ -239,7 +246,6 @@ export function RegistroProduto(props) {
       }))
     };
 
-    // POST para a API de receitas conforme o modelo informado
     const payloadApi = {
       nome: nomeReceita,
       ingredientes: ingredientesReceita.map(ing => ({
