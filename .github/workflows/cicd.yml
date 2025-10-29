@@ -57,30 +57,27 @@ jobs:
           ARGS: "-rltgDzvpO --delete" 
           # SOURCE: O que será copiado. Pode ser o diretório de build (ex: ./dist)
           SOURCE: "./anjos-bolos-front-end/dist/"
-      # 5. Configurar ambiente e reiniciar Docker Nginx
+      # 5. Atualizando o IP privado da API e reiniciando o docker do Nginx
       - name: FE - Executar Comando Shell na EC2
         uses: appleboy/ssh-action@v1.0.3 # Action popular para SSH
         with:
           host: ${{ secrets.REMOTE_HOST }} 
           username: ${{ secrets.REMOTE_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}  
+
           # O Comando ou Script a ser Executado no EC2
           # Use o pipe '|' para comandos de múltiplas linhas
           script: |
             set -e
 
-            cd /home/${{ secrets.REMOTE_USER }}/frontend
-          
-            # Corrigir permissões para o Docker acessar
-            sudo chmod -R 755 /home/${{ secrets.REMOTE_USER }}/frontend
-            sudo find /home/${{ secrets.REMOTE_USER }}/frontend -type f -exec chmod 644 {} \;
-            echo "Permissões corrigidas"
+            export IP_PORTA_API=${{ secrets.REMOTE_HOST_PRIVADO }}:8080
+            echo "Variável de IP e porta da API criada: $IP_PORTA_API"
+            
+            envsubst '${IP_PORTA_API}' < /home/${{ secrets.REMOTE_USER }}/frontend/nginx/templates/default.conf.template > /home/${{ secrets.REMOTE_USER }}/frontend/nginx/conf.d/default.conf
+            echo "Arquivo default.conf do nginx criado"
 
-            # Navegar para pasta do docker-compose do Nginx
-            cd /home/${{ secrets.REMOTE_USER }}/frontend
-
-            # Reiniciar o container do Nginx para recarregar os arquivos
-            sudo docker compose restart web_server
-            echo "Container Nginx reiniciado"
-
-            echo "Configuração do frontend concluída"
+            docker compose -f /home/${{ secrets.REMOTE_USER }}/compose.yaml down
+            echo "Docker compose do Nginx parado"
+            
+            docker compose -f /home/${{ secrets.REMOTE_USER }}/compose.yaml up -d --build
+            echo "Docker compose do Nginx reiniciado"
