@@ -34,13 +34,33 @@ jobs:
           script: |
             set -e
 
+            # Verificar e instalar Node.js se não estiver instalado
+            if ! command -v node &> /dev/null; then
+              echo "Node.js não encontrado. Instalando..."
+              curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+              sudo apt-get install -y nodejs
+              echo "Node.js instalado com sucesso"
+            else
+              echo "Node.js já está instalado: $(node -v)"
+            fi
+
+            # Verificar npm
+            if ! command -v npm &> /dev/null; then
+              echo "npm não encontrado. Instalando..."
+              sudo apt-get install -y npm
+            else
+              echo "npm já está instalado: $(npm -v)"
+            fi
+
             # Criar arquivo .env com o IP privado ANTES do build
             cd /home/${{ secrets.REMOTE_USER }}/frontend-build
             echo "IP_API=${{ secrets.REMOTE_HOST_PRIVADO }}" > .env
             echo "Arquivo .env criado com IP_API=${{ secrets.REMOTE_HOST_PRIVADO }}"
 
             # Instalar dependências e buildar com o .env correto
+            echo "Instalando dependências..."
             npm install
+            echo "Executando build..."
             npm run build
             echo "Build concluído com variáveis de ambiente corretas"
 
@@ -54,14 +74,18 @@ jobs:
             sudo find /home/${{ secrets.REMOTE_USER }}/frontend -type f -exec chmod 644 {} \;
             echo "Permissões corrigidas"
 
-            # Reiniciar API
-            cd /home/${{ secrets.REMOTE_USER }}
-            sudo docker compose restart api
-            echo "API reiniciada"
+            # Reiniciar API (se o docker-compose estiver na raiz)
+            if [ -f /home/${{ secrets.REMOTE_USER }}/docker-compose.yml ]; then
+              cd /home/${{ secrets.REMOTE_USER }}
+              sudo docker compose restart api
+              echo "API reiniciada"
+            fi
 
             # Reiniciar Nginx
-            cd /home/${{ secrets.REMOTE_USER }}/frontend
-            sudo docker compose restart web_server
-            echo "Nginx reiniciado"
+            if [ -f /home/${{ secrets.REMOTE_USER }}/frontend/docker-compose.yml ]; then
+              cd /home/${{ secrets.REMOTE_USER }}/frontend
+              sudo docker compose restart web_server
+              echo "Nginx reiniciado"
+            fi
 
             echo "Deploy concluído com sucesso!"
