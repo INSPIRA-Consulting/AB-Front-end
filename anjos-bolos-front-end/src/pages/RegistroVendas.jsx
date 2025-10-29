@@ -186,7 +186,7 @@ export function RegistroVendas(props) {
       setVendas((prevVendas) => {
           const updatedVendas = [
             ...prevVendas,
-            { nome: produto.titulo, valorFinal: produto.valor, categoriaEntrega: tipoVenda, produtoId: produto.id || null },
+            { nome: produto.titulo, valorFinal: produto.valor, categoriaEntrega: tipoVenda, produtoId: produto.id || null, categoria: produto.categoria || '' },
           ];
         console.log("Produto selecionado:", produto.titulo);
   console.log("Todas as vendas:", vendas);
@@ -196,7 +196,7 @@ export function RegistroVendas(props) {
 
   // resumoVendas removed (not used)
 
-    const navigateToResumoVendas = () => {
+    const navigateToResumoVendas = async () => {
       console.log("Vendas registradas:", vendas);
       // Se há um bolo parcialmente/totalmente montado, exigir montagem completa antes de registrar
       if (festaMontada && ((festaMontada.massa && festaMontada.massa.length) || (festaMontada.recheio && festaMontada.recheio.length) || (festaMontada.cobertura && festaMontada.cobertura.length))) {
@@ -208,6 +208,41 @@ export function RegistroVendas(props) {
         alert('Complete a montagem do bolo (massa, recheio e cobertura) antes de registrar.');
         return;
       }
+      // Antes de salvar, contar quantos bolos foram selecionados.
+      // Critério: partidas cujo nome contenha 'bolo' (case-insensitive) OR
+      // cujo produtoId corresponda a um produto nas categorias de bolo.
+      const cakeCategories = ['tradicionais', 'pote', 'festa'];
+      const normalize = s => (String(s || '').toLowerCase());
+      let boloCount = 0;
+      for (const venda of vendas) {
+        const nome = normalize(venda.nome);
+        if (nome.includes('bolo')) {
+          boloCount += 1;
+          continue;
+        }
+        if (venda.produtoId) {
+          const prod = produtos.find(p => p.id === venda.produtoId);
+          if (prod && cakeCategories.includes(prod.categoria)) {
+            boloCount += 1;
+            continue;
+          }
+        }
+      }
+
+      // Se tiver mais de 5 bolos, notificar o serviço externo
+      if (boloCount > 5) {
+        try {
+          await fetch('http://localhost:8081/bolos', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ qtd: boloCount })
+          });
+        } catch (err) {
+          console.error('Erro ao notificar quantidade de bolos (POST /bolos):', err);
+          // não bloqueamos a navegação por causa de erro de notificação
+        }
+      }
+
       // Salvar vendas e tipoVenda no localStorage e navegar para resumo
       try {
         const payload = { vendas, tipoVenda };
