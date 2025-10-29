@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const IP_API = import.meta.env.VITE_IP_API || 'localhost';
-const BASE_URL = `http://${IP_API}:8080`;
+const BASE_URL = `/api`;
 
 console.log('🔧 API Configuration:', {
     VITE_IP_API: import.meta.env.VITE_IP_API,

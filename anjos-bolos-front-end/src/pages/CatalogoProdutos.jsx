@@ -27,7 +27,7 @@ export function CatalogoProdutos(props) {
         setLoading(true);
         try {
             
-            let url = `/produtos`;
+            let url = `/api/produtos`;
             
             // Adicionar ordenação
             if (ordenacao) {

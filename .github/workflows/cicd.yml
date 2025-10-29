@@ -49,7 +49,7 @@ jobs:
           ARGS: "-rltgDzvpO --delete" 
           # SOURCE: O que será copiado. Pode ser o diretório de build (ex: ./dist)
           SOURCE: "./anjos-bolos-front-end/dist/"
-      # 5. Reiniciar Nginx
+      # 5. Configurar Nginx e Reiniciar
       - name: FE - Executar Comando Shell na EC2
         uses: appleboy/ssh-action@v1.0.3
         with:
@@ -58,12 +58,50 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}  
           script: |
             set -e
-            cd /home/${{ secrets.REMOTE_USER }}/frontend
+            
+            # Criar diretório de configuração se não existir
+            mkdir -p /home/${{ secrets.REMOTE_USER }}/nginx-config
+            
+            # Criar arquivo de configuração do Nginx com IP correto
+            cat > /home/${{ secrets.REMOTE_USER }}/nginx-config/default.conf << 'EOF'
+            server {
+                listen 80;
+                server_name _;
+
+                location / {
+                    root /usr/share/nginx/html;
+                    try_files $uri $uri/ /index.html;
+                }
+
+                location /api/ {
+                    proxy_pass http://${{ secrets.REMOTE_HOST_PRIVADO }}:8080/;
+                    proxy_set_header Host $host;
+                    proxy_set_header X-Real-IP $remote_addr;
+                    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                    proxy_set_header X-Forwarded-Proto $scheme;
+                }
+            }
+            EOF
+            
+            echo "Arquivo default.conf do Nginx criado/atualizado"
+            cat /home/${{ secrets.REMOTE_USER }}/nginx-config/default.conf
             
             # Corrigir permissões
             sudo chmod -R 755 /home/${{ secrets.REMOTE_USER }}/frontend
             sudo find /home/${{ secrets.REMOTE_USER }}/frontend -type f -exec chmod 644 {} \;
             
-            # Reiniciar Nginx
-            docker compose -f /home/${{ secrets.REMOTE_USER }}/compose.yaml restart web_server || true
-            echo "Nginx reiniciado"
+            # Parar e remover container antigo
+            docker stop frontend_nginx 2>/dev/null || true
+            docker rm frontend_nginx 2>/dev/null || true
+            
+            # Subir Nginx com nova configuração
+            cd /home/${{ secrets.REMOTE_USER }}
+            docker compose -f compose.yaml up -d
+            
+            echo "Aguardando Nginx iniciar..."
+            sleep 3
+            
+            # Verificar se está rodando
+            docker ps | grep frontend_nginx
+            
+            echo "Nginx configurado e reiniciado com sucesso!"

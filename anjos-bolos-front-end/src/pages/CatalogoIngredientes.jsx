@@ -24,7 +24,7 @@ export function CatalogoIngredientes(props) {
         setLoading(true);
         try {
             // Buscar TODOS os ingredientes para permitir filtros locais
-            let url = `/ingredientes`;
+            let url = `/api/ingredientes`;
             
             // Adicionar ordenação
             if (ordenacao) {
