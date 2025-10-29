@@ -44,7 +44,7 @@ jobs:
           SCRIPT: |
             sudo docker compose restart api
             echo "servico reiniciado via docker compose"
-      # 5. Atualizando o IP privado da API e corrigindo permissões
+      # 5. Configurar Nginx e subir Docker
       - name: FE - Executar Comando Shell na EC2
         uses: appleboy/ssh-action@v1.0.3 # Action popular para SSH
         with:
@@ -68,14 +68,36 @@ jobs:
             echo "IP_API=${{ secrets.REMOTE_HOST_PRIVADO }}" > .env
             echo "Arquivo .env criado com IP_API valor do IP privado"
 
-            # Corrigir permissões - arquivos devem ter leitura para todos
-            sudo chmod -R 755 .
-            sudo find . -type f -exec chmod 644 {} \;
-            echo "Permissões corrigidas (755 diretórios, 644 arquivos)"
+            # Configurar Nginx para servir o frontend
+            sudo tee /etc/nginx/sites-available/frontend > /dev/null <<EOF
+            server {
+                listen 80;
+                server_name _;
 
-            # Reiniciar Docker Compose para aplicar mudanças
-            sudo docker compose down
-            sudo docker compose up -d
-            echo "Docker Compose reiniciado"
+                root /home/${{ secrets.REMOTE_USER }}/frontend/anjos-bolos-front-end;
+                index index.html;
+
+                location / {
+                    try_files \$uri /index.html;
+                }
+            }
+            EOF
+
+            # Habilitar o site e remover default
+            sudo rm -f /etc/nginx/sites-enabled/default
+            sudo ln -sf /etc/nginx/sites-available/frontend /etc/nginx/sites-enabled/
+            echo "Configuração do Nginx criada"
+
+            # Testar configuração do Nginx
+            sudo nginx -t
+
+            # Corrigir permissões
+            sudo chmod -R 755 /home/${{ secrets.REMOTE_USER }}/frontend/anjos-bolos-front-end
+            sudo find /home/${{ secrets.REMOTE_USER }}/frontend/anjos-bolos-front-end -type f -exec chmod 644 {} \;
+            echo "Permissões corrigidas"
+
+            # Reiniciar Nginx
+            sudo systemctl restart nginx
+            echo "Nginx reiniciado"
 
             echo "Configuração do frontend concluída"
