@@ -44,7 +44,7 @@ export function RegistroVendas(props) {
           const resp = await api.get(`/produtos`);
           const content = resp && resp.data && resp.data.content ? resp.data.content : [];
           const mapped = content.map(p => {
-            const imagem = p.nomeImagem ? `https://bucket-raw-anjos-bolos-1.s3.us-east-1.amazonaws.com/bolos/${p.nomeImagem}` : '';
+            const imagem = p.nomeImagem ? `https://bucket-raw-anjos-bolos-1.s3.us-east-1.amazonaws.com/${p.nomeImagem}` : '';
             const categoria = categoryMap[p.categoriaProduto] || 'tradicionais';
             return {
                 id: p.id,
