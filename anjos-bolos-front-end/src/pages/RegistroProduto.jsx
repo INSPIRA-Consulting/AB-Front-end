@@ -371,11 +371,10 @@ export function RegistroProduto(props) {
     // Normaliza para o formato usado na lista local
     const entrada = {
       nome: selecionada.nome,
-      // tipo pode não existir no modelo da API; manter undefined
       ingredientes: Array.isArray(selecionada.ingredientes)
         ? selecionada.ingredientes.map((ing) => ({
             ingredienteId: ing.ingredienteId,
-            ingredienteNome: ing.ingredienteNome || '', // pode vir vazio
+            ingredienteNome: ing.ingredienteNome || '',
             quantidade: ing.quantidade,
             unidade: mapUnidadeFromApi(ing.unidadeMedida)
           }))
