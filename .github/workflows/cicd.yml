@@ -56,8 +56,26 @@ jobs:
           script: |
             set -e
 
+            # Remover index.html da pasta frontend (se existir)
+            if [ -f /home/${{ secrets.REMOTE_USER }}/frontend/index.html ]; then
+              rm /home/${{ secrets.REMOTE_USER }}/frontend/index.html
+              echo "index.html removido da pasta /frontend"
+            fi
+
             cd /home/${{ secrets.REMOTE_USER }}/frontend/anjos-bolos-front-end
+            
+            # Criar arquivo .env com o IP privado
             echo "IP_API=${{ secrets.REMOTE_HOST_PRIVADO }}" > .env
             echo "Arquivo .env criado com IP_API valor do IP privado"
+
+            # Corrigir permissões dos arquivos (777 para evitar problemas com Docker)
+            sudo chmod -R 755 /home/${{ secrets.REMOTE_USER }}/frontend/anjos-bolos-front-end
+            sudo find /home/${{ secrets.REMOTE_USER }}/frontend/anjos-bolos-front-end -type f -exec chmod 644 {} \;
+            echo "Permissões corrigidas"
+
+            # Reiniciar o Docker Compose do frontend
+            sudo docker compose down
+            sudo docker compose up -d
+            echo "Docker Compose reiniciado"
 
             echo "Configuração do frontend concluída"
