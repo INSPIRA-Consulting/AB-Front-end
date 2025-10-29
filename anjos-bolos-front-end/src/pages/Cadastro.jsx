@@ -3,9 +3,7 @@ import { useState } from "react";
 import api from "../provider/api";
 import { TextBox } from "../components/TextBox";
 import { Button } from "../components/Button";
-import { Modal } from "../components/Modal";
-import sucesso from "../assets/success.svg";
-import erro from "../assets/error.svg"
+import { ModernToast } from "../components/ModernToast";
 import { Navbar } from "../components/Navbar";
 import { useDocumentTitle } from "../hooks/useDocumentTitle";
 
@@ -20,8 +18,8 @@ export function Cadastro(props) {
         telefone: ""
     })
 
-    const [modalAberto, setModalAberto] = useState(false);
-    const [modalErroAberto, setModalErroAberto] = useState(false);
+    const [toastSucesso, setToastSucesso] = useState(false);
+    const [toastErro, setToastErro] = useState(false);
 
 
     // Máscara para CPF: 000.000.000-00
@@ -59,11 +57,11 @@ export function Cadastro(props) {
 
         try{
             const response = await api.post(`/usuarios`, form)
-            setModalAberto(true)
+            setToastSucesso(true)
         }
         catch(error) {
             console.error(error);
-            setModalErroAberto(true)
+            setToastErro(true)
         }
     }
 
@@ -96,17 +94,17 @@ export function Cadastro(props) {
 
             <Button function="Cadastrar" onClick={cadastrar} />
 
-            <Modal isOpen={modalAberto} onClose={() => setModalAberto(false)}>
-                <h1>Cadastro Concluído</h1>
-                <p>Funcionário <b>{form.nome}</b> cadastrado concluído.</p>
-                <img src={sucesso} alt="" />
-            </Modal>
+            <ModernToast 
+                isOpen={toastSucesso}
+                message={`Funcionário ${form.nome} cadastrado com sucesso!`}
+                type="success"
+            />
 
-            <Modal isOpen={modalErroAberto} onClose={() => setModalErroAberto(false)}>
-                <h1>Erro ao realizar Cadastro</h1>
-                <p>Verifique as informações preenchidas e tente novamente.</p>
-                <img src={erro} alt="" />
-            </Modal>
+            <ModernToast 
+                isOpen={toastErro}
+                message="Erro ao realizar cadastro. Verifique as informações e tente novamente."
+                type="error"
+            />
         </div>
         </div></>
     )

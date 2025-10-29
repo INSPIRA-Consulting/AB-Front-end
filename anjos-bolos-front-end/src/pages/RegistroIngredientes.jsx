@@ -3,9 +3,7 @@ import { useState } from "react";
 import api from "../provider/api";
 import { TextBox } from "../components/TextBox";
 import { Button } from "../components/Button";
-import { Modal } from "../components/Modal";
-import sucesso from "../assets/success.svg";
-import erro from "../assets/error.svg"
+import { ModernToast } from "../components/ModernToast";
 import { Navbar } from "../components/Navbar";
 import { useDocumentTitle } from "../hooks/useDocumentTitle";
 
@@ -16,6 +14,8 @@ export function RegistroIngredientes(props) {
     const [medida, setMedida] = useState("");
     const [valor, setValor] = useState("");
     const [quantidade, setQuantidade] = useState("");
+    const [toastSucesso, setToastSucesso] = useState(false);
+    const [toastErro, setToastErro] = useState(false);
 
     const handleVoltar = () => {
         window.location.href = '/catalogo-ingredientes';
@@ -30,19 +30,22 @@ export function RegistroIngredientes(props) {
             quantidadeConvertida = quantidade * 1000;
         }
         
-        api.post(`/ingredientes`, {
-            nome: nome,
-            valorEmbalagem: valor,
-            quantidadeEmbalagem: quantidadeConvertida
-        })
-        .then((response)=>{
+        try {
+            const response = await api.post(`/ingredientes`, {
+                nome: nome,
+                valorEmbalagem: valor,
+                quantidadeEmbalagem: quantidadeConvertida
+            });
             console.log(response.data);
             setNome("");
             setMedida("");
             setValor("");
-            quantidade("");
-            alert("Ingrediente cadastrado com sucesso!");
-        })        
+            setQuantidade("");
+            setToastSucesso(true);
+        } catch (error) {
+            console.error(error);
+            setToastErro(true);
+        }
     }
 
    
@@ -99,17 +102,17 @@ export function RegistroIngredientes(props) {
 
             <Button function="Cadastrar" onClick={salvar} />
 
-            {/* <Modal isOpen={modalAberto} onClose={() => setModalAberto(false)}>
-                <h1>Autenticação bem-sucedida!</h1>
-                <p>Usuário autenticado com sucesso.</p>
-                <img src={sucesso} alt="" />
-            </Modal>
+            <ModernToast 
+                isOpen={toastSucesso}
+                message="Ingrediente cadastrado com sucesso!"
+                type="success"
+            />
 
-            <Modal isOpen={modalErroAberto} onClose={() => setModalErroAberto(false)}>
-                <h1>Erro ao acessar o Sistema</h1>
-                <p>Verifique as informações preenchidas e tente novamente.</p>
-                <img src={erro} alt="" />
-            </Modal> */}
+            <ModernToast 
+                isOpen={toastErro}
+                message="Erro ao cadastrar ingrediente. Verifique as informações e tente novamente."
+                type="error"
+            />
             </div>
             </div>
         </div>
