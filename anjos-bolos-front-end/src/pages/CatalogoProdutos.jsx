@@ -7,7 +7,7 @@ import { DataTable } from "../components/DataTable";
 import { AdvancedFilter } from "../components/AdvancedFilter";
 import styles from "../styles/CatalogoProdutos.module.css";
 import { useEffect } from "react";
-import axios from "axios";
+import api from "../provider/api";
 import { useDocumentTitle } from "../hooks/useDocumentTitle";
 
 
@@ -27,7 +27,7 @@ export function CatalogoProdutos(props) {
         setLoading(true);
         try {
             // Buscar TODOS os produtos para permitir filtros locais
-            let url = `/api/produtos`;
+            let url = `/produtos`;
             
             // Adicionar ordenação
             if (ordenacao) {
@@ -36,7 +36,7 @@ export function CatalogoProdutos(props) {
                 url += `?sort=nome,asc`;
             }
             
-            const response = await axios.get(url);
+            const response = await api.get(url);
             
             // Verificar se é um array ou objeto com propriedade content
             let dadosRecebidos;

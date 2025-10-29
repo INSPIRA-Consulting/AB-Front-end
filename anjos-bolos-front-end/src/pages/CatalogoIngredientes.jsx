@@ -4,7 +4,7 @@ import { CatalogHeader } from "../components/CatalogHeader";
 import { SearchBar } from "../components/SearchBar";
 import { DataTable } from "../components/DataTable";
 import styles from "../styles/CatalogoProdutos.module.css";
-import axios from "axios";
+import api from "../provider/api";
 import { AdvancedFilterIngredientes } from "../components/AdvancedFilterIngredientes";
 import { useEffect } from "react";
 import { useDocumentTitle } from "../hooks/useDocumentTitle";
@@ -24,7 +24,7 @@ export function CatalogoIngredientes(props) {
         setLoading(true);
         try {
             // Buscar TODOS os ingredientes para permitir filtros locais
-            let url = `/api/ingredientes`;
+            let url = `/ingredientes`;
             
             // Adicionar ordenação
             if (ordenacao) {
@@ -33,7 +33,7 @@ export function CatalogoIngredientes(props) {
                 url += `?sort=nome,asc`;
             }
             
-            const response = await axios.get(url);
+            const response = await api.get(url);
             
             // Verificar se é um array ou objeto com propriedade content
             let dadosRecebidos;
