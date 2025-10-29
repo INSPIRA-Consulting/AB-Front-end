@@ -55,7 +55,7 @@ jobs:
           # Use o pipe '|' para comandos de múltiplas linhas
           script: |
             set -e
-            [ -f index.html ] && rm index.html || true
+
             cd /home/${{ secrets.REMOTE_USER }}/frontend/anjos-bolos-front-end
             echo "IP_API=${{ secrets.REMOTE_HOST_PRIVADO }}" > .env
             echo "Arquivo .env criado com IP_API valor do IP privado"
