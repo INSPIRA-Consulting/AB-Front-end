@@ -18,6 +18,10 @@ export function RegistroVendas(props) {
     ];
 
     const [produtos, setProdutos] = React.useState(initialProdutos);
+    // receitas para montagem de bolos de festa
+    const [massas, setMassas] = React.useState([]);
+    const [recheios, setRecheios] = React.useState([]);
+    const [coberturas, setCoberturas] = React.useState([]);
 
     React.useEffect(() => {
       let mounted = true;
@@ -43,6 +47,7 @@ export function RegistroVendas(props) {
             const imagem = p.nomeImagem ? `https://bucket-raw-anjos-bolos-1.s3.us-east-1.amazonaws.com/bolos/${p.nomeImagem}` : '';
             const categoria = categoryMap[p.categoriaProduto] || 'tradicionais';
             return {
+                id: p.id,
               imagem,
               titulo: p.nome,
               valor: Number(p.precoFinal) || 0,
@@ -58,6 +63,34 @@ export function RegistroVendas(props) {
       loadProdutos();
       return () => { mounted = false };
     }, []);
+
+      // carregar receitas (massa/recheio/cobertura) do backend
+      React.useEffect(() => {
+        let mounted = true;
+        async function loadReceitas() {
+          try {
+            let resp;
+            try {
+              resp = await axios.get(`/api/receitas`);
+            } catch (err) {
+              // fallback para rota sem /api
+              resp = await axios.get(`/receitas`);
+            }
+            const list = resp && resp.data ? resp.data : [];
+            if (!mounted) return;
+            const m = list.filter(r => String(r.tipoReceita || '').toLowerCase().startsWith('massa')).map(r => ({ id: r.id, nome: r.nome }));
+            const rec = list.filter(r => String(r.tipoReceita || '').toLowerCase().startsWith('recheio')).map(r => ({ id: r.id, nome: r.nome }));
+            const c = list.filter(r => String(r.tipoReceita || '').toLowerCase().startsWith('cobertura')).map(r => ({ id: r.id, nome: r.nome }));
+            setMassas(m);
+            setRecheios(rec);
+            setCoberturas(c);
+          } catch (err) {
+            console.error('Erro ao carregar receitas:', err);
+          }
+        }
+        loadReceitas();
+        return () => { mounted = false };
+      }, []);
 
     const limitador = 24;
 
@@ -84,7 +117,7 @@ export function RegistroVendas(props) {
           if (!boloDeFesta) {
             setVendas((prevVendas) => [
               ...prevVendas,
-              { categoriaEntrega: tipoVenda, nome: "Bolo de festa", massa: produto.titulo, valorFinal: produto.valor },
+              { categoriaEntrega: tipoVenda, nome: "Bolo de festa", massa: produto.titulo, valorFinal: produto.valor, produtoId: produto.id || null },
             ]);
           } else {
             const updatedVendas = vendas.map((venda) => {
@@ -98,7 +131,7 @@ export function RegistroVendas(props) {
               return venda;
             });
             setVendas(updatedVendas);
-            console.log("Todas as vendas:", updatedVendas);
+            console.log("Todas as vendas:", vendas);
           }
         return;
       }
@@ -109,9 +142,9 @@ export function RegistroVendas(props) {
           if (!boloDeFesta) {
             setVendas((prevVendas) => [
               ...prevVendas,
-              { categoriaEntrega: tipoVenda, nome: "Bolo de festa", recheio: produto.titulo, valorFinal: produto.valor },
+              { categoriaEntrega: tipoVenda, nome: "Bolo de festa", recheio: produto.titulo, valorFinal: produto.valor, produtoId: produto.id || null },
             ]);
-            console.log("Todas as vendas:", updatedVendas);
+            console.log("Todas as vendas:", vendas);
           } else {
             const updatedVendas = vendas.map((venda) => {
                 if (venda.nome === "Bolo de festa") {
@@ -124,7 +157,7 @@ export function RegistroVendas(props) {
               return venda;
             });
             setVendas(updatedVendas);
-            console.log("Todas as vendas:", updatedVendas);
+            console.log("Todas as vendas:", vendas);
           }
         return;
       }
@@ -135,9 +168,9 @@ export function RegistroVendas(props) {
           if (!boloDeFesta) {
             setVendas((prevVendas) => [
               ...prevVendas,
-              { categoriaEntrega: tipoVenda, nome: "Bolo de festa", cobertura: produto.titulo, valorFinal: produto.valor },
+              { categoriaEntrega: tipoVenda, nome: "Bolo de festa", cobertura: produto.titulo, valorFinal: produto.valor, produtoId: produto.id || null },
             ]);
-            console.log("Todas as vendas:", updatedVendas);
+            console.log("Todas as vendas:", vendas);
           } else {
             const updatedVendas = vendas.map((venda) => {
               if (venda.nome === "Bolo de festa") {
@@ -157,29 +190,30 @@ export function RegistroVendas(props) {
     }
 
       setVendas((prevVendas) => {
-        const updatedVendas = [
-          ...prevVendas,
-          { nome: produto.titulo, valorFinal: produto.valor, categoriaEntrega: tipoVenda },
-        ];
+          const updatedVendas = [
+            ...prevVendas,
+            { nome: produto.titulo, valorFinal: produto.valor, categoriaEntrega: tipoVenda, produtoId: produto.id || null },
+          ];
         console.log("Produto selecionado:", produto.titulo);
-        console.log("Todas as vendas:", updatedVendas);
+  console.log("Todas as vendas:", vendas);
         return updatedVendas;
       });
     };
 
-    const resumoVendas = async e => {
-        console.log("Vendas registradas:", vendas);
-    }
+  // resumoVendas removed (not used)
 
     const navigateToResumoVendas = () => {
       console.log("Vendas registradas:", vendas);
-      // Se tiver bolo de festa selecionado, abrir modal de detalhes do bolo
-      const hasBoloFesta = vendas.find(v => v.nome === 'Bolo de festa');
-      if (hasBoloFesta) {
-        setShowBoloFestaModal(true);
+      // Se há um bolo parcialmente/totalmente montado, exigir montagem completa antes de registrar
+      if (festaMontada && ((festaMontada.massa && festaMontada.massa.length) || (festaMontada.recheio && festaMontada.recheio.length) || (festaMontada.cobertura && festaMontada.cobertura.length))) {
+        // só permitir abrir o modal se todos os três componentes tiverem ao menos um item
+        if ((festaMontada.massa && festaMontada.massa.length > 0) && (festaMontada.recheio && festaMontada.recheio.length > 0) && (festaMontada.cobertura && festaMontada.cobertura.length > 0)) {
+          setShowBoloFestaModal(true);
+          return;
+        }
+        alert('Complete a montagem do bolo (massa, recheio e cobertura) antes de registrar.');
         return;
       }
-
       // Salvar vendas e tipoVenda no localStorage e navegar para resumo
       try {
         const payload = { vendas, tipoVenda };
@@ -187,10 +221,7 @@ export function RegistroVendas(props) {
         if (tipoVenda === 'Encomenda' && orderDetails) {
           payload.orderDetails = orderDetails;
         }
-        // incluir detalhes do bolo de festa se preenchidos
-        if (festaDetails && (festaDetails.peso || festaDetails.preco || festaDetails.observacao)) {
-          payload.festaDetails = festaDetails;
-        }
+        // se houver bolos já convertidos em vendas, eles já estarão em `vendas` ou serão adicionados pelo modal
         localStorage.setItem('resumoVendas', JSON.stringify(payload));
       } catch (err) {
         console.error('Erro ao salvar no localStorage:', err);
@@ -209,11 +240,16 @@ export function RegistroVendas(props) {
       clientId: null
     });
     const [showBoloFestaModal, setShowBoloFestaModal] = React.useState(false);
-    const [festaDetails, setFestaDetails] = React.useState({
-      peso: '',
-      preco: '',
-      observacao: ''
-    });
+
+  // Estados para montar bolo de festa inline (não salva no banco)
+  const [selectedMassa, setSelectedMassa] = React.useState('');
+  const [selectedRecheio, setSelectedRecheio] = React.useState('');
+  const [selectedCobertura, setSelectedCobertura] = React.useState('');
+  // montagem temporária de um único bolo de festa (não salva no banco)
+  // cada categoria pode conter múltiplos itens (ex: vários recheios)
+  const [festaMontada, setFestaMontada] = React.useState({ id: null, massa: [], recheio: [], cobertura: [] });
+  // inputs do modal de confirmação (peso/preço/observação) para o único bolo
+  const [festaModalInput, setFestaModalInput] = React.useState({ peso: '', preco: '', observacao: '' });
 
     const cpfDebounceRef = React.useRef(null);
 
@@ -229,7 +265,7 @@ export function RegistroVendas(props) {
         if (found) {
           setOrderDetails(prev => ({ ...prev, clientId: found.id, clientName: found.nome, phone: found.telefone }));
         } else {
-          // não encontrado: limpar id, manter cpf for user to fill name/phone
+          
           setOrderDetails(prev => ({ ...prev, clientId: null, clientName: prev.clientName || '', phone: prev.phone || '' }));
         }
       } catch (err) {
@@ -314,31 +350,7 @@ export function RegistroVendas(props) {
       setOrderDetails({ date: '', time: '', cpf: '', clientName: '', phone: '', clientId: null });
     };
 
-    const handleConfirmBoloFesta = () => {
-      // validações simples
-      const pesoNum = parseFloat(String(festaDetails.peso).replace(',', '.'));
-      const precoNum = parseFloat(String(festaDetails.preco).replace(',', '.'));
-      if (Number.isNaN(pesoNum) || pesoNum <= 0) {
-        alert('Informe um peso válido para o bolo (kg).');
-        return;
-      }
-      if (Number.isNaN(precoNum) || precoNum <= 0) {
-        alert('Informe um preço válido para o bolo.');
-        return;
-      }
-
-      // salvar junto ao payload e navegar
-      try {
-        const payload = { vendas, tipoVenda };
-        if (tipoVenda === 'Encomenda' && orderDetails) payload.orderDetails = orderDetails;
-        payload.festaDetails = { peso: pesoNum, preco: precoNum, observacao: festaDetails.observacao };
-        localStorage.setItem('resumoVendas', JSON.stringify(payload));
-      } catch (err) {
-        console.error('Erro ao salvar festaDetails no localStorage:', err);
-      }
-      setShowBoloFestaModal(false);
-      window.location.href = '/resumo-venda';
-    };
+    // handleConfirmBoloFesta removed — modal now handles converting listaFesta into vendas and saving
 
     const handleCancelBoloFesta = () => {
       setShowBoloFestaModal(false);
@@ -434,40 +446,93 @@ export function RegistroVendas(props) {
       </Modal>
       {/* Modal de detalhes do Bolo de Festa */}
       <Modal isOpen={showBoloFestaModal} onClose={handleCancelBoloFesta}>
-        <div style={{ padding: 20, maxWidth: 480 }}>
-          <h3>Detalhes do Bolo de Festa</h3>
-          <div style={{ marginBottom: 12 }}>
-            <label>Peso do Bolo (kg)</label>
-            <input
-              type="text"
-              value={festaDetails.peso}
-              onChange={e => setFestaDetails(prev => ({ ...prev, peso: e.target.value }))}
-              placeholder="Ex: 2.5"
-              style={{ width: '100%', padding: 8, marginTop: 6 }}
-            />
+        <div style={{ padding: 20, maxWidth: 720 }}>
+          <h3>Detalhes dos Bolos de Festa</h3>
+          <div style={{ display: 'grid', gap: 12 }}>
+            {!festaMontada || (!((festaMontada.massa && festaMontada.massa.length) || (festaMontada.recheio && festaMontada.recheio.length) || (festaMontada.cobertura && festaMontada.cobertura.length))) ? (
+              <div>Nenhum bolo montado. Volte e adicione massa, recheio e cobertura antes de confirmar.</div>
+            ) : (
+              <div style={{ background: '#fff', border: '1px solid #e8e1d8', padding: 12, borderRadius: 6 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+                  <strong>Bolo</strong>
+                  <span style={{ color: '#6b3200' }}>{(festaMontada.massa && festaMontada.massa.length) ? festaMontada.massa.join(' | ') : '-'} / {(festaMontada.recheio && festaMontada.recheio.length) ? festaMontada.recheio.join(' | ') : '-'} / {(festaMontada.cobertura && festaMontada.cobertura.length) ? festaMontada.cobertura.join(' | ') : '-'}</span>
+                </div>
+                <div style={{ display: 'flex', gap: 12 }}>
+                  <div style={{ flex: 1 }}>
+                    <label>Peso (kg)</label>
+                    <input
+                      type="text"
+                      value={festaModalInput.peso || ''}
+                      onChange={e => setFestaModalInput(prev => ({ ...prev, peso: e.target.value }))}
+                      placeholder="Ex: 2.5"
+                      style={{ width: '70%', padding: 8, marginTop: 6 }}
+                    />
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <label>Preço (R$)</label>
+                    <input
+                      type="text"
+                      value={festaModalInput.preco || ''}
+                      onChange={e => setFestaModalInput(prev => ({ ...prev, preco: e.target.value }))}
+                      placeholder="Ex: 150.00"
+                      style={{ width: '70%', padding: 8, marginTop: 6 }}
+                    />
+                  </div>
+                </div>
+                <div style={{ marginTop: 8 }}>
+                  <label>Observação (Opcional)</label>
+                  <textarea
+                    value={(festaModalInput.observacao) || ''}
+                    onChange={e => setFestaModalInput(prev => ({ ...prev, observacao: e.target.value }))}
+                    placeholder="Observações sobre o bolo"
+                    style={{ width: '80%', padding: 8, marginTop: 6, minHeight: 60 }}
+                  />
+                </div>
+              </div>
+            )}
           </div>
-          <div style={{ marginBottom: 12 }}>
-            <label>Preço (R$)</label>
-            <input
-              type="text"
-              value={festaDetails.preco}
-              onChange={e => setFestaDetails(prev => ({ ...prev, preco: e.target.value }))}
-              placeholder="Ex: 150.00"
-              style={{ width: '100%', padding: 8, marginTop: 6 }}
-            />
-          </div>
-          <div style={{ marginBottom: 12 }}>
-            <label>Observação (Opcional)</label>
-            <textarea
-              value={festaDetails.observacao}
-              onChange={e => setFestaDetails(prev => ({ ...prev, observacao: e.target.value }))}
-              placeholder="Observações sobre o bolo"
-              style={{ width: '100%', padding: 8, marginTop: 6, minHeight: 80 }}
-            />
-          </div>
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 8 }}>
+
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 12 }}>
             <button onClick={handleCancelBoloFesta} style={{ padding: '8px 12px' }}>Cancelar</button>
-            <button onClick={handleConfirmBoloFesta} style={{ padding: '8px 12px' }}>Confirmar</button>
+            <button onClick={() => {
+              // validar e transformar o bolo montado em uma venda com os inputs preenchidos
+              try {
+                if (!festaMontada || !( (festaMontada.massa && festaMontada.massa.length > 0) && (festaMontada.recheio && festaMontada.recheio.length > 0) && (festaMontada.cobertura && festaMontada.cobertura.length > 0) )) {
+                  throw new Error('Nenhum bolo completamente montado para confirmar.');
+                }
+                const pesoNum = parseFloat(String(festaModalInput.peso || '').replace(',', '.'));
+                const precoNum = parseFloat(String(festaModalInput.preco || '').replace(',', '.'));
+                if (Number.isNaN(pesoNum) || pesoNum <= 0) throw new Error('Informe um peso válido para o bolo.');
+                if (Number.isNaN(precoNum) || precoNum <= 0) throw new Error('Informe um preço válido para o bolo.');
+
+                const bolo = {
+                  categoriaEntrega: tipoVenda,
+                  nome: 'Bolo de festa',
+                  massa: (festaMontada.massa || []).join(' | '),
+                  recheio: (festaMontada.recheio || []).join(' | '),
+                  cobertura: (festaMontada.cobertura || []).join(' | '),
+                  peso: pesoNum,
+                  valorFinal: precoNum,
+                  observacao: festaModalInput.observacao || ''
+                };
+
+                // adicionar à lista de vendas e salvar
+                const updatedVendas = [...vendas, bolo];
+                const payload = { vendas: updatedVendas, tipoVenda };
+                if (tipoVenda === 'Encomenda' && orderDetails) payload.orderDetails = orderDetails;
+                localStorage.setItem('resumoVendas', JSON.stringify(payload));
+
+                
+                setFestaMontada({ id: null, massa: [], recheio: [], cobertura: [] });
+                setFestaModalInput({ peso: '', preco: '', observacao: '' });
+
+                // navegar
+                window.location.href = '/resumo-venda';
+              } catch (err) {
+                alert(err.message || 'Erro ao confirmar o bolo. Preencha todos os campos corretamente.');
+                console.error(err);
+              }
+            }} style={{ padding: '8px 12px' }}>Confirmar e Continuar</button>
           </div>
         </div>
       </Modal>
@@ -519,77 +584,100 @@ export function RegistroVendas(props) {
       </div>
 
       {categoria === 'festa' && (
-      <div>
-       <div className={styles.selecao}>
-      <h4>Escolha a Massa</h4>
-      <div className={styles.produtos}>
-      {produtos
-      .filter((produto) => produto.categoria === "massa")
-      .map((produto) => (
-      <Produto
-      key={produto.titulo}
-      imagem={produto.imagem}
-      titulo={produto.titulo}
-      tipo="festa"
-      valor={produto.valor.toFixed(2).replace('.', ',')}
-      onAdd={() => handleProdutoClick(produto, "massa")}
-      onRemove={() => handleProdutoRemove(produto, "massa")}
-      />
-      ))}
-      </div>
-      </div>
+  <div className={styles.festaAssembly} style={{ color: '#6b3200', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+    <h3 style={{ textAlign: 'center' }}>Montar Bolo de Festa</h3>
+
+    <div style={{ display: 'grid', gap: 12, maxWidth: 760, width: '100%' }}>
+          <div style={{ display: 'flex', gap: 12 }}>
+            <div style={{ flex: 1 }}>
+              <label>Massa</label>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <select value={selectedMassa} onChange={e => setSelectedMassa(e.target.value)} style={{ width: '100%', padding: 8, marginTop: 6 }}>
+                  <option value="">-- selecione massa --</option>
+                  {massas && massas.length ? massas.map(r => (
+                    <option key={r.id} value={r.nome}>{r.nome}</option>
+                  )) : produtos.filter(p => p.categoria === 'massa').map(p => (
+                    <option key={p.titulo} value={p.titulo}>{p.titulo}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+            <div style={{ flex: 1 }}>
+              <label>Recheio</label>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <select value={selectedRecheio} onChange={e => setSelectedRecheio(e.target.value)} style={{ width: '100%', padding: 8, marginTop: 6 }}>
+                  <option value="">-- selecione recheio --</option>
+                  {recheios && recheios.length ? recheios.map(r => (
+                    <option key={r.id} value={r.nome}>{r.nome}</option>
+                  )) : produtos.filter(p => p.categoria === 'recheio').map(p => (
+                    <option key={p.titulo} value={p.titulo}>{p.titulo}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+            <div style={{ flex: 1 }}>
+              <label>Cobertura</label>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <select value={selectedCobertura} onChange={e => setSelectedCobertura(e.target.value)} style={{ width: '100%', padding: 8, marginTop: 6 }}>
+                  <option value="">-- selecione cobertura --</option>
+                  {coberturas && coberturas.length ? coberturas.map(r => (
+                    <option key={r.id} value={r.nome}>{r.nome}</option>
+                  )) : produtos.filter(p => p.categoria === 'cobertura').map(p => (
+                    <option key={p.titulo} value={p.titulo}>{p.titulo}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          </div>
 
 
-      <div className={styles.selecao}>
-      <h4>Escolha o Recheio</h4>
 
-      {vendas.find((venda) => venda.massa) && (
-        
-        <div className={styles.produtos}>
-      
-        {produtos
-        .filter((produto) => produto.categoria === "recheio")
-        .map((produto) => (
-        <Produto
-        key={produto.titulo}
-        imagem={produto.imagem}
-        titulo={produto.titulo}
-        tipo="festa"
-        valor={produto.valor.toFixed(2).replace('.', ',')}
-        onAdd={() => handleProdutoClick(produto, "recheio")}
-        onRemove={() => handleProdutoRemove(produto, "recheio")}
-        />
-        ))}
-      
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button type="button" onClick={() => {
+              // adicionar o item selecionado à montagem atual: permite múltiplos itens por categoria
+              const id = festaMontada.id || (Date.now().toString(36) + Math.random().toString(36).slice(2,8));
+              if (selectedMassa) {
+                setFestaMontada(prev => ({ ...prev, id, massa: [...(prev.massa || []), selectedMassa] }));
+                setIsButtonActive(true);
+                setSelectedMassa('');
+                return;
+              }
+              if (selectedRecheio) {
+                setFestaMontada(prev => ({ ...prev, id, recheio: [...(prev.recheio || []), selectedRecheio] }));
+                setIsButtonActive(true);
+                setSelectedRecheio('');
+                return;
+              }
+              if (selectedCobertura) {
+                setFestaMontada(prev => ({ ...prev, id, cobertura: [...(prev.cobertura || []), selectedCobertura] }));
+                setIsButtonActive(true);
+                setSelectedCobertura('');
+                return;
+              }
+              alert('Selecione uma massa, recheio ou cobertura antes de adicionar.');
+            }} style={{ padding: '8px 12px' }}>Adicionar item</button>
+          </div>
+
+          {/* Exibir resumo da montagem atual (um único bolo) */}
+          {(festaMontada && ((festaMontada.massa && festaMontada.massa.length) || (festaMontada.recheio && festaMontada.recheio.length) || (festaMontada.cobertura && festaMontada.cobertura.length))) && (
+            <div style={{ marginTop: 12, background: '#fff', border: '2px solid #6b3200', borderRadius: 8, padding: 8 }}>
+              <strong>Montagem atual</strong>
+              <div style={{ marginTop: 8 }}>
+                <div style={{ color: '#6b3200' }}><strong>Massa:</strong> {(festaMontada.massa && festaMontada.massa.length) ? festaMontada.massa.join(' | ') : '-'} </div>
+                <div style={{ color: '#6b3200' }}><strong>Recheio:</strong> {(festaMontada.recheio && festaMontada.recheio.length) ? festaMontada.recheio.join(' | ') : '-'} </div>
+                <div style={{ color: '#6b3200' }}><strong>Cobertura:</strong> {(festaMontada.cobertura && festaMontada.cobertura.length) ? festaMontada.cobertura.join(' | ') : '-'} </div>
+                <div style={{ marginTop: 8 }}>
+                  <button type="button" onClick={() => {
+                    setFestaMontada({ id: null, massa: [], recheio: [], cobertura: [] });
+                    setIsButtonActive(vendas.length > 0);
+                  }} className={styles.removerButton}>Remover montagem</button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
-
+      </div>
       )}
-      </div>
-      
-
-      <div className={styles.selecao}>
-      <h4>Escolha a cobertura</h4>
-
-      {vendas.find((venda) => venda.recheio) && (
-        <div className={styles.produtos}>
-        {produtos
-        .filter((produto) => produto.categoria === "cobertura")
-        .map((produto) => (
-        <Produto
-        key={produto.titulo}
-        imagem={produto.imagem}
-        titulo={produto.titulo}
-        tipo="festa"
-        valor={produto.valor.toFixed(2).replace('.', ',')}
-        onAdd={() => handleProdutoClick(produto, "cobertura")}
-        onRemove={() => handleProdutoRemove(produto, "cobertura")}
-        />
-        ))}
-        </div>
-       )}
-      </div>
-      </div>
-       )}
 
       <div className={styles.produtos}>
       {produtos

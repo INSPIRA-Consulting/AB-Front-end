@@ -5,6 +5,8 @@ import styles from "../styles/HistoricoVendas.module.css";
 import { DateInput } from 'rsuite';
 import { FaRegCalendarAlt } from "react-icons/fa";
 import { useDocumentTitle } from "../hooks/useDocumentTitle";
+import axios from 'axios';
+import { Modal } from '../components/Modal';
 
 export function HistoricoVendas(props) {
   useDocumentTitle(props.titulo);
@@ -20,23 +22,69 @@ export function HistoricoVendas(props) {
     valor: "Todos",
   });
 
-  const [vendas, setVendas] = useState([
-    { valor: 150, itens: 2, dia: 12 },
-    { valor: 150, itens: 2, dia: 12 },
-    { valor: 150, itens: 2, dia: 12 },
-    { valor: 150, itens: 2, dia: 12 },
-    { valor: 150, itens: 2, dia: 12 },
-    { valor: 150, itens: 2, dia: 12 },
-    { valor: 150, itens: 2, dia: 12 },
-    { valor: 150, itens: 2, dia: 12 },
-    { valor: 150, itens: 2, dia: 12 },
-    { valor: 150, itens: 2, dia: 12 },
-    { valor: 150, itens: 2, dia: 12 },
-    { valor: 150, itens: 2, dia: 12 },
-    { valor: 150, itens: 2, dia: 12 },
-    { valor: 150, itens: 2, dia: 12 },  
-    // aqui futuramente você pode puxar do backend
-  ]);
+  const [vendas, setVendas] = useState([]);
+  const [pedidosFull, setPedidosFull] = useState([]);
+  const [itensFull, setItensFull] = useState([]);
+  const [modalAberto, setModalAberto] = useState(false);
+  const [itensDoDia, setItensDoDia] = useState([]);
+
+  // carregar pedidos e itens do backend e agregá-los por dia
+  React.useEffect(() => {
+    let mounted = true;
+
+    async function loadPedidosEItens() {
+      try {
+        // tentar endpoints com /api primeiro, fallback sem /api
+        let pedidosResp;
+        try {
+          pedidosResp = await axios.get('/api/pedidos');
+        } catch (err) {
+          pedidosResp = await axios.get('/pedidos');
+        }
+
+        let itensResp;
+        try {
+          itensResp = await axios.get('/api/itens-pedido');
+        } catch (err) {
+          itensResp = await axios.get('/itens-pedido');
+        }
+
+        const pedidos = Array.isArray(pedidosResp.data) ? pedidosResp.data : (pedidosResp.data && pedidosResp.data.content) ? pedidosResp.data.content : [];
+        const itens = Array.isArray(itensResp.data) ? itensResp.data : (itensResp.data && itensResp.data.content) ? itensResp.data.content : [];
+
+        // agregar por dia (usando dataPedido)
+        const mapa = {};
+        pedidos.forEach(pedido => {
+          const dataStr = pedido.dataPedido || pedido.dataPedidoString || pedido.dataPedidoAt || '';
+          const dt = dataStr ? new Date(dataStr) : null;
+          const dia = dt ? dt.getDate() : null;
+
+          // somar itens vinculados a esse pedido
+          const itensDoPedido = itens.filter(it => Number(it.pedidoId) === Number(pedido.id));
+          const valorTotal = itensDoPedido.reduce((s, it) => s + (Number(it.valorFinal) || 0), 0);
+          const qtdItens = itensDoPedido.reduce((s, it) => s + (Number(it.quantidade) || 0), 0);
+
+          if (dia == null) return;
+
+          if (!mapa[dia]) mapa[dia] = { valor: 0, itens: 0, dia };
+          mapa[dia].valor += valorTotal;
+          mapa[dia].itens += qtdItens;
+        });
+
+        const resultado = Object.values(mapa).sort((a, b) => b.dia - a.dia);
+        if (mounted) {
+          setVendas(resultado);
+          setPedidosFull(pedidos);
+          setItensFull(itens);
+        }
+      } catch (err) {
+        console.error('Erro ao carregar pedidos/itens:', err);
+      }
+    }
+
+    loadPedidosEItens();
+    return () => { mounted = false; };
+  }, []);
 
 
   const handlePesquisar = () => {
@@ -47,6 +95,31 @@ export function HistoricoVendas(props) {
   const handleDownload = () => {
     console.log("Download solicitado");
     // aqui você gera o CSV/Excel com base nas vendas filtradas
+  };
+
+  // abre modal com itens do dia selecionado
+  const handleDetalhesDia = (dia) => {
+    try {
+      const pedidosDoDia = pedidosFull.filter(p => {
+        const dataStr = p.dataPedido || p.dataPedidoString || p.dataPedidoAt || '';
+        const dt = dataStr ? new Date(dataStr) : null;
+        const d = dt ? dt.getDate() : null;
+        return d === dia;
+      });
+
+      const itens = [];
+      pedidosDoDia.forEach(p => {
+        const itensDoPedido = itensFull.filter(it => Number(it.pedidoId) === Number(p.id));
+        itens.push(...itensDoPedido);
+      });
+
+      setItensDoDia(itens);
+      setModalAberto(true);
+    } catch (err) {
+      console.error('Erro ao buscar itens do dia:', err);
+      setItensDoDia([]);
+      setModalAberto(true);
+    }
   };
 
   return (
@@ -167,7 +240,7 @@ export function HistoricoVendas(props) {
 
           </div>
 
-          <button className={styles.btnPesquisar} onClick={console.log()}>
+          <button className={styles.btnPesquisar} onClick={handlePesquisar}>
             Pesquisar
           </button>
         </div>
@@ -193,7 +266,7 @@ export function HistoricoVendas(props) {
                     <td>
                       <button
                         className={styles.btnDetalhes}
-                        onClick={() => alert(`Detalhes da venda do dia ${v.dia}`)}
+                        onClick={() => handleDetalhesDia(v.dia)}
                       >
                         <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24"><path fill="#56270B" d="M15.5 14h-.79l-.28-.27A6.47 6.47 0 0 0 16 9.5A6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5S14 7.01 14 9.5S11.99 14 9.5 14" /></svg>
                       </button>
@@ -211,6 +284,38 @@ export function HistoricoVendas(props) {
       </div>
 
       <Footer />
+      {/* Modal de detalhes do dia - usar Modal reutilizável */}
+      <Modal isOpen={modalAberto} onClose={() => setModalAberto(false)}>
+        <div style={{ padding: 12, width: 720 }}>
+          <h2 style={{ marginTop: 6, marginBottom: 12 }}>Itens vendidos no dia</h2>
+          {itensDoDia.length === 0 ? (
+            <p>Nenhum item encontrado para este dia.</p>
+          ) : (
+            <div style={{ maxHeight: 360, overflowY: 'auto', background: '#fff', border: '2px solid #6b3200', borderRadius: 8 }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                <thead>
+                  <tr style={{ background: '#f9f7f4' }}>
+                    <th style={{ textAlign: 'left', padding: '8px', borderBottom: '1px solid #e5ded8', color: '#6b3200' }}>Produto</th>
+                    <th style={{ textAlign: 'center', padding: '8px', borderBottom: '1px solid #e5ded8', color: '#6b3200', width: 120 }}>Quantidade</th>
+                    <th style={{ textAlign: 'right', padding: '8px', borderBottom: '1px solid #e5ded8', color: '#6b3200', width: 140 }}>Valor unit.</th>
+                    <th style={{ textAlign: 'right', padding: '8px', borderBottom: '1px solid #e5ded8', color: '#6b3200', width: 140 }}>Valor total</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {itensDoDia.map((it, i) => (
+                    <tr key={i}>
+                      <td style={{ padding: '8px', borderBottom: '1px solid #f0ece8', color: '#6b3200' }}>{it.produto || it.nomeProduto || it.descricao || 'Item'}</td>
+                      <td style={{ padding: '8px', textAlign: 'center', borderBottom: '1px solid #f0ece8', color: '#6b3200' }}>{it.quantidade || 0}</td>
+                      <td style={{ padding: '8px', textAlign: 'right', borderBottom: '1px solid #f0ece8', color: '#6b3200' }}>R$ {Number(it.precoUnitario || it.valorUnitario || it.valorFinal || 0).toFixed(2)}</td>
+                      <td style={{ padding: '8px', textAlign: 'right', borderBottom: '1px solid #f0ece8', color: '#6b3200' }}>R$ {Number((it.valorFinal || 0)).toFixed(2)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      </Modal>
     </div>
   );
 
