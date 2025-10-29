@@ -13,65 +13,55 @@ jobs:
       - name: Checkout do Repositório
         uses: actions/checkout@v4
 
-      # 2. Configuração do ambiente Node
-      - name: FE - Configurar Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          
-      # 3. Build da aplicação (Se for uma aplicação que precisa ser construída, ex: React, Angular, Vue)
-      - name: FE - Instalar Dependências e Fazer Build
-        run: |
-             npm install
-             npm install axios
-             npm run build --if-present 
-             # Se sua app não precisar de build, remova esta etapa
-        working-directory: ./anjos-bolos-front-end
-
-      # 4. Deploy (Transferência de arquivos e execução de comandos remotos)
-      - name: FE - Copiar arquivos e Deploy (Usando SSH com rsync)
+      # 2. Deploy (Transferência de código fonte)
+      - name: FE - Copiar código fonte para EC2
         uses: easingthemes/ssh-deploy@main
         with:
           SSH_PRIVATE_KEY: ${{ secrets.EC2_SSH_KEY }}
           REMOTE_HOST: ${{ secrets.REMOTE_HOST }}
           REMOTE_USER: ${{ secrets.REMOTE_USER }}
-          TARGET: /home/${{ secrets.REMOTE_USER }}/frontend
-          # ARGS para rsync: removido -o para não preservar owner
-          ARGS: "-rltgDzvpO --delete" 
-          # SOURCE: O que será copiado. Pode ser o diretório de build (ex: ./dist)
-          SOURCE: "./anjos-bolos-front-end/dist/"
-          # reininciando o servico 'api' via docker compose
-          SCRIPT: |
-            sudo docker compose restart api
-            echo "servico reiniciado via docker compose"
-      # 5. Configurar ambiente e reiniciar Docker Nginx
+          TARGET: /home/${{ secrets.REMOTE_USER }}/frontend-build
+          ARGS: "-rltgDzvp --delete"
+          SOURCE: "./anjos-bolos-front-end/"
+          EXCLUDE: "/node_modules/, /dist/, /.git/"
+      # 3. Build no servidor e configurar ambiente
       - name: FE - Executar Comando Shell na EC2
-        uses: appleboy/ssh-action@v1.0.3 # Action popular para SSH
+        uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.REMOTE_HOST }} 
           username: ${{ secrets.REMOTE_USER }}
-          key: ${{ secrets.EC2_SSH_KEY }}  
-          # O Comando ou Script a ser Executado no EC2
-          # Use o pipe '|' para comandos de múltiplas linhas
+          key: ${{ secrets.EC2_SSH_KEY }}
           script: |
             set -e
 
-            cd /home/${{ secrets.REMOTE_USER }}/frontend
-            
-            # Criar arquivo .env com o IP privado
+            # Criar arquivo .env com o IP privado ANTES do build
+            cd /home/${{ secrets.REMOTE_USER }}/frontend-build
             echo "IP_API=${{ secrets.REMOTE_HOST_PRIVADO }}" > .env
-            echo "Arquivo .env criado com IP_API valor do IP privado"
+            echo "Arquivo .env criado com IP_API=${{ secrets.REMOTE_HOST_PRIVADO }}"
 
-            # Corrigir permissões para o Docker acessar
+            # Instalar dependências e buildar com o .env correto
+            npm install
+            npm run build
+            echo "Build concluído com variáveis de ambiente corretas"
+
+            # Copiar build para pasta do Nginx
+            sudo rm -rf /home/${{ secrets.REMOTE_USER }}/frontend/*
+            sudo cp -r dist/* /home/${{ secrets.REMOTE_USER }}/frontend/
+            echo "Arquivos copiados para /frontend"
+
+            # Corrigir permissões
             sudo chmod -R 755 /home/${{ secrets.REMOTE_USER }}/frontend
             sudo find /home/${{ secrets.REMOTE_USER }}/frontend -type f -exec chmod 644 {} \;
             echo "Permissões corrigidas"
 
-            # Navegar para pasta do docker-compose do Nginx
+            # Reiniciar API
+            cd /home/${{ secrets.REMOTE_USER }}
+            sudo docker compose restart api
+            echo "API reiniciada"
+
+            # Reiniciar Nginx
             cd /home/${{ secrets.REMOTE_USER }}/frontend
-
-            # Reiniciar o container do Nginx para recarregar os arquivos
             sudo docker compose restart web_server
-            echo "Container Nginx reiniciado"
+            echo "Nginx reiniciado"
 
-            echo "Configuração do frontend concluída"
+            echo "Deploy concluído com sucesso!"
