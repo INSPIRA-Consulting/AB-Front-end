@@ -6,6 +6,7 @@ import { Navbar } from '../components/Navbar';
 import { Modal } from '../components/Modal';
 import styles from '../styles/RegistroProduto.module.css';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
+import { useToast } from '../components/Toast';
 
 async function uploadImagemProduto(id, file) {
   if (!id || !file) throw new Error("ID e arquivo são obrigatórios");
@@ -18,6 +19,8 @@ async function uploadImagemProduto(id, file) {
 
 export function RegistroProduto(props) {
   useDocumentTitle(props.titulo);
+  const imagemInputRef = useRef(null);
+  const toast = useToast();
   const [receita, setreceita] = useState('');
   const [quantidade, setQuantidade] = useState('');
   const [unidade, setUnidade] = useState('g');
@@ -54,6 +57,29 @@ export function RegistroProduto(props) {
   const [receitaDetalhe, setReceitaDetalhe] = useState(null);
   const [errors, setErrors] = useState({});
   const [salvando, setSalvando] = useState(false);
+
+  // Restaura o formulário para o estado inicial
+  function resetForm() {
+    setNomeProduto('');
+    setCategoria('');
+    setValor('');
+    setCusto('');
+    setListareceitas([]);
+    setReceitaSelecionadaId('');
+    setQuantidade('');
+    setErrors({});
+
+    // Limpa imagem e file input
+    if (imagemObjectUrlRef.current) {
+      URL.revokeObjectURL(imagemObjectUrlRef.current);
+      imagemObjectUrlRef.current = null;
+    }
+    setImagem('/src/assets/bolinho15.png');
+    setImagemFile(null);
+    if (imagemInputRef.current) {
+      imagemInputRef.current.value = '';
+    }
+  }
 
   // Mapeia a medida da API para uma unidade curta para exibição
   function getUnidadeFromMedida(medidaApi) {
@@ -116,7 +142,7 @@ export function RegistroProduto(props) {
 
       if (Object.keys(newErrors).length > 0) {
         setErrors(newErrors);
-        alert('Corrija os campos destacados.');
+        toast.warning('Corrija os campos destacados.');
         return;
       }
 
@@ -137,18 +163,22 @@ export function RegistroProduto(props) {
       if (imagemFile && produtoId) {
         const uploadResp = await uploadImagemProduto(produtoId, imagemFile);
         if (uploadResp.status === 201 || uploadResp.status === 200) {
-          alert('Produto e imagem enviados com sucesso.');
+          toast.success('Produto e imagem enviados com sucesso.');
+          resetForm();
         } else {
-          alert('Produto criado, mas houve um problema ao enviar a imagem.');
+          toast.warning('Produto criado, mas houve um problema ao enviar a imagem.');
+          resetForm();
         }
       } else if (imagemFile && !produtoId) {
-        alert('Produto criado, mas não foi possível obter o ID para enviar a imagem.');
+        toast.warning('Produto criado, mas não foi possível obter o ID para enviar a imagem.');
+        resetForm();
       } else {
-        alert('Produto cadastrado com sucesso.');
+        toast.success('Produto cadastrado com sucesso.');
+        resetForm();
       }
     } catch (err) {
       console.error('Erro ao cadastrar produto ou enviar imagem:', err);
-      alert('Não foi possível cadastrar o produto.');
+      toast.error('Não foi possível cadastrar o produto.');
     }
     finally {
       setSalvando(false);
@@ -227,11 +257,11 @@ export function RegistroProduto(props) {
   function confirmarCriacaoReceita(e) {
     e.preventDefault();
     if (!nomeReceita || !tipoReceita) {
-      alert('Preencha o nome e o tipo da receita.');
+      toast.warning('Preencha o nome e o tipo da receita.');
       return;
     }
     if (ingredientesReceita.length === 0) {
-      alert('Adicione pelo menos um ingrediente à receita.');
+      toast.warning('Adicione pelo menos um ingrediente à receita.');
       return;
     }
 
@@ -257,11 +287,11 @@ export function RegistroProduto(props) {
 
     axios.post('/api/receitas', payloadApi)
       .then(() => {
-        alert('Receita registrada com sucesso!');
+        toast.success('Receita registrada com sucesso!');
       })
       .catch((err) => {
         console.error('Erro ao registrar receita:', err);
-        alert('Não foi possível registrar a receita. Tente novamente.');
+        toast.error('Não foi possível registrar a receita. Tente novamente.');
       });
 
     setListareceitas(prev => [...prev, novaReceita]);
@@ -277,7 +307,7 @@ export function RegistroProduto(props) {
   // Adicionar ingrediente na lista temporária do modal
   function adicionarIngredienteModal() {
     if (!ingredienteSelecionado || !quantidadeIngrediente) {
-      alert('Selecione um ingrediente e informe a quantidade.');
+      toast.warning('Selecione um ingrediente e informe a quantidade.');
       return;
     }
     const ingrediente = ingredientes.find(i => String(i.id) === String(ingredienteSelecionado)) ||
@@ -324,17 +354,17 @@ export function RegistroProduto(props) {
 
   function adicionarreceita() {
     if (!receitaSelecionadaId) {
-      alert('Selecione uma receita.');
+      toast.warning('Selecione uma receita.');
       return;
     }
     const qtd = quantidade === '' ? 1 : Number(quantidade);
     if (!Number.isFinite(qtd) || qtd < 1) {
-      alert('Informe a quantidade de receitas (mínimo 1).');
+      toast.warning('Informe a quantidade de receitas (mínimo 1).');
       return;
     }
     const selecionada = receitasBanco.find(r => String(r.id) === String(receitaSelecionadaId));
     if (!selecionada) {
-      alert('Receita não encontrada.');
+      toast.error('Receita não encontrada.');
       return;
     }
 
@@ -562,6 +592,7 @@ export function RegistroProduto(props) {
                     onChange={handleImagem}
                     id="imagem-produto"
                     className={styles.imagemInput}
+                    ref={imagemInputRef}
                   />
                   <label htmlFor="imagem-produto" className={styles.escolherButton}>
                     Escolher
