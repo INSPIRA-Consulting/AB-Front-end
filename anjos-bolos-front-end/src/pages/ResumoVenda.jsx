@@ -1,6 +1,5 @@
 import React, { useRef, useState } from "react";
 import { Navbar } from "../components/Navbar";
-import Footer from "../components/Footer";
 import styles from "../styles/ResumoVendas.module.css";
 import { DateInput } from 'rsuite';
 import { FaRegCalendarAlt } from "react-icons/fa";
@@ -234,8 +233,6 @@ export function ResumoVenda() {
           </button>
         </div>
       </div>
-
-      <Footer />
     </div>
   );
 

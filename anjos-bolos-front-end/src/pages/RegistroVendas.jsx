@@ -5,7 +5,6 @@ import styles from "../styles/RegistroVendas.module.css";
 import { Produto } from "../components/Produto";
 import { Modal } from "../components/Modal";
 import api from '../provider/api';
-import Footer from "../components/Footer";
 import { useDocumentTitle } from "../hooks/useDocumentTitle";
 
 export function RegistroVendas(props) {
@@ -690,7 +689,6 @@ export function RegistroVendas(props) {
       ))}
       </div>
 
-      <Footer />
       </div>
     );
 

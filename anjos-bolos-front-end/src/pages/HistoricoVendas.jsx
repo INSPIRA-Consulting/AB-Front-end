@@ -1,6 +1,5 @@
 import React, { useRef, useState } from "react";
 import { Navbar } from "../components/Navbar";
-import Footer from "../components/Footer";
 import styles from "../styles/HistoricoVendas.module.css";
 import { DateInput } from 'rsuite';
 import { FaRegCalendarAlt } from "react-icons/fa";
@@ -274,8 +273,7 @@ export function HistoricoVendas(props) {
         </div>
       </div>
 
-      <Footer />
-      {/* Modal de detalhes do dia - usar Modal reutilizável */}
+  {/* Modal de detalhes do dia - usar Modal reutilizável */}
       <Modal isOpen={modalAberto} onClose={() => setModalAberto(false)}>
         <div style={{ padding: 12, width: 720 }}>
           <h2 style={{ marginTop: 6, marginBottom: 12 }}>Itens vendidos no dia</h2>

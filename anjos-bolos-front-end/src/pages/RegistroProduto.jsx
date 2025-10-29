@@ -3,9 +3,9 @@ import api from '../provider/api';
 import { FaTrashCan } from "react-icons/fa6";
 import { Navbar } from '../components/Navbar';
 import { Modal } from '../components/Modal';
+import { ModernToast } from '../components/ModernToast';
 import styles from '../styles/RegistroProduto.module.css';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
-import { useToast } from '../components/Toast';
 
 async function uploadImagemProduto(id, file) {
   if (!id || !file) throw new Error("ID e arquivo são obrigatórios");
@@ -19,7 +19,9 @@ async function uploadImagemProduto(id, file) {
 export function RegistroProduto(props) {
   useDocumentTitle(props.titulo);
   const imagemInputRef = useRef(null);
-  const toast = useToast();
+  const [toastSucesso, setToastSucesso] = useState(false);
+  const [toastErro, setToastErro] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
   const [receita, setreceita] = useState('');
   const [quantidade, setQuantidade] = useState('');
   const [unidade, setUnidade] = useState('g');
@@ -162,22 +164,27 @@ export function RegistroProduto(props) {
       if (imagemFile && produtoId) {
         const uploadResp = await uploadImagemProduto(produtoId, imagemFile);
         if (uploadResp.status === 201 || uploadResp.status === 200) {
-          toast.success('Produto e imagem enviados com sucesso.');
+          setToastMessage('Produto e imagem enviados com sucesso.');
+          setToastSucesso(true);
           resetForm();
         } else {
-          toast.warning('Produto criado, mas houve um problema ao enviar a imagem.');
+          setToastMessage('Produto criado, mas houve um problema ao enviar a imagem.');
+          setToastErro(true);
           resetForm();
         }
       } else if (imagemFile && !produtoId) {
-        toast.warning('Produto criado, mas não foi possível obter o ID para enviar a imagem.');
+        setToastMessage('Produto criado, mas não foi possível obter o ID para enviar a imagem.');
+        setToastErro(true);
         resetForm();
       } else {
-        toast.success('Produto cadastrado com sucesso.');
+        setToastMessage('Produto cadastrado com sucesso.');
+        setToastSucesso(true);
         resetForm();
       }
     } catch (err) {
       console.error('Erro ao cadastrar produto ou enviar imagem:', err);
-      toast.error('Não foi possível cadastrar o produto.');
+      setToastMessage('Não foi possível cadastrar o produto.');
+      setToastErro(true);
     }
     finally {
       setSalvando(false);
@@ -286,11 +293,13 @@ export function RegistroProduto(props) {
 
     api.post('/receitas', payloadApi)
       .then(() => {
-        toast.success('Receita registrada com sucesso!');
+        setToastMessage('Receita registrada com sucesso!');
+        setToastSucesso(true);
       })
       .catch((err) => {
         console.error('Erro ao registrar receita:', err);
-        toast.error('Não foi possível registrar a receita. Tente novamente.');
+        setToastMessage('Não foi possível registrar a receita. Tente novamente.');
+        setToastErro(true);
       });
 
     setListareceitas(prev => [...prev, novaReceita]);
@@ -808,6 +817,18 @@ export function RegistroProduto(props) {
           )}
         </div>
       </Modal>
+
+      <ModernToast 
+        isOpen={toastSucesso}
+        message={toastMessage}
+        type="success"
+      />
+
+      <ModernToast 
+        isOpen={toastErro}
+        message={toastMessage}
+        type="error"
+      />
     </div>
   );
 }
