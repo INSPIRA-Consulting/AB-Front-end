@@ -86,11 +86,11 @@ export function CatalogoProdutos(props) {
                 return categorias.some(categoria => {
                     // Mapear IDs dos filtros para nomes das categorias
                     const mapeamento = {
-                        'bolosTradicionais': 'Bolos Tradicionais',
-                        'bebidas': 'Bebidas',
+                        'bolosTradicionais': 'Bolo Tradicional',
+                        'bebidas': 'Bebida',
                         'salgados': 'Salgados',
-                        'bolosPote': 'Bolos de pote',
-                        'bolosFesta': 'Bolos de Festa'
+                        'bolosPote': 'Bolo de pote',
+                        'bolosFesta': 'Bolo de Festa'
                     };
                     return categoriaProduto === mapeamento[categoria];
                 });

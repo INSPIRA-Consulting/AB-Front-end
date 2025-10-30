@@ -4,7 +4,8 @@ on:
   push:
     branches:
       - master # O branch que acionará o deploy
-# Teste
+  
+  workflow_dispatch: # Permite execução manual do workflow
 jobs:
   build_and_deploy:
     runs-on: ubuntu-latest
