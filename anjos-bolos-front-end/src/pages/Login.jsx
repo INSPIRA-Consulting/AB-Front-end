@@ -42,6 +42,7 @@ export function Login(props) {
             
             // Salvar dados do usuário logado no localStorage
             if (response.data) {
+                localStorage.setItem('token', response.data.token);
                 localStorage.setItem('usuario', JSON.stringify(response.data));
                 console.log("Dados do usuário salvos:", response.data);
             }
