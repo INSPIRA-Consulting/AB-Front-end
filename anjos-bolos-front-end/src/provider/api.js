@@ -12,10 +12,23 @@ console.log('🔧 API Configuration:', {
 const api = axios.create({
     baseURL: BASE_URL,
     headers: {
-        'Content-Type': 'application/json',
-        'Authorization': localStorage.getItem('token') ? `Bearer ${localStorage.getItem('token')}` : ''
+        'Content-Type': 'application/json'
     }
 });
+
+// Interceptor para adicionar o token dinamicamente em todas as requisições
+api.interceptors.request.use(
+    (config) => {
+        const token = localStorage.getItem('token');
+        if (token) {
+            config.headers.Authorization = `Bearer ${token}`;
+        }
+        return config;
+    },
+    (error) => {
+        return Promise.reject(error);
+    }
+);
 
 api.interceptors.response.use(
     (resp) => resp,

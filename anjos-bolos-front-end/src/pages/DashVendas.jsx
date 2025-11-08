@@ -1,10 +1,11 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { FaRegCalendarAlt } from "react-icons/fa";
 import styles from '../styles/DashVendas.module.css';
 import '../styles/fonts/fonts.css';
 import { Navbar } from '../components/Navbar';
 import { DashSidebar } from '../components/DashSidebar';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
+import api from '../provider/api';
 
 
 import {
@@ -39,13 +40,261 @@ export function DashVendas(props) {
 	const startInputRef = useRef(null);
 	const endInputRef = useRef(null);
 
+	// Estados para dados do dashboard (seguindo o padrão do CatalogoProdutos)
+	const [produtoMaisVendido, setProdutoMaisVendido] = useState("Selecione um período");
+	const [diaSemanaComMaisVendas, setDiaSemanaComMaisVendas] = useState("Selecione um período");
+	const [totalVendas, setTotalVendas] = useState("Selecione um período");
+	const [faturamentoTotal, setFaturamentoTotal] = useState("Selecione um período");
+	const [loading, setLoading] = useState(false);
+	
+	// Estados para o gráfico
+	const [chartLabels, setChartLabels] = useState([]);
+	const [chartDataValues, setChartDataValues] = useState([]);
+
+	// Função para buscar produtos mais vendidos (seguindo o padrão do CatalogoProdutos)
+	const fetchProdutosMaisVendidos = async () => {
+		if (!startDate || !endDate) {
+			setProdutoMaisVendido("Selecione um período");
+			return;
+		}
+
+		setLoading(true);
+		try {
+			// Caminho completo: /dashboards/produtos-mais-vendidos
+			let url = `/dashboards/produtos-mais-vendidos?inicio=${startDate}&fim=${endDate}`;
+			
+			console.log('🔍 Buscando produtos mais vendidos em:', url);
+			
+			const response = await api.get(url);
+			
+			console.log('✅ Produtos mais vendidos carregados:', response.data);
+			
+			// Verificar se é um array ou objeto com propriedade content
+			let dadosRecebidos;
+			if (Array.isArray(response.data)) {
+				dadosRecebidos = response.data;
+			} else if (response.data.content && Array.isArray(response.data.content)) {
+				dadosRecebidos = response.data.content;
+			} else {
+				dadosRecebidos = [];
+			}
+			
+			if (dadosRecebidos && dadosRecebidos.length > 0) {
+				// Pega o primeiro produto (mais vendido)
+				const produto = dadosRecebidos[0];
+				console.log('📦 Primeiro produto:', produto);
+				const nomeProduto = produto.nomeProduto || produto.nome || 'Produto sem nome';
+				setProdutoMaisVendido(nomeProduto);
+			} else {
+				setProdutoMaisVendido("Nenhum produto encontrado");
+			}
+		} catch (error) {
+			console.error("❌ Erro ao buscar produtos mais vendidos:", error);
+			console.error("📍 URL que falhou:", error.config?.url);
+			console.error("📍 Status:", error.response?.status);
+			console.error("📍 Resposta do servidor:", error.response?.data);
+			
+			// Se for 404, mostrar mensagem mais clara
+			if (error.response?.status === 404) {
+				setProdutoMaisVendido("Endpoint não encontrado - verifique o backend");
+			} else {
+				setProdutoMaisVendido("Erro ao carregar dados");
+			}
+		} finally {
+			setLoading(false);
+		}
+	};
+
+	// Função para buscar dia da semana com mais vendas
+	const fetchDiaSemanaComMaisVendas = async () => {
+		if (!startDate || !endDate) {
+			setDiaSemanaComMaisVendas("Selecione um período");
+			return;
+		}
+
+		try {
+			let url = `/dashboards/dia-semana-mais-vendas?inicio=${startDate}&fim=${endDate}`;
+			
+			console.log('🔍 Buscando dia da semana com mais vendas em:', url);
+			
+			const response = await api.get(url);
+			
+			console.log('✅ Dia da semana carregado:', response.data);
+			
+			// O backend retorna apenas uma string com o dia
+			if (response.data && typeof response.data === 'string') {
+				// Traduzir para português se vier em inglês
+				const diaEmPortugues = traduzirDiaSemana(response.data);
+				setDiaSemanaComMaisVendas(diaEmPortugues);
+			} else {
+				setDiaSemanaComMaisVendas("Nenhum dia encontrado");
+			}
+		} catch (error) {
+			console.error("❌ Erro ao buscar dia da semana:", error);
+			console.error("📍 URL que falhou:", error.config?.url);
+			console.error("📍 Status:", error.response?.status);
+			
+			if (error.response?.status === 404) {
+				setDiaSemanaComMaisVendas("Endpoint não encontrado");
+			} else {
+				setDiaSemanaComMaisVendas("Erro ao carregar dados");
+			}
+		}
+	};
+
+	// Função auxiliar para traduzir dias da semana
+	const traduzirDiaSemana = (dia) => {
+		const traducoes = {
+			'MONDAY': 'Segunda-feira',
+			'TUESDAY': 'Terça-feira',
+			'WEDNESDAY': 'Quarta-feira',
+			'THURSDAY': 'Quinta-feira',
+			'FRIDAY': 'Sexta-feira',
+			'SATURDAY': 'Sábado',
+			'SUNDAY': 'Domingo',
+			// Também aceita versões em minúsculas
+			'monday': 'Segunda-feira',
+			'tuesday': 'Terça-feira',
+			'wednesday': 'Quarta-feira',
+			'thursday': 'Quinta-feira',
+			'friday': 'Sexta-feira',
+			'saturday': 'Sábado',
+			'sunday': 'Domingo',
+			// Se já vier em português, retorna como está
+			'segunda-feira': 'Segunda-feira',
+			'terça-feira': 'Terça-feira',
+			'quarta-feira': 'Quarta-feira',
+			'quinta-feira': 'Quinta-feira',
+			'sexta-feira': 'Sexta-feira',
+			'sábado': 'Sábado',
+			'domingo': 'Domingo'
+		};
+		
+		const diaLower = dia.toLowerCase().trim();
+		return traducoes[dia] || traducoes[diaLower] || dia;
+	};
+
+	// Função para buscar faturamento e total de vendas
+	const fetchFaturamento = async () => {
+		if (!startDate || !endDate) {
+			setTotalVendas("Selecione um período");
+			setFaturamentoTotal("Selecione um período");
+			return;
+		}
+
+		try {
+			let url = `/dashboards/pedidos-faturamento?inicio=${startDate}&fim=${endDate}`;
+			
+			console.log('🔍 Buscando faturamento em:', url);
+			
+			const response = await api.get(url);
+			
+			console.log('✅ Faturamento carregado:', response.data);
+			
+			// O backend retorna um objeto com quantidadePedidos e faturamento
+			if (response.data) {
+				// Total de vendas (quantidadePedidos)
+				const quantidade = response.data.quantidadePedidos || 0;
+				setTotalVendas(`${quantidade} ${quantidade === 1 ? 'venda' : 'vendas'}`);
+				
+				// Faturamento Total
+				const faturamento = response.data.faturamento || 0;
+				setFaturamentoTotal(
+					new Intl.NumberFormat('pt-BR', {
+						style: 'currency',
+						currency: 'BRL'
+					}).format(faturamento)
+				);
+			} else {
+				setTotalVendas("0 vendas");
+				setFaturamentoTotal("R$ 0,00");
+			}
+		} catch (error) {
+			console.error("❌ Erro ao buscar faturamento:", error);
+			console.error("📍 URL que falhou:", error.config?.url);
+			console.error("📍 Status:", error.response?.status);
+			
+			if (error.response?.status === 404) {
+				setTotalVendas("Endpoint não encontrado");
+				setFaturamentoTotal("Endpoint não encontrado");
+			} else {
+				setTotalVendas("Erro ao carregar");
+				setFaturamentoTotal("Erro ao carregar");
+			}
+		}
+	};
+
+	// Função para buscar dados do gráfico (vendas por dia)
+	const fetchDadosGrafico = async () => {
+		if (!startDate || !endDate) {
+			setChartLabels([]);
+			setChartDataValues([]);
+			return;
+		}
+
+		try {
+			// Gerar array de datas entre início e fim
+			const inicio = new Date(startDate + 'T00:00:00');
+			const fim = new Date(endDate + 'T00:00:00');
+			const diasPeriodo = [];
+			const labels = [];
+			const valores = [];
+
+			// Gerar todas as datas do período
+			for (let d = new Date(inicio); d <= fim; d.setDate(d.getDate() + 1)) {
+				const dataFormatada = d.toISOString().split('T')[0];
+				diasPeriodo.push(dataFormatada);
+				
+				// Formatar label (ex: "01 Nov")
+				const dia = String(d.getDate()).padStart(2, '0');
+				const meses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+				const mes = meses[d.getMonth()];
+				labels.push(`${dia} ${mes}`);
+			}
+
+			// Buscar dados de cada dia
+			const promessas = diasPeriodo.map(async (data) => {
+				try {
+					const url = `/dashboards/pedidos-faturamento?inicio=${data}&fim=${data}`;
+					const response = await api.get(url);
+					return response.data?.quantidadePedidos || 0;
+				} catch (error) {
+					console.warn(`Erro ao buscar dados do dia ${data}:`, error);
+					return 0;
+				}
+			});
+
+			const resultados = await Promise.all(promessas);
+			
+			setChartLabels(labels);
+			setChartDataValues(resultados);
+			
+			console.log('📊 Dados do gráfico carregados:', { labels, valores: resultados });
+
+		} catch (error) {
+			console.error("❌ Erro ao buscar dados do gráfico:", error);
+			setChartLabels([]);
+			setChartDataValues([]);
+		}
+	};
+
+	// Buscar dados quando as datas mudarem (seguindo o padrão do CatalogoProdutos)
+	useEffect(() => {
+		if (startDate && endDate) {
+			fetchProdutosMaisVendidos();
+			fetchDiaSemanaComMaisVendas();
+			fetchFaturamento();
+			fetchDadosGrafico();
+		}
+	}, [startDate, endDate]);
+
 	// Dados e configuração do gráfico Chart.js
 	const chartData = {
-		labels: ['19 Jun', '20 Jun', '21 Jun', '22 Jun', '23 Jun', '24 Jun', '25 Jun', '26 Jun'],
+		labels: chartLabels.length > 0 ? chartLabels : ['Selecione um período'],
 		datasets: [
 			{
-				label: 'Quantidade',
-				data: [58, 52, 48, 45, 55, 82, 60, 42],
+				label: 'Quantidade de Vendas',
+				data: chartDataValues.length > 0 ? chartDataValues : [0],
 				borderColor: '#a86b32',
 				backgroundColor: 'rgba(168, 107, 50, 0.1)',
 				borderWidth: 3,
@@ -104,14 +353,19 @@ export function DashVendas(props) {
 				}
 			},
 			y: {
-				min: 0,
-				max: 100,
+				beginAtZero: true,
 				ticks: {
 					color: '#6b3a13',
 					font: {
 						family: 'Montserrat, Arial, sans-serif',
 						size: 11,
 						weight: 600
+					},
+					stepSize: 1,
+					callback: function(value) {
+						if (Number.isInteger(value)) {
+							return value;
+						}
 					}
 				},
 				grid: {
@@ -197,20 +451,32 @@ export function DashVendas(props) {
 								</div>
 							</div>
 						</section>
-						<section className={styles.dashCards}>
-							<div className={styles.dashCard}>
-								<div className={styles.dashCardTitle + ' ' + styles.dashCardTitleVendido}>Produto mais vendido</div>
-								<div className={styles.dashCardContent}>Bolo de cenoura com chocolate</div>
+					<section className={styles.dashCards}>
+						<div className={styles.dashCard}>
+							<div className={styles.dashCardTitle + ' ' + styles.dashCardTitleVendido}>Produto mais vendido</div>
+							<div className={styles.dashCardContent}>
+								{loading ? "Carregando..." : produtoMaisVendido}
 							</div>
-							<div className={styles.dashCard}>
-								<div className={styles.dashCardTitle + ' ' + styles.dashCardTitleTotal}>Total de vendas</div>
-								<div className={styles.dashCardContent}>90 vendas</div>
+						</div>
+						<div className={styles.dashCard}>
+							<div className={styles.dashCardTitle + ' ' + styles.dashCardTitleTotal}>Total de vendas</div>
+							<div className={styles.dashCardContent}>
+								{loading ? "Carregando..." : totalVendas}
 							</div>
-							<div className={styles.dashCard}>
-								<div className={styles.dashCardTitle + ' ' + styles.dashCardTitleDia}>Dia da semana com mais vendas</div>
-								<div className={styles.dashCardContent}>Sexta-Feira</div>
+						</div>
+						<div className={styles.dashCard}>
+							<div className={styles.dashCardTitle + ' ' + styles.dashCardTitleDia}>Dia com mais vendas</div>
+							<div className={styles.dashCardContent}>
+								{loading ? "Carregando..." : diaSemanaComMaisVendas}
 							</div>
-						</section>
+						</div>
+						<div className={styles.dashCard}>
+							<div className={styles.dashCardTitle + ' ' + styles.dashCardTitleTotal}>Faturamento Total</div>
+							<div className={styles.dashCardContent}>
+								{loading ? "Carregando..." : faturamentoTotal}
+							</div>
+						</div>
+					</section>
 						<section className={styles.dashGrafico}>
 							<h2>Quantidade de Venda por Período:</h2>
 							<div className={styles.graficoPlaceholder}>
