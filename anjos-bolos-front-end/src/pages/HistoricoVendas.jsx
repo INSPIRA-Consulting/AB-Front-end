@@ -79,15 +79,9 @@ export function HistoricoVendas(props) {
 
   const handlePesquisar = () => {
     console.log("Filtros aplicados:", filtros);
-    // aqui entraria lógica de filtro no backend ou no estado
   };
 
-  const handleDownload = () => {
-    console.log("Download solicitado");
-    // aqui você gera o CSV/Excel com base nas vendas filtradas
-  };
 
-  // abre modal com itens do dia selecionado
   const handleDetalhesDia = (dia) => {
     try {
       const pedidosDoDia = pedidosFull.filter(p => {
@@ -295,7 +289,7 @@ export function HistoricoVendas(props) {
                     <tr key={i}>
                       <td style={{ padding: '8px', borderBottom: '1px solid #f0ece8', color: '#6b3200' }}>{it.produto || it.nomeProduto || it.descricao || 'Item'}</td>
                       <td style={{ padding: '8px', textAlign: 'center', borderBottom: '1px solid #f0ece8', color: '#6b3200' }}>{it.quantidade || 0}</td>
-                      <td style={{ padding: '8px', textAlign: 'right', borderBottom: '1px solid #f0ece8', color: '#6b3200' }}>R$ {Number(it.precoUnitario || it.valorUnitario || it.valorFinal || 0).toFixed(2)}</td>
+                      <td style={{ padding: '8px', textAlign: 'right', borderBottom: '1px solid #f0ece8', color: '#6b3200' }}>R$ {(Number(it.valorFinal || 0) / it.quantidade).toFixed(2)}</td>
                       <td style={{ padding: '8px', textAlign: 'right', borderBottom: '1px solid #f0ece8', color: '#6b3200' }}>R$ {Number((it.valorFinal || 0)).toFixed(2)}</td>
                     </tr>
                   ))}
