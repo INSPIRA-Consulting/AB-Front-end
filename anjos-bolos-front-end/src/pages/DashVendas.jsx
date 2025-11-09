@@ -34,9 +34,30 @@ ChartJS.register(
 
 export function DashVendas(props) {
 	useDocumentTitle(props.titulo);
-	// Estados para datas
-	const [startDate, setStartDate] = useState("");
-	const [endDate, setEndDate] = useState("");
+	
+	// Função para obter o primeiro dia do mês atual no formato yyyy-MM-dd
+	const getPrimeiroDiaDoMes = () => {
+		const hoje = new Date();
+		const ano = hoje.getFullYear();
+		const mes = String(hoje.getMonth() + 1).padStart(2, '0');
+		return `${ano}-${mes}-01`;
+	};
+	
+	// Função para obter o último dia do mês atual no formato yyyy-MM-dd
+	const getUltimoDiaDoMes = () => {
+		const hoje = new Date();
+		const ano = hoje.getFullYear();
+		const mes = hoje.getMonth();
+		// Criar data do próximo mês, dia 0 (que é o último dia do mês atual)
+		const ultimoDia = new Date(ano, mes + 1, 0);
+		const dia = String(ultimoDia.getDate()).padStart(2, '0');
+		const mesFormatado = String(mes + 1).padStart(2, '0');
+		return `${ano}-${mesFormatado}-${dia}`;
+	};
+	
+	// Estados para datas - inicializados com primeiro e último dia do mês atual
+	const [startDate, setStartDate] = useState(getPrimeiroDiaDoMes());
+	const [endDate, setEndDate] = useState(getUltimoDiaDoMes());
 	const startInputRef = useRef(null);
 	const endInputRef = useRef(null);
 

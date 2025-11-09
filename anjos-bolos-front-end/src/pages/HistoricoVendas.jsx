@@ -1,17 +1,46 @@
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import { Navbar } from "../components/Navbar";
 import styles from "../styles/HistoricoVendas.module.css";
 import { DateInput } from 'rsuite';
 import { FaRegCalendarAlt } from "react-icons/fa";
 import { useDocumentTitle } from "../hooks/useDocumentTitle";
+import { useSearchParams } from "react-router-dom";
 import api from '../provider/api';
 import { Modal } from '../components/Modal';
 
 export function HistoricoVendas(props) {
   useDocumentTitle(props.titulo);
 
-  const [startDate, setStartDate] = useState("2025-06-01");
-  const [endDate, setEndDate] = useState("2025-06-12");
+  // Função para obter o primeiro dia do mês atual no formato yyyy-MM-dd
+  const getPrimeiroDiaDoMes = () => {
+    const hoje = new Date();
+    const ano = hoje.getFullYear();
+    const mes = String(hoje.getMonth() + 1).padStart(2, '0');
+    return `${ano}-${mes}-01`;
+  };
+  
+  // Função para obter o último dia do mês atual no formato yyyy-MM-dd
+  const getUltimoDiaDoMes = () => {
+    const hoje = new Date();
+    const ano = hoje.getFullYear();
+    const mes = hoje.getMonth();
+    // Criar data do próximo mês, dia 0 (que é o último dia do mês atual)
+    const ultimoDia = new Date(ano, mes + 1, 0);
+    const dia = String(ultimoDia.getDate()).padStart(2, '0');
+    const mesFormatado = String(mes + 1).padStart(2, '0');
+    return `${ano}-${mesFormatado}-${dia}`;
+  };
+
+  // Ler parâmetros da URL (vindos da DashProdutos)
+  const [searchParams] = useSearchParams();
+  
+  // Inicializar datas: se vier da URL usa os parâmetros, senão usa primeiro e último dia do mês atual
+  const dataInicioParam = searchParams.get('dataInicio') || getPrimeiroDiaDoMes();
+  const dataFimParam = searchParams.get('dataFim') || getUltimoDiaDoMes();
+  const statusParam = searchParams.get('status') || "Todos"; // Ler status da URL
+
+  const [startDate, setStartDate] = useState(dataInicioParam);
+  const [endDate, setEndDate] = useState(dataFimParam);
   const startInputRef = useRef(null);
   const endInputRef = useRef(null);
 
@@ -19,68 +48,209 @@ export function HistoricoVendas(props) {
     dia: startDate,
     mes: endDate,
     valor: "Todos",
+    categoria: 'Todos',
+    status: statusParam // Inicializar com status da URL
   });
 
   const [vendas, setVendas] = useState([]);
   const [pedidosFull, setPedidosFull] = useState([]);
   const [itensFull, setItensFull] = useState([]);
+  const [pedidosOriginais, setPedidosOriginais] = useState([]); // Guardar pedidos sem filtro
+  const [itensOriginais, setItensOriginais] = useState([]); // Guardar itens sem filtro
   const [modalAberto, setModalAberto] = useState(false);
   const [itensDoDia, setItensDoDia] = useState([]);
 
+  // Atualizar filtros quando os parâmetros mudarem
+  useEffect(() => {
+    if (dataInicioParam || dataFimParam) {
+      setFiltros(prev => ({
+        ...prev,
+        dia: dataInicioParam || startDate,
+        mes: dataFimParam || endDate
+      }));
+      
+      console.log('📋 Histórico carregado com filtros da DashProdutos:');
+      console.log('  📅 Data Início:', dataInicioParam);
+      console.log('  📅 Data Fim:', dataFimParam);
+    }
+  }, [dataInicioParam, dataFimParam]);
+
   // carregar pedidos e itens do backend e agregá-los por dia
-  React.useEffect(() => {
+  useEffect(() => {
     let mounted = true;
 
     async function loadPedidosEItens() {
       try {
-        let pedidosResp;
-        pedidosResp = await api.get('/pedidos');
+        console.log('🔍 Buscando pedidos e itens-pedido...');
+        console.log('  📅 Período:', startDate, 'até', endDate);
 
-        let itensResp;
-        itensResp = await api.get('/itens-pedido');
+        // Backend não tem endpoint de intervalo de datas, então:
+        // 1. Buscar todos os pedidos
+        let pedidosResp = await api.get('/pedidos');
+        let itensResp = await api.get('/itens-pedido');
 
         const pedidos = Array.isArray(pedidosResp.data) ? pedidosResp.data : (pedidosResp.data && pedidosResp.data.content) ? pedidosResp.data.content : [];
         const itens = Array.isArray(itensResp.data) ? itensResp.data : (itensResp.data && itensResp.data.content) ? itensResp.data.content : [];
 
-        // agregar por dia (usando dataPedido)
-        const mapa = {};
-        pedidos.forEach(pedido => {
-          const dataStr = pedido.dataPedido || pedido.dataPedidoString || pedido.dataPedidoAt || '';
-          const dt = dataStr ? new Date(dataStr) : null;
-          const dia = dt ? dt.getDate() : null;
+        console.log('✅ Total de pedidos no sistema:', pedidos.length);
+        console.log('✅ Total de itens no sistema:', itens.length);
 
-          // somar itens vinculados a esse pedido
-          const itensDoPedido = itens.filter(it => Number(it.pedidoId) === Number(pedido.id));
-          const valorTotal = itensDoPedido.reduce((s, it) => s + (Number(it.valorFinal) || 0), 0);
-          const qtdItens = itensDoPedido.reduce((s, it) => s + (Number(it.quantidade) || 0), 0);
+        // Guardar dados originais para filtragem
+        if (mounted) {
+          setPedidosOriginais(pedidos);
+          setItensOriginais(itens);
+        }
 
-          if (dia == null) return;
+        // 2. Filtrar pedidos por intervalo de datas
+        let pedidosFiltrados = pedidos;
+        if (startDate || endDate) {
+          pedidosFiltrados = pedidos.filter(pedido => {
+            const dataStr = pedido.dataPedido || pedido.dataPedidoString || pedido.dataPedidoAt || '';
+            if (!dataStr) return false;
+            
+            // Parse da data (pode vir como "2025-01-15" ou "2025-01-15T10:30:00")
+            const dataPedido = new Date(dataStr);
+            dataPedido.setHours(0, 0, 0, 0); // Normalizar para início do dia
+            
+            const dataInicio = startDate ? new Date(startDate) : null;
+            const dataFim = endDate ? new Date(endDate) : null;
+            
+            if (dataInicio) dataInicio.setHours(0, 0, 0, 0);
+            if (dataFim) dataFim.setHours(23, 59, 59, 999); // Final do dia
+            
+            if (dataInicio && dataPedido < dataInicio) return false;
+            if (dataFim && dataPedido > dataFim) return false;
+            
+            return true;
+          });
+        }
 
-          if (!mapa[dia]) mapa[dia] = { valor: 0, itens: 0, dia };
-          mapa[dia].valor += valorTotal;
-          mapa[dia].itens += qtdItens;
-        });
+        console.log('📊 Pedidos no período selecionado:', pedidosFiltrados.length);
 
-        const resultado = Object.values(mapa).sort((a, b) => b.dia - a.dia);
+        // Filtrar itens apenas dos pedidos do período
+        const pedidosIdsFiltrados = new Set(pedidosFiltrados.map(p => Number(p.id)));
+        const itensFiltrados = itens.filter(it => pedidosIdsFiltrados.has(Number(it.pedidoId)));
+        
+        console.log('📦 Itens dos pedidos filtrados:', itensFiltrados.length);
+
+        // Aplicar filtros adicionais (status, categoria, valor) se já existirem
+        const resultado = aplicarFiltrosEAgregar(pedidosFiltrados, itensFiltrados, filtros);
+        
         if (mounted) {
           setVendas(resultado);
-          setPedidosFull(pedidos);
-          setItensFull(itens);
+          setPedidosFull(pedidosFiltrados);
+          setItensFull(itensFiltrados);
         }
       } catch (err) {
-        console.error('Erro ao carregar pedidos/itens:', err);
+        console.error('❌ Erro ao carregar pedidos/itens:', err);
       }
     }
 
     loadPedidosEItens();
     return () => { mounted = false; };
-  }, []);
+  }, [startDate, endDate]);
+
+  // Função para aplicar filtros e agregar dados
+  const aplicarFiltrosEAgregar = (pedidos, itens, filtrosAplicados) => {
+    let pedidosFiltrados = [...pedidos];
+    let itensFiltrados = [...itens];
+
+    // Filtrar por status do pedido
+    if (filtrosAplicados.status && filtrosAplicados.status !== 'Todos') {
+      pedidosFiltrados = pedidosFiltrados.filter(p => {
+        const status = (p.status || p.Status || '').toString().toUpperCase();
+        return status === filtrosAplicados.status;
+      });
+    }
+
+    // Atualizar itens após filtro de status
+    const pedidoIds = new Set(pedidosFiltrados.map(p => Number(p.id)));
+    itensFiltrados = itensFiltrados.filter(it => pedidoIds.has(Number(it.pedidoId)));
+
+    // Filtrar por categoria
+    if (filtrosAplicados.categoria && filtrosAplicados.categoria !== 'Todos') {
+      itensFiltrados = itensFiltrados.filter(it => {
+        const nome = (it.produto || it.nomeProduto || it.descricao || '').toString();
+        const cat = inferCategoryFromProductName(nome);
+        return cat === filtrosAplicados.categoria;
+      });
+
+      // Manter apenas pedidos que tenham itens após filtro de categoria
+      const pedidoIdsComItens = new Set(itensFiltrados.map(it => Number(it.pedidoId)));
+      pedidosFiltrados = pedidosFiltrados.filter(p => pedidoIdsComItens.has(Number(p.id)));
+    }
+
+    // Agregar por dia
+    const mapa = {};
+    pedidosFiltrados.forEach(pedido => {
+      const dataStr = pedido.dataPedido || pedido.dataPedidoString || pedido.dataPedidoAt || '';
+      const dt = dataStr ? new Date(dataStr) : null;
+      
+      if (!dt) return;
+      
+      const dataCompleta = dataStr.split(' ')[0];
+      const dia = dt.getDate();
+
+      const itensDoPedido = itensFiltrados.filter(it => Number(it.pedidoId) === Number(pedido.id));
+      const valorTotal = itensDoPedido.reduce((s, it) => s + (Number(it.valorFinal) || 0), 0);
+      const qtdItens = itensDoPedido.reduce((s, it) => s + (Number(it.quantidade) || 0), 0);
+
+      if (!mapa[dataCompleta]) {
+        mapa[dataCompleta] = { valor: 0, itens: 0, dia, dataCompleta };
+      }
+      mapa[dataCompleta].valor += valorTotal;
+      mapa[dataCompleta].itens += qtdItens;
+    });
+
+    let resultado = Object.values(mapa);
+
+    // Filtrar por valor (após agregação)
+    if (filtrosAplicados.valor && filtrosAplicados.valor !== 'Todos') {
+      resultado = resultado.filter(v => {
+        const valor = v.valor;
+        if (filtrosAplicados.valor === 'Abaixo de R$ 50') return valor < 50;
+        if (filtrosAplicados.valor === 'R$ 50 - R$ 100') return valor >= 50 && valor <= 100;
+        if (filtrosAplicados.valor === 'R$ 100 - R$ 200') return valor >= 100 && valor <= 200;
+        if (filtrosAplicados.valor === 'Acima de R$ 200') return valor > 200;
+        return true;
+      });
+    }
+
+    resultado.sort((a, b) => new Date(b.dataCompleta) - new Date(a.dataCompleta));
+    
+    return resultado;
+  };
 
 
   const handlePesquisar = () => {
-    console.log("Filtros aplicados:", filtros);
-    // aqui entraria lógica de filtro no backend ou no estado
+    console.log("🔍 Filtros aplicados:", filtros);
+
+    try {
+      // Começar com pedidos já filtrados por data
+      let pedidos = [...pedidosFull];
+      let itens = [...itensFull];
+
+      // Aplicar filtros e agregar
+      const resultado = aplicarFiltrosEAgregar(pedidos, itens, filtros);
+
+      setVendas(resultado);
+      console.log('✅ Pesquisa aplicada com sucesso. Registros encontrados:', resultado.length);
+    } catch (err) {
+      console.error('❌ Erro ao aplicar filtros:', err);
+    }
   };
+
+  // Heurística simples para inferir categoria a partir do nome do produto
+  function inferCategoryFromProductName(nome) {
+    if (!nome) return 'Outros';
+    const n = nome.toLowerCase();
+    if (n.includes('coxinha') || n.includes('empada') || n.includes('salgado')) return 'Salgados';
+    if (n.includes('pote') || n.includes('bolo de pote')) return 'Bolos de Pote';
+    if (n.includes('bolo') && (n.includes('festa') || n.includes('anivers'))) return 'Bolos de Festa';
+    if (n.includes('bolo')) return 'Bolos Tradicionais';
+    if (n.includes('suco') || n.includes('refrigerante') || n.includes('bebida')) return 'Bebidas';
+    return 'Outros';
+  }
 
   const handleDownload = () => {
     console.log("Download solicitado");
@@ -88,14 +258,20 @@ export function HistoricoVendas(props) {
   };
 
   // abre modal com itens do dia selecionado
-  const handleDetalhesDia = (dia) => {
+  const handleDetalhesDia = (vendaItem) => {
     try {
+      console.log('🔍 Abrindo detalhes para:', vendaItem);
+      
+      // Usar dataCompleta ao invés de só o número do dia
+      const dataAlvo = vendaItem.dataCompleta; // "2025-11-01"
+      
       const pedidosDoDia = pedidosFull.filter(p => {
         const dataStr = p.dataPedido || p.dataPedidoString || p.dataPedidoAt || '';
-        const dt = dataStr ? new Date(dataStr) : null;
-        const d = dt ? dt.getDate() : null;
-        return d === dia;
+        const dataCompleta = dataStr.split(' ')[0]; // "2025-11-01"
+        return dataCompleta === dataAlvo;
       });
+
+      console.log('📦 Pedidos do dia', dataAlvo, ':', pedidosDoDia.length);
 
       const itens = [];
       pedidosDoDia.forEach(p => {
@@ -103,10 +279,12 @@ export function HistoricoVendas(props) {
         itens.push(...itensDoPedido);
       });
 
+      console.log('🛒 Itens encontrados:', itens.length);
+      
       setItensDoDia(itens);
       setModalAberto(true);
     } catch (err) {
-      console.error('Erro ao buscar itens do dia:', err);
+      console.error('❌ Erro ao buscar itens do dia:', err);
       setItensDoDia([]);
       setModalAberto(true);
     }
@@ -115,18 +293,16 @@ export function HistoricoVendas(props) {
   return (
     <div className={styles.containerHistoiricoVendas}>
       <Navbar logado={true} />
-      <h1>Histórico de Venda</h1>
 
       <div className={styles.contentHistoiricoVendas}>
         {/* Coluna de pesquisa */}
         <div className={styles.filtros}>
           <h1>Pesquisar</h1>
+          
           <div className={styles.filtroItem}>
             <label>Data Inicio</label>
-            {/* <DateInput format="dd/MM/yyyy" className={styles.inputData} onChange={(value) => setDataInicio(value)}/> */}
             <div className={styles.periodoDate}
-              onClick={() => startInputRef.current && startInputRef.current.showPicker && startInputRef.current.showPicker()}
-              style={{ position: "relative", cursor: "pointer" }}>
+              onClick={() => startInputRef.current && startInputRef.current.showPicker && startInputRef.current.showPicker()}>
               <FaRegCalendarAlt className={styles.calendarIcon} />
               {!startDate && (
                 <span className={styles.datePlaceholder}>dd/mm/aaaa</span>
@@ -137,16 +313,6 @@ export function HistoricoVendas(props) {
                 value={startDate}
                 onChange={e => setStartDate(e.target.value)}
                 className={styles.invisibleDateInput}
-                style={{
-                  position: "absolute",
-                  left: 0,
-                  top: 0,
-                  width: "100%",
-                  height: "100%",
-                  opacity: 0,
-                  cursor: "pointer",
-                  zIndex: 2
-                }}
               />
               {startDate && (
                 <span className={styles.dateValue}>{formatDateBR(startDate)}</span>
@@ -156,11 +322,9 @@ export function HistoricoVendas(props) {
 
           <div className={styles.filtroItem}>
             <label>Data Final</label>
-            {/* <DateInput format="dd/MM/yyyy" className={styles.inputData} onChange={(value) => setDataInicio(value)}/> */}
             <div
               className={styles.periodoDate}
               onClick={() => endInputRef.current && endInputRef.current.showPicker && endInputRef.current.showPicker()}
-              style={{ position: "relative", cursor: "pointer" }}
             >
               <FaRegCalendarAlt className={styles.calendarIcon} />
               {!endDate && (
@@ -172,16 +336,6 @@ export function HistoricoVendas(props) {
                 value={endDate}
                 onChange={e => setEndDate(e.target.value)}
                 className={styles.invisibleDateInput}
-                style={{
-                  position: "absolute",
-                  left: 0,
-                  top: 0,
-                  width: "100%",
-                  height: "100%",
-                  opacity: 0,
-                  cursor: "pointer",
-                  zIndex: 2
-                }}
               />
               {endDate && (
                 <span className={styles.dateValue}>{formatDateBR(endDate)}</span>
@@ -189,53 +343,62 @@ export function HistoricoVendas(props) {
             </div>
           </div>
 
-          <label>Valor:</label>
-          <div className={styles.filtroRadio}>
-            <label>
-              <input
-                type="radio"
-                name="valor"
-                value="Abaixo de R$ 50"
-              // onChange={}
-              />
-              Abaixo de R$ 50
-            </label>
-            <label>
-              <input
-                type="radio"
-                name="valor"
-                value="R$ 50 - R$ 100"
-              // onChange={}
-              />
-              R$ 50 - R$ 100
-            </label>
-            <label>
-              <input
-                type="radio"
-                name="valor"
-                value="R$ 100 - R$ 200"
-              // onChange={}
-              />
-              R$ 100 - R$ 200
-            </label>
-            <label>
-              <input
-                type="radio"
-                name="valor"
-                value="Todos"
-              // onChange={}
-              />
-              Todos
-            </label>
+          <div className={styles.filterCompactRow}>
+            <div className={styles.filtroCompactItem}>
+              <label>Categoria</label>
+              <select
+                value={filtros.categoria || 'Todos'}
+                onChange={e => setFiltros(prev => ({ ...prev, categoria: e.target.value }))}
+                className={styles.compactSelect}
+              >
+                <option value="Todos">Todos</option>
+                <option value="Bolos Tradicionais">Bolos Tradicionais</option>
+                <option value="Bebidas">Bebidas</option>
+                <option value="Salgados">Salgados</option>
+                <option value="Bolos de Pote">Bolos de Pote</option>
+                <option value="Bolos de Festa">Bolos de Festa</option>
+              </select>
+            </div>
 
+            <div className={styles.filtroCompactItem}>
+              <label>Status</label>
+              <select
+                value={filtros.status || 'Todos'}
+                onChange={e => setFiltros(prev => ({ ...prev, status: e.target.value }))}
+                className={styles.compactSelect}
+              >
+                <option value="Todos">Todos</option>
+                <option value="CONFIRMADO">Confirmado</option>
+                <option value="PENDENTE_PAGAMENTO">Pendente Pag.</option>
+                <option value="CANCELADO">Cancelado</option>
+                <option value="FINALIZADO">Finalizado</option>
+              </select>
+            </div>
+
+            <div className={styles.filtroCompactItem}>
+              <label>Valor</label>
+              <select
+                value={filtros.valor || 'Todos'}
+                onChange={e => setFiltros(prev => ({ ...prev, valor: e.target.value }))}
+                className={styles.compactSelect}
+              >
+                <option value="Todos">Todos</option>
+                <option value="Abaixo de R$ 50">Abaixo de R$ 50</option>
+                <option value="R$ 50 - R$ 100">R$ 50 - R$ 100</option>
+                <option value="R$ 100 - R$ 200">R$ 100 - R$ 200</option>
+                <option value="Acima de R$ 200">Acima de R$ 200</option>
+              </select>
+            </div>
+
+            <button className={styles.btnPesquisar} onClick={handlePesquisar}>
+              Pesquisar
+            </button>
           </div>
-
-          <button className={styles.btnPesquisar} onClick={handlePesquisar}>
-            Pesquisar
-          </button>
         </div>
 
         <div className={styles.leftContent}>
+          <h1 className={styles.pageTitle}>Histórico de Venda</h1>
+          
           {/* Tabela de resultados */}
           <div className={styles.tabelaContainer}>
             <table className={styles.tabela}>
@@ -248,21 +411,29 @@ export function HistoricoVendas(props) {
                 </tr>
               </thead>
               <tbody>
-                {vendas.map((v, idx) => (
-                  <tr key={idx}>
-                    <td>R$ {v.valor.toFixed(2)}</td>
-                    <td>{v.itens}</td>
-                    <td>{v.dia}</td>
-                    <td>
-                      <button
-                        className={styles.btnDetalhes}
-                        onClick={() => handleDetalhesDia(v.dia)}
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24"><path fill="#56270B" d="M15.5 14h-.79l-.28-.27A6.47 6.47 0 0 0 16 9.5A6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5S14 7.01 14 9.5S11.99 14 9.5 14" /></svg>
-                      </button>
+                {vendas.length === 0 ? (
+                  <tr>
+                    <td colSpan="4" className={styles.emptyMessage}>
+                      Nenhum registro encontrado para o período selecionado
                     </td>
                   </tr>
-                ))}
+                ) : (
+                  vendas.map((v, idx) => (
+                    <tr key={idx}>
+                      <td>R$ {v.valor.toFixed(2)}</td>
+                      <td>{v.itens}</td>
+                      <td>{v.dia}</td>
+                      <td>
+                        <button
+                          className={styles.btnDetalhes}
+                          onClick={() => handleDetalhesDia(v)}
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24"><path fill="#56270B" d="M15.5 14h-.79l-.28-.27A6.47 6.47 0 0 0 16 9.5A6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5S14 7.01 14 9.5S11.99 14 9.5 14" /></svg>
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
 
@@ -275,31 +446,50 @@ export function HistoricoVendas(props) {
 
   {/* Modal de detalhes do dia - usar Modal reutilizável */}
       <Modal isOpen={modalAberto} onClose={() => setModalAberto(false)}>
-        <div style={{ padding: 12, width: 720 }}>
-          <h2 style={{ marginTop: 6, marginBottom: 12 }}>Itens vendidos no dia</h2>
+        <div className={styles.modalContent}>
+          <div className={styles.modalHeader}>
+            <h2>Itens vendidos no dia</h2>
+          </div>
+          
           {itensDoDia.length === 0 ? (
-            <p>Nenhum item encontrado para este dia.</p>
+            <div className={styles.emptyState}>
+              <p>Nenhum item encontrado para este dia.</p>
+            </div>
           ) : (
-            <div style={{ maxHeight: 360, overflowY: 'auto', background: '#fff', border: '2px solid #6b3200', borderRadius: 8 }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+            <div className={styles.tableWrapper}>
+              <table className={styles.modalTable}>
                 <thead>
-                  <tr style={{ background: '#f9f7f4' }}>
-                    <th style={{ textAlign: 'left', padding: '8px', borderBottom: '1px solid #e5ded8', color: '#6b3200' }}>Produto</th>
-                    <th style={{ textAlign: 'center', padding: '8px', borderBottom: '1px solid #e5ded8', color: '#6b3200', width: 120 }}>Quantidade</th>
-                    <th style={{ textAlign: 'right', padding: '8px', borderBottom: '1px solid #e5ded8', color: '#6b3200', width: 140 }}>Valor unit.</th>
-                    <th style={{ textAlign: 'right', padding: '8px', borderBottom: '1px solid #e5ded8', color: '#6b3200', width: 140 }}>Valor total</th>
+                  <tr>
+                    <th>Produto</th>
+                    <th>Qtd.</th>
+                    <th>Valor unit.</th>
+                    <th>Valor total</th>
                   </tr>
                 </thead>
                 <tbody>
                   {itensDoDia.map((it, i) => (
                     <tr key={i}>
-                      <td style={{ padding: '8px', borderBottom: '1px solid #f0ece8', color: '#6b3200' }}>{it.produto || it.nomeProduto || it.descricao || 'Item'}</td>
-                      <td style={{ padding: '8px', textAlign: 'center', borderBottom: '1px solid #f0ece8', color: '#6b3200' }}>{it.quantidade || 0}</td>
-                      <td style={{ padding: '8px', textAlign: 'right', borderBottom: '1px solid #f0ece8', color: '#6b3200' }}>R$ {Number(it.precoUnitario || it.valorUnitario || it.valorFinal || 0).toFixed(2)}</td>
-                      <td style={{ padding: '8px', textAlign: 'right', borderBottom: '1px solid #f0ece8', color: '#6b3200' }}>R$ {Number((it.valorFinal || 0)).toFixed(2)}</td>
+                      <td className={styles.productName}>
+                        {it.produto || it.nomeProduto || it.descricao || 'Item'}
+                      </td>
+                      <td className={styles.centered}>{it.quantidade || 0}</td>
+                      <td className={styles.currency}>
+                        R$ {Number(it.precoUnitario || it.valorUnitario || it.valorFinal || 0).toFixed(2)}
+                      </td>
+                      <td className={styles.currencyBold}>
+                        R$ {Number(it.valorFinal || 0).toFixed(2)}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
+                <tfoot>
+                  <tr className={styles.totalRow}>
+                    <td colSpan="3">Total</td>
+                    <td className={styles.totalValue}>
+                      R$ {itensDoDia.reduce((sum, it) => sum + Number(it.valorFinal || 0), 0).toFixed(2)}
+                    </td>
+                  </tr>
+                </tfoot>
               </table>
             </div>
           )}

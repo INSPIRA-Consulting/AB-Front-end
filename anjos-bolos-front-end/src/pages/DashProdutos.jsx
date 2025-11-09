@@ -7,21 +7,51 @@ import { Navbar } from '../components/Navbar';
 import { DashSidebar } from '../components/DashSidebar';
 import { FaFilter } from "react-icons/fa";
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
+import api from '../provider/api';
 
 export function DashProdutos(props) {
 	useDocumentTitle(props.titulo);
-	// Estados para datas
-	const [startDate, setStartDate] = useState("2025-06-01");
-	const [endDate, setEndDate] = useState("2025-06-12");
+	
+	// Função para obter o primeiro dia do mês atual no formato yyyy-MM-dd
+	const getPrimeiroDiaDoMes = () => {
+		const hoje = new Date();
+		const ano = hoje.getFullYear();
+		const mes = String(hoje.getMonth() + 1).padStart(2, '0');
+		return `${ano}-${mes}-01`;
+	};
+	
+	// Função para obter o último dia do mês atual no formato yyyy-MM-dd
+	const getUltimoDiaDoMes = () => {
+		const hoje = new Date();
+		const ano = hoje.getFullYear();
+		const mes = hoje.getMonth();
+		// Criar data do próximo mês, dia 0 (que é o último dia do mês atual)
+		const ultimoDia = new Date(ano, mes + 1, 0);
+		const dia = String(ultimoDia.getDate()).padStart(2, '0');
+		const mesFormatado = String(mes + 1).padStart(2, '0');
+		return `${ano}-${mesFormatado}-${dia}`;
+	};
+	
+	// Estados para datas - inicializados com primeiro e último dia do mês atual
+	const [startDate, setStartDate] = useState(getPrimeiroDiaDoMes());
+	const [endDate, setEndDate] = useState(getUltimoDiaDoMes());
 	const startInputRef = useRef(null);
 	const endInputRef = useRef(null);
 	
 	// Hook de navegação
 	const navigate = useNavigate();
 	
-	// Função para redirecionar para histórico de vendas
+	// Função para redirecionar para histórico de vendas com as datas e status FINALIZADO
 	const handleSearchClick = () => {
-		navigate('/historico-vendas');
+		// Montar query params com as datas atuais e status FINALIZADO
+		const params = new URLSearchParams();
+		
+		if (startDate) params.append('dataInicio', startDate);
+		if (endDate) params.append('dataFim', endDate);
+		params.append('status', 'FINALIZADO'); // Sempre filtrar por status FINALIZADO
+		
+		// Navegar para histórico com os parâmetros
+		navigate(`/historico-vendas?${params.toString()}`);
 	};
 
 	// Estados para filtros
@@ -35,6 +65,10 @@ export function DashProdutos(props) {
 		"Bolos de Festa"
 	]);
 	const [selectedCategoriaType, setSelectedCategoriaType] = useState("Categorias de Produtos");
+	
+	// Estado para dados da tabela TOP 5 do backend
+	const [top5Produtos, setTop5Produtos] = useState([]);
+	const [loading, setLoading] = useState(false);
 
 	// Opções de filtro para recomendações (múltipla seleção)
 	const recomendOptions = [
@@ -72,6 +106,109 @@ export function DashProdutos(props) {
 		setSelectedCategoriaType(type);
 		setShowCategoriasFilter(false);
 	};
+
+	// Função para buscar TOP 5 produtos do backend
+	const fetchTop5Produtos = async () => {
+		if (!startDate || !endDate) {
+			setTop5Produtos([]);
+			return;
+		}
+
+		try {
+			setLoading(true);
+			let url = `/dashboards/produtos-mais-vendidos?inicio=${startDate}&fim=${endDate}`;
+			
+			console.log('🏆 Buscando TOP 5 produtos em:', url);
+			console.log('📅 Data início selecionada:', startDate);
+			console.log('📅 Data fim selecionada:', endDate);
+			
+			const response = await api.get(url);
+			
+			console.log('✅ TOP 5 produtos carregados:', response.data);
+			console.log('📊 Quantidade de produtos retornados:', response.data.length);
+			
+			if (Array.isArray(response.data)) {
+				setTop5Produtos(response.data);
+			} else {
+				setTop5Produtos([]);
+			}
+		} catch (error) {
+			console.error("❌ Erro ao buscar TOP 5 produtos:", error);
+			setTop5Produtos([]);
+		} finally {
+			setLoading(false);
+		}
+	};
+
+	// Buscar dados quando as datas ou filtro de categoria mudarem
+	useEffect(() => {
+		if (startDate && endDate) {
+			fetchTop5Produtos();
+		}
+	}, [startDate, endDate]);
+
+	// Filtrar produtos por categoria localmente
+	const getFiltredProdutos = () => {
+		console.log('🔍 Filtrando produtos...');
+		console.log('📦 Total de produtos recebidos do backend:', top5Produtos.length);
+		console.log('🏷️ Categoria selecionada:', selectedCategoriaType);
+		
+		if (selectedCategoriaType === "Categorias de Produtos") {
+			console.log('✅ Agrupando por CATEGORIAS');
+			
+			// Agrupar produtos por categoria e somar quantidades
+			const categorias = {};
+			
+			top5Produtos.forEach(produto => {
+				const categoria = produto.categoriaProduto;
+				if (categorias[categoria]) {
+					categorias[categoria] += produto.quantidadeVendida;
+				} else {
+					categorias[categoria] = produto.quantidadeVendida;
+				}
+			});
+			
+			// Converter objeto em array e ordenar por quantidade (decrescente)
+			const categoriasArray = Object.keys(categorias).map(categoria => ({
+				nomeProduto: categoria, // Aqui o "produto" é a categoria
+				quantidadeVendida: categorias[categoria],
+				categoriaProduto: categoria
+			}));
+			
+			// Ordenar por quantidade vendida (maior para menor)
+			categoriasArray.sort((a, b) => b.quantidadeVendida - a.quantidadeVendida);
+			
+			// Pegar TOP 5 categorias
+			const top5Categorias = categoriasArray.slice(0, 5);
+			
+			console.log('📊 Categorias agrupadas:', top5Categorias);
+			
+			return top5Categorias;
+		}
+		
+		// Mapear nomes de categoria do frontend para o backend
+		const categoriaMap = {
+			"Bolos Tradicionais": "Bolo Tradicional",
+			"Bebidas": "Bebida",
+			"Salgados": "Salgados",
+			"Bolos de Pote": "Bolo de Pote",
+			"Bolos de Festa": "Bolo de Festa"
+		};
+		
+		const categoriaBackend = categoriaMap[selectedCategoriaType] || selectedCategoriaType;
+		console.log('🔄 Categoria mapeada para backend:', categoriaBackend);
+		
+		const filtrados = top5Produtos.filter(produto => 
+			produto.categoriaProduto === categoriaBackend
+		);
+		
+		console.log('✅ Produtos após filtro:', filtrados.length);
+		console.log('📋 Produtos filtrados:', filtrados);
+		
+		return filtrados;
+	};
+
+	const produtosFiltrados = getFiltredProdutos();
 
 	// Função para gerar título dinâmico
 	const getTableTitle = () => {
@@ -273,58 +410,38 @@ export function DashProdutos(props) {
 											style={{ cursor: "pointer" }}
 											onClick={() => setShowCategoriasFilter(!showCategoriasFilter)}
 										>
-											Categorias <FaFilter style={{ fontSize: 17, marginLeft: 4, verticalAlign: "middle" }} />
-										</th>
-										<th>Qtd.</th>
-										<th></th>
-									</tr>
+										{selectedCategoriaType === "Categorias de Produtos" ? "Categoria" : "Produto"} <FaFilter style={{ fontSize: 17, marginLeft: 4, verticalAlign: "middle" }} />
+									</th>
+									<th>Qtd.</th>
+									<th>Detalhes</th>
+								</tr>
 								</thead>
 								<tbody>
-									<tr>
-										<td>1º</td>
-										<td>Bolos Tradicionais</td>
-										<td>25</td>
-										<td><FaSearch 
-											style={{ color: "#4d2c0c", fontSize: 24, cursor: 'pointer' }} 
-											onClick={handleSearchClick}
-										/></td>
-									</tr>
-									<tr>
-										<td>2º</td>
-										<td>Bolos de Pote</td>
-										<td>10</td>
-										<td><FaSearch 
-											style={{ color: "#4d2c0c", fontSize: 24, cursor: 'pointer' }} 
-											onClick={handleSearchClick}
-										/></td>
-									</tr>
-									<tr>
-										<td>3º</td>
-										<td>Bolos de Festa</td>
-										<td>9</td>
-										<td><FaSearch 
-											style={{ color: "#4d2c0c", fontSize: 24, cursor: 'pointer' }} 
-											onClick={handleSearchClick}
-										/></td>
-									</tr>
-									<tr>
-										<td>4º</td>
-										<td>Salgado</td>
-										<td>8</td>
-										<td><FaSearch 
-											style={{ color: "#4d2c0c", fontSize: 24, cursor: 'pointer' }} 
-											onClick={handleSearchClick}
-										/></td>
-									</tr>
-									<tr>
-										<td>5º</td>
-										<td>Bebida</td>
-										<td>3</td>
-										<td><FaSearch 
-											style={{ color: "#4d2c0c", fontSize: 24, cursor: 'pointer' }} 
-											onClick={handleSearchClick}
-										/></td>
-									</tr>
+									{loading ? (
+										<tr>
+											<td colSpan="4" style={{ textAlign: 'center', padding: '20px' }}>
+												Carregando...
+											</td>
+										</tr>
+									) : produtosFiltrados.length > 0 ? (
+										produtosFiltrados.map((produto, index) => (
+											<tr key={index}>
+												<td>{index + 1}º</td>
+												<td>{produto.nomeProduto}</td>
+												<td>{produto.quantidadeVendida}</td>
+												<td><FaSearch 
+													style={{ color: "#4d2c0c", fontSize: 24, cursor: 'pointer' }} 
+													onClick={handleSearchClick}
+												/></td>
+											</tr>
+										))
+									) : (
+										<tr>
+											<td colSpan="4" style={{ textAlign: 'center', padding: '20px', fontStyle: 'italic', color: '#8b6239' }}>
+												{startDate && endDate ? "Nenhum produto encontrado no período selecionado." : "Selecione um período para visualizar os produtos mais vendidos."}
+											</td>
+										</tr>
+									)}
 								</tbody>
 							</table>
 						</div>
