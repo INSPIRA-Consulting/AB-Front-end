@@ -60,11 +60,11 @@ input[type=number] {
 
 .pageTitle {
   color: #6b3200;
-  font-family: 'DancingScript', cursive;
-  font-size: 2.6rem;
+  font-family: 'Montserrat', sans-serif;
+  font-size: 1.5rem;
   font-weight: 700;
   text-align: center;
-  margin: 20px 0 40px 0;
+  margin: 10px 0 25px 0;
   text-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
@@ -81,13 +81,13 @@ input[type=number] {
   background: #e5ded8;
   border-radius: 18px;
   box-shadow: 0 8px 32px rgba(0,0,0,0.07);
-  padding: 24px;
-  gap: 24px;
+  padding: 20px;
+  gap: 20px;
   max-width: 900px;
   width: 100%;
   border: 2px solid #bcae9e;
   height: fit-content;
-  max-height: calc(100vh - 220px);
+  max-height: calc(100vh - 180px);
   overflow: hidden;
 }
 
@@ -106,9 +106,9 @@ input[type=number] {
 }
 
 .sectionTitle {
-  font-family: 'DancingScript', cursive;
+  font-family: 'Montserrat', sans-serif;
   color: #6b3200;
-  font-size: 1.5rem;
+  font-size: 1.1rem;
   font-weight: 700;
   margin-bottom: 14px;
   text-align: center;

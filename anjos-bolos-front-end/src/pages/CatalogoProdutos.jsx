@@ -351,11 +351,6 @@ export function CatalogoProdutos(props) {
                 onNextPage={handleNextPage}
                 onPageClick={handlePageClick}
             />
-            
-            {/* Debug info temporário */}
-            <div style={{padding: '10px', background: '#f0f0f0', margin: '10px 0', fontSize: '12px'}}>
-                Debug: Produtos: {produtos.length} | Total Pages: {totalPages} | Current Page: {currentPage} | Page Size: {pageSize}
-            </div>
 
             {loading && (
                 <div className={styles.loadingContainer}>

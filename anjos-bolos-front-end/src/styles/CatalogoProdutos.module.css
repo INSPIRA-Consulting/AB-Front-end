@@ -37,7 +37,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 15px 0;
+    padding: 25px 0 10px 0;
     flex-shrink: 0;
 }
 
@@ -51,16 +51,22 @@
 .titulo::after {
     content: '▼';
     position: absolute;
-    right: 15px;
-    top: 25px;
+    right: 60px;
+    top: 45%;
+    transform: translateY(-50%);
     color: #56270B;
-    font-size: 1.8rem;
+    font-size: 1.3rem;
     pointer-events: none;
 }
 
+/* Ajuste específico para quando "Produtos" está selecionado */
+.titulo:has(select option[value="produtos"]:checked)::after {
+    right: 110px;
+}
+
 .titulo h1 {
-    font-family: 'DancingScript';
-    font-size: 4rem;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 1.8rem;
     font-weight: bold;
     color: #663b2b;
     margin: 0;
@@ -69,8 +75,8 @@
 .titulo select {
     background-color: transparent;
     border: none;
-    font-size: 4rem;
-    font-family: 'DancingScript';
+    font-size: 1.8rem;
+    font-family: 'Montserrat', sans-serif;
     color: #56270B;
     font-weight: bold;
     outline: none;
@@ -111,16 +117,16 @@
 .registrarButton {
     background-color: #663b2b;
     color: white;
-    padding: 16px 16px;
+    padding: 14px 14px;
     border: none;
     border-radius: 10px;
     font-family: 'Montserrat', sans-serif;
-    font-size: 1.2rem;
+    font-size: 1.05rem;
     font-weight: 600;
     cursor: pointer;
     transition: background-color 0.3s;
     white-space: nowrap;
-    width: 250px;
+    width: 230px;
 }
 
 .registrarButton:hover {
@@ -352,7 +358,7 @@
 
 /* Tabela de produtos */
 .tableSection {
-    margin: 20px auto;
+    margin: 10px auto 20px auto;
     max-width: 1400px;
     width: 100%;
     display: flex;
@@ -410,10 +416,11 @@
     display: flex;
     border-bottom: 1px solid #eee;
     transition: background-color 0.2s;
+    background-color: white;
 }
 
 .tableRow:nth-child(even) {
-    background-color: #f9f9f9;
+    background-color: white;
 }
 
 .tableRow:hover {

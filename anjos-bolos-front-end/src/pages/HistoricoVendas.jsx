@@ -189,14 +189,18 @@ export function HistoricoVendas(props) {
       if (!dt) return;
       
       const dataCompleta = dataStr.split(' ')[0];
-      const dia = dt.getDate();
+      // Formatar como dd/MM/yyyy
+      const dia = String(dt.getDate()).padStart(2, '0');
+      const mes = String(dt.getMonth() + 1).padStart(2, '0');
+      const ano = dt.getFullYear();
+      const diaFormatado = `${dia}/${mes}/${ano}`;
 
       const itensDoPedido = itensFiltrados.filter(it => Number(it.pedidoId) === Number(pedido.id));
       const valorTotal = itensDoPedido.reduce((s, it) => s + (Number(it.valorFinal) || 0), 0);
       const qtdItens = itensDoPedido.reduce((s, it) => s + (Number(it.quantidade) || 0), 0);
 
       if (!mapa[dataCompleta]) {
-        mapa[dataCompleta] = { valor: 0, itens: 0, dia, dataCompleta };
+        mapa[dataCompleta] = { valor: 0, itens: 0, dia: diaFormatado, dataCompleta };
       }
       mapa[dataCompleta].valor += valorTotal;
       mapa[dataCompleta].itens += qtdItens;
@@ -406,7 +410,7 @@ export function HistoricoVendas(props) {
                 <tr>
                   <th>Valor total</th>
                   <th>Itens</th>
-                  <th>Dia</th>
+                  <th>Data</th>
                   <th>Detalhes</th>
                 </tr>
               </thead>
@@ -467,20 +471,27 @@ export function HistoricoVendas(props) {
                   </tr>
                 </thead>
                 <tbody>
-                  {itensDoDia.map((it, i) => (
-                    <tr key={i}>
-                      <td className={styles.productName}>
-                        {it.produto || it.nomeProduto || it.descricao || 'Item'}
-                      </td>
-                      <td className={styles.centered}>{it.quantidade || 0}</td>
-                      <td className={styles.currency}>
-                        R$ {Number(it.precoUnitario || it.valorUnitario || it.valorFinal || 0).toFixed(2)}
-                      </td>
-                      <td className={styles.currencyBold}>
-                        R$ {Number(it.valorFinal || 0).toFixed(2)}
-                      </td>
-                    </tr>
-                  ))}
+                  {itensDoDia.map((it, i) => {
+                    // Calcular preço unitário: valorFinal / quantidade
+                    const precoUnitario = it.quantidade > 0 
+                      ? Number(it.valorFinal || 0) / Number(it.quantidade) 
+                      : 0;
+                    
+                    return (
+                      <tr key={i}>
+                        <td className={styles.productName}>
+                          {it.produto || it.nomeProduto || it.descricao || 'Item'}
+                        </td>
+                        <td className={styles.centered}>{it.quantidade || 0}</td>
+                        <td className={styles.currency}>
+                          R$ {precoUnitario.toFixed(2)}
+                        </td>
+                        <td className={styles.currencyBold}>
+                          R$ {Number(it.valorFinal || 0).toFixed(2)}
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
                 <tfoot>
                   <tr className={styles.totalRow}>

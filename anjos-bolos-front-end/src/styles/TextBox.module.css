@@ -9,10 +9,17 @@
   padding: 14px 12px 6px;
   font-size: 1rem;
   color: #663b2b;
-  border: 2px solid #663b2b;
+  border: 2px solid #c4b5a3;
   border-radius: 10px;
   outline: none;
   background-color: #fff;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.input:focus {
+  border-color: #663b2b;
+  box-shadow: 0 0 0 3px rgba(102, 59, 43, 0.1);
+  transform: translateY(-1px);
 }
 
 .label {
@@ -20,16 +27,17 @@
   left: 12px;
   top: 14px;
   padding: 0 4px;
-  color: #663b2b;
+  color: #8b7a6f;
   font-size: 1rem;
   background-color: #fff;
-  transition: all 0.2s ease-out;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   pointer-events: none;
 }
 
 .active {
-  top: -20px;
-  font-size: 1.2rem;
+  top: -10px;
+  font-size: 0.85rem;
   font-weight: 600;
   color: #663b2b;
+  letter-spacing: 0.02em;
 }

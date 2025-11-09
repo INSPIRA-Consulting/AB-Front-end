@@ -76,14 +76,16 @@ export function Login(props) {
                 isVisible={toastSucesso} 
                 message="Login realizado com sucesso! Redirecionando..." 
                 type="success" 
-                onClose={fecharToastSucesso} 
+                onClose={fecharToastSucesso}
+                duration={1500}
             />
             
             <ModernToast 
                 isVisible={toastErro} 
                 message="Erro ao fazer login. Verifique suas credenciais!" 
                 type="error" 
-                onClose={() => setToastErro(false)} 
+                onClose={() => setToastErro(false)}
+                duration={1500}
             />
             </div>
         </div></>

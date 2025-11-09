@@ -153,7 +153,7 @@ export function DashFinancas(props) {
             setLoadingResumo(true);
             
             try {
-                const [menorResponse, maiorResponse, pedidosResponse, itensResponse] = await Promise.all([
+                const [menorResponse, maiorResponse, faturamentoResponse, pedidosResponse, itensResponse] = await Promise.all([
                     api.get('/dashboards/menor-margem-lucro', {
                         params: {
                             dataInicio: startDate,
@@ -166,6 +166,12 @@ export function DashFinancas(props) {
                             dataFim: endDate
                         }
                     }),
+                    api.get('/dashboards/pedidos-faturamento', {
+                        params: {
+                            inicio: startDate,
+                            fim: endDate
+                        }
+                    }),
                     api.get('/pedidos'),
                     api.get('/itens-pedido')
                 ]);
@@ -173,6 +179,18 @@ export function DashFinancas(props) {
                 // Setar dados de margem de lucro
                 setMenorMargemLucro(menorResponse.data);
                 setMaiorMargemLucro(maiorResponse.data);
+                
+                // Setar dados do Resumo Financeiro usando o endpoint
+                const dadosFaturamento = faturamentoResponse.data;
+                setFaturamento(dadosFaturamento.faturamento);  // Entrada
+                setCustos(dadosFaturamento.custos);             // Saída
+                setLucro(dadosFaturamento.faturamento - dadosFaturamento.custos); // Lucro
+                
+                console.log('💰 Resumo Financeiro do endpoint:', {
+                    entrada: dadosFaturamento.faturamento,
+                    saida: dadosFaturamento.custos,
+                    lucro: dadosFaturamento.faturamento - dadosFaturamento.custos
+                });
                 
                 // Processar dados para o gráfico
                 const pedidos = Array.isArray(pedidosResponse.data) ? pedidosResponse.data : [];
@@ -242,27 +260,14 @@ export function DashFinancas(props) {
                 const saida = datasOrdenadas.map(data => dadosPorData[data].saida);
                 const lucroArray = datasOrdenadas.map(data => dadosPorData[data].lucro);
                 
-                console.log('📊 Dados do gráfico:', {
+                console.log('📊 Dados do gráfico por dia:', {
                     labels,
                     entrada,
                     saida,
                     lucro: lucroArray
                 });
-                console.log('💰 Total Entrada:', entrada.reduce((a, b) => a + b, 0).toFixed(2));
-                console.log('💸 Total Saída:', saida.reduce((a, b) => a + b, 0).toFixed(2));
-                console.log('💵 Total Lucro:', lucroArray.reduce((a, b) => a + b, 0).toFixed(2));
                 
-                // Calcular totais para o Resumo Financeiro baseado nos mesmos dados do gráfico
-                // Isso garante consistência entre o gráfico e o card de resumo
-                const totalEntrada = entrada.reduce((a, b) => a + b, 0);
-                const totalSaida = saida.reduce((a, b) => a + b, 0);
-                const totalLucro = lucroArray.reduce((a, b) => a + b, 0);
-                
-                // Setar dados do Resumo Financeiro com os valores calculados
-                setFaturamento(totalEntrada);
-                setCustos(totalSaida);
-                setLucro(totalLucro);
-                
+                // Setar dados do gráfico
                 setDadosGraficoPorData({
                     labels,
                     entrada,

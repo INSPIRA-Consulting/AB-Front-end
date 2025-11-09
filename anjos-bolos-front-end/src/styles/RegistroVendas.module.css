@@ -3,12 +3,6 @@
 .containerRegistroVendas {
     background-color: #F7F7F7;
 
-    h4 {
-        font-family: 'Montserrat';
-        font-size: 15px;
-        margin-bottom: 5%;
-    }
-
     h5 {
         font-family: 'Montserrat';
         font-size: 15px;
@@ -17,16 +11,16 @@
 }
 
 .containerRegistroVendas h1 {
-    font-family: 'DancingScript';
-    font-size: 2.5rem;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 1.6rem;
     font-weight: bold;
     color: #663b2b;
     margin-bottom: 0;
 }
 
 h3{
-    font-family: 'DancingScript';
-    font-size: 1rem;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 0.85rem;
     font-weight: bold;
     color: #56270B;
 }
@@ -147,14 +141,18 @@ h3{
         label {
             font-family: 'Montserrat';
             font-size: 1rem;
-            color: #663b2b;
-            font-weight: normal;
+            color: #4A4A4A;
+            font-weight: 500;
             margin-right: 10px;
             display: inline-flex;
             flex-direction: row;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            user-select: none;
 
             input {
-                margin-right: 15px;
+                margin-right: 0;
             }
             
         }
@@ -163,27 +161,41 @@ h3{
     input[type="radio"] {
         appearance: none;
         -webkit-appearance: none;
-        width: 20px;
-        height: 20px;
-        border: 2px solid #56270B;
-        border-radius: 3px;
-        background-color: #B4A499;
+        width: 22px;
+        height: 22px;
+        border: 2.5px solid #663b2b;
+        border-radius: 6px;
+        background-color: white;
         cursor: pointer;
         position: relative;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        flex-shrink: 0;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    input[type="radio"]:hover {
+        border-color: #8b5a2b;
+        transform: scale(1.05);
     }
 
     input[type="radio"]:checked {
-        background-color: #B4A499;
+        background-color: #663b2b;
+        border-color: #663b2b;
     }
 
     input[type="radio"]:checked::after {
-        content: 'X';
-        color: #56270B;
-        font-size: 1.5rem;
-        font-weight: normal;
+        content: '✓';
+        color: white;
+        font-size: 13px;
+        font-weight: bold;
+        line-height: 1;
         display: flex;
         align-items: center;
         justify-content: center;
+        position: absolute;
+        inset: 0;
         position: absolute;
         top: 0;
         left: 0;
@@ -202,4 +214,91 @@ h3{
     margin-left: 10%;
     margin-right: 10%;
     row-gap: 20px;
+}
+
+/* Estilos do Modal de Encomenda */
+.modalEncomenda {
+    padding: 30px;
+    max-width: 500px;
+    background: #f5f1ed;
+    border-radius: 15px;
+}
+
+.modalEncomenda h3 {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #663b2b;
+    margin-bottom: 25px;
+    text-align: left;
+}
+
+.modalEncomendaField {
+    margin-bottom: 18px;
+}
+
+.modalEncomendaField label {
+    display: block;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: #56270B;
+    margin-bottom: 6px;
+    text-align: left;
+}
+
+.modalEncomendaField input,
+.modalEncomendaField select {
+    width: 100%;
+    padding: 10px 12px;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 0.95rem;
+    color: #4a4a4a;
+    background: white;
+    border: 2px solid #c4b5a3;
+    border-radius: 8px;
+    outline: none;
+    transition: border-color 0.2s;
+    box-sizing: border-box;
+}
+
+.modalEncomendaField input:focus,
+.modalEncomendaField select:focus {
+    border-color: #8b5a2b;
+}
+
+.modalEncomendaButtons {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 25px;
+}
+
+.modalEncomendaButtons button {
+    padding: 10px 20px;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 1rem;
+    font-weight: 600;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.modalCancelButton {
+    background: #d1c8c2;
+    color: #56270B;
+}
+
+.modalCancelButton:hover {
+    background: #bcae9e;
+}
+
+.modalConfirmButton {
+    background: #663b2b;
+    color: white;
+}
+
+.modalConfirmButton:hover {
+    background: #56270B;
 }

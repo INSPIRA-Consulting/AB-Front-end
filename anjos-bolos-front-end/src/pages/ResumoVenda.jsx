@@ -10,6 +10,10 @@ export function ResumoVenda() {
 
   const [vendas, setVendas] = React.useState([]);
 
+  const handleVoltar = () => {
+    window.location.href = '/registro-vendas';
+  };
+
   useEffect(() => {
     try {
       const raw = localStorage.getItem('resumoVendas');
@@ -172,7 +176,17 @@ export function ResumoVenda() {
   return (
     <div className={styles.containerResumoVendas}>
       <Navbar logado={true} />
-      <h1>Resumo da Venda</h1>
+      
+      <div className={styles.headerContainer}>
+        <button 
+          className={styles.voltarButton}
+          onClick={handleVoltar}
+        >
+          {'< Voltar'}
+        </button>
+      </div>
+      
+      <h1 className={styles.pageTitle}>Resumo da Venda</h1>
 
       <div className={styles.contentResumoVendas}>
 

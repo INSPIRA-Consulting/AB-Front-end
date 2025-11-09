@@ -106,12 +106,14 @@ export function RegistroIngredientes(props) {
                 isOpen={toastSucesso}
                 message="Ingrediente cadastrado com sucesso!"
                 type="success"
+                duration={1500}
             />
 
             <ModernToast 
                 isOpen={toastErro}
                 message="Erro ao cadastrar ingrediente. Verifique as informações e tente novamente."
                 type="error"
+                duration={1500}
             />
             </div>
             </div>

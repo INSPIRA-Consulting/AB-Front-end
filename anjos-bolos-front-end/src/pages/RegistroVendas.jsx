@@ -446,33 +446,30 @@ export function RegistroVendas(props) {
 
       {/* Modal de Encomenda */}
       <Modal isOpen={showEncomendaModal} onClose={handleCancelEncomenda}>
-        <div style={{ padding: 20, maxWidth: 480 }}>
+        <div className={styles.modalEncomenda}>
           <h3>Detalhes da Encomenda</h3>
-          <div style={{ marginBottom: 12 }}>
+          <div className={styles.modalEncomendaField}>
             <label>Data de retirada</label>
             <input
               type="date"
               value={orderDetails.date}
               onChange={e => setOrderDetails(prev => ({ ...prev, date: e.target.value }))}
-              style={{ width: '100%', padding: 8, marginTop: 6 }}
             />
           </div>
-          <div style={{ marginBottom: 12 }}>
+          <div className={styles.modalEncomendaField}>
             <label>CPF do cliente</label>
             <input
               type="text"
               value={orderDetails.cpf}
               onChange={handleCpfChange}
               placeholder="000.000.000-00"
-              style={{ width: '100%', padding: 8, marginTop: 6 }}
             />
           </div>
-          <div style={{ marginBottom: 12 }}>
+          <div className={styles.modalEncomendaField}>
             <label>Horário previsto</label>
             <select
               value={orderDetails.time}
               onChange={e => setOrderDetails(prev => ({ ...prev, time: e.target.value }))}
-              style={{ width: '100%', padding: 8, marginTop: 6 }}
             >
               <option value="">-- selecione --</option>
               {timeOptions.map(t => (
@@ -480,31 +477,29 @@ export function RegistroVendas(props) {
               ))}
             </select>
           </div>
-          <div style={{ marginBottom: 12 }}>
+          <div className={styles.modalEncomendaField}>
             <label>Nome do cliente</label>
             <input
               type="text"
               value={orderDetails.clientName}
               onChange={e => setOrderDetails(prev => ({ ...prev, clientName: e.target.value }))}
               placeholder="Nome do cliente"
-              style={{ width: '100%', padding: 8, marginTop: 6 }}
             />
           </div>
-          <div style={{ marginBottom: 12 }}>
+          <div className={styles.modalEncomendaField}>
             <label>Telefone do cliente</label>
             <input
               type="tel"
               value={orderDetails.phone}
               onChange={e => setOrderDetails(prev => ({ ...prev, phone: e.target.value }))}
               placeholder="(xx) xxxxx-xxxx"
-              style={{ width: '100%', padding: 8, marginTop: 6 }}
             />
           </div>
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 8 }}>
-            <button onClick={handleCancelEncomenda} style={{ padding: '8px 12px' }}>
+          <div className={styles.modalEncomendaButtons}>
+            <button className={styles.modalCancelButton} onClick={handleCancelEncomenda}>
               Cancelar
             </button>
-            <button onClick={handleConfirmEncomenda} style={{ padding: '8px 12px' }}>
+            <button className={styles.modalConfirmButton} onClick={handleConfirmEncomenda}>
               Confirmar
             </button>
           </div>

@@ -65,8 +65,22 @@ export function Cadastro(props) {
         }
     }
 
+    const handleVoltar = () => {
+        window.location.href = '/menu';
+    };
+
     return(
         <><Navbar />
+        <div className={styles.pageContainer}>
+            <div className={styles.headerContainer}>
+                <button 
+                    className={styles.voltarButton}
+                    onClick={handleVoltar}
+                >
+                    {'< Voltar'}
+                </button>
+            </div>
+            
         <div className={styles.cadastro}>
         <div className={styles.container}>
             <h1>{props.titulo}</h1>
@@ -98,13 +112,16 @@ export function Cadastro(props) {
                 isOpen={toastSucesso}
                 message={`Funcionário ${form.nome} cadastrado com sucesso!`}
                 type="success"
+                duration={1500}
             />
 
             <ModernToast 
                 isOpen={toastErro}
                 message="Erro ao realizar cadastro. Verifique as informações e tente novamente."
                 type="error"
+                duration={1500}
             />
+        </div>
         </div>
         </div></>
     )

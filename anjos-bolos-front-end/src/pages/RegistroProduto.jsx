@@ -822,12 +822,14 @@ export function RegistroProduto(props) {
         isOpen={toastSucesso}
         message={toastMessage}
         type="success"
+        duration={1500}
       />
 
       <ModernToast 
         isOpen={toastErro}
         message={toastMessage}
         type="error"
+        duration={1500}
       />
     </div>
   );
