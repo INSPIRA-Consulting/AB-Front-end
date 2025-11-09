@@ -242,9 +242,17 @@ export function DashFinancas(props) {
                     // Somar valores dos itens deste pedido
                     const itensDoPedido = itens.filter(item => item.pedidoId === pedido.id);
                     itensDoPedido.forEach(item => {
-                        dadosPorData[data].entrada += item.valorFinal || 0;
-                        dadosPorData[data].saida += item.custoProducao || 0;
-                        dadosPorData[data].lucro += (item.valorFinal || 0) - (item.custoProducao || 0);
+                        const quantidade = Number(item.quantidade || 0);
+                        const valorUnitario = Number(item.valorFinal || 0);
+                        const custoUnitario = Number(item.custoProducao || 0);
+                        
+                        // valorFinal é o valor unitário, precisa multiplicar pela quantidade
+                        const entradaItem = valorUnitario * quantidade;
+                        const saidaItem = custoUnitario * quantidade;
+                        
+                        dadosPorData[data].entrada += entradaItem;
+                        dadosPorData[data].saida += saidaItem;
+                        dadosPorData[data].lucro += entradaItem - saidaItem;
                     });
                     
                     console.log(`📅 ${data}: Pedido #${pedido.id} - ${itensDoPedido.length} itens - Entrada: R$ ${dadosPorData[data].entrada.toFixed(2)}`);
