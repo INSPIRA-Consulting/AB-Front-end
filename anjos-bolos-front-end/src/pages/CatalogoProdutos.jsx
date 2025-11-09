@@ -9,10 +9,12 @@ import styles from "../styles/CatalogoProdutos.module.css";
 import { useEffect } from "react";
 import api from "../provider/api";
 import { useDocumentTitle } from "../hooks/useDocumentTitle";
+import { useSearchParams } from "react-router-dom";
 
 
 export function CatalogoProdutos(props) {
     useDocumentTitle(props.titulo);
+    const [searchParams] = useSearchParams();
     const [produtos, setProdutos] = useState([]);
     const [produtosOriginais, setProdutosOriginais] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
@@ -66,6 +68,15 @@ export function CatalogoProdutos(props) {
     useEffect(() => {
         fetchProdutos();
     }, []);
+
+    // useEffect para ler o parâmetro 'nome' da URL e setar no searchTerm
+    useEffect(() => {
+        const nomeProduto = searchParams.get('nome');
+        if (nomeProduto && produtosOriginais.length > 0) {
+            setSearchTerm(nomeProduto);
+            filtrarProdutosLocalmente(nomeProduto, categoriasSelecionadas);
+        }
+    }, [searchParams, produtosOriginais]);
 
     // Função para filtrar produtos localmente
     const filtrarProdutosLocalmente = (termo, categorias) => {
