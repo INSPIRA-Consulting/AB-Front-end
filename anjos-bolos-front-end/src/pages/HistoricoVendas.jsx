@@ -452,7 +452,7 @@ export function HistoricoVendas(props) {
       <Modal isOpen={modalAberto} onClose={() => setModalAberto(false)}>
         <div className={styles.modalContent}>
           <div className={styles.modalHeader}>
-            <h2>Itens vendidos no dia</h2>
+            <h2>Itens Vendidos do Dia</h2>
           </div>
           
           {itensDoDia.length === 0 ? (
