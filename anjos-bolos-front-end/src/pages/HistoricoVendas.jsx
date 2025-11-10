@@ -472,9 +472,8 @@ export function HistoricoVendas(props) {
                 </thead>
                 <tbody>
                   {itensDoDia.map((it, i) => {
-                    // valorFinal já é o valor unitário (não precisa dividir por quantidade)
-                    const precoUnitario = Number(it.valorFinal || 0);
-                    const valorTotal = precoUnitario * Number(it.quantidade || 0);
+                    const precoUnitario = Number(it.valorFinal / (Number(it.quantidade) || 1));
+                    const valorTotal = Number(it.valorFinal || 0)
                     
                     return (
                       <tr key={i}>
