@@ -34,11 +34,11 @@ a:hover {
 body {
   margin: 0;
   padding: 0;
-  display: flex;
-  place-items: center;
-  overflow: hidden;
-  width: 100vw;
-  height: 100vh;
+  display: block;
+  place-items: normal;
+  overflow: auto;
+  width: 100%;
+  min-height: 100vh;
 }
 
 h1 {

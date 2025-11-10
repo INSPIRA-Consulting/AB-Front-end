@@ -80,7 +80,7 @@ export function RegistroVendas(props) {
         const mapped = content.map(p => ({
           id: p.id,
           imagem: p.nomeImagem
-            ? `https://bucket-raw-anjos-bolos-1.s3.us-east-1.amazonaws.com/${p.nomeImagem}`
+            ? `https://bucket-raw-anjos-bolos.s3.us-east-1.amazonaws.com/images/${p.nomeImagem}`
             : '',
           titulo: p.nome,
           valor: Number(p.precoFinal) || 0,
