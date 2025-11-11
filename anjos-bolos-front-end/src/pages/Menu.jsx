@@ -3,6 +3,7 @@ import '../styles/fonts/fonts.css';
 import {Navbar} from '../components/Navbar';
 import caixa from '../assets/caixa-registradora.png';
 import historico from '../assets/historico-de-pedidos.png';
+import booking from '../assets/booking.png';
 import ganhar from '../assets/ganhar-dinheiro.png';
 import catalogo from '../assets/catalogo.png';
 import addIcon from '../assets/add.png';
@@ -77,6 +78,10 @@ export function Menu(props) {
                     <div className={styles.modernCard} onClick={() => navigate('/historico-vendas')}>
                         <img src={historico} alt="Histórico de Vendas" className={styles.cardIcon} />
                         <div className={styles.cardLabel}>Histórico de Vendas</div>
+                    </div>
+                    <div className={styles.modernCard} onClick={() => navigate('/encomendas')}>
+                        <img src={booking} alt="Encomendas" className={styles.cardIcon} />
+                        <div className={styles.cardLabel}>Encomendas</div>
                     </div>
                     <div className={styles.modernCard} onClick={() => navigate('/dash-vendas')}>
                         <img src={ganhar} alt="Painel de Métricas" className={styles.cardIcon} />

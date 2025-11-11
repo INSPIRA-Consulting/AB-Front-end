@@ -196,7 +196,7 @@ export function HistoricoVendas(props) {
       const diaFormatado = `${dia}/${mes}/${ano}`;
 
       const itensDoPedido = itensFiltrados.filter(it => Number(it.pedidoId) === Number(pedido.id));
-      const valorTotal = itensDoPedido.reduce((s, it) => s + (Number(it.valorFinal)), 0);
+      const valorTotal = itensDoPedido.reduce((s, it) => s + (Number(it.valorFinal) * (Number(it.quantidade) || 1)), 0);
       const qtdItens = itensDoPedido.reduce((s, it) => s + (Number(it.quantidade) || 0), 0);
 
       if (!mapa[dataCompleta]) {
@@ -472,8 +472,8 @@ export function HistoricoVendas(props) {
                 </thead>
                 <tbody>
                   {itensDoDia.map((it, i) => {
-                    const precoUnitario = Number(it.valorFinal / (Number(it.quantidade) || 1));
-                    const valorTotal = Number(it.valorFinal || 0)
+                    const precoUnitario = Number(it.valorFinal || 1);
+                    const valorTotal = Number(it.valorFinal || 0) * (Number(it.quantidade) || 1);
                     
                     return (
                       <tr key={i}>
@@ -485,7 +485,7 @@ export function HistoricoVendas(props) {
                           R$ {precoUnitario.toFixed(2)}
                         </td>
                         <td className={styles.currencyBold}>
-                          R$ {valorTotal.toFixed(2)}
+                          R$ {valorTotal.toFixed(2)} 
                         </td>
                       </tr>
                     );
@@ -495,7 +495,7 @@ export function HistoricoVendas(props) {
                   <tr className={styles.totalRow}>
                     <td colSpan="3">Total</td>
                     <td className={styles.totalValue}>
-                      R$ {itensDoDia.reduce((sum, it) => sum + (Number(it.valorFinal || 0)), 0).toFixed(2)}
+                      R$ {itensDoDia.reduce((sum, it) => sum + (Number(it.valorFinal || 0) * (Number(it.quantidade) || 1)), 0).toFixed(2)};
                     </td>
                   </tr>
                 </tfoot>

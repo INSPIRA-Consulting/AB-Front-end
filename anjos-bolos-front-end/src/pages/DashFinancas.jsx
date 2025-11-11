@@ -62,8 +62,8 @@ export function DashFinancas(props) {
     const startInputRef = useRef(null);
     const endInputRef = useRef(null);
     
-    // Estado para controlar qual opção do resumo financeiro está selecionada
-    const [opcaoSelecionada, setOpcaoSelecionada] = useState('entrada');
+    // Estado para controlar quais opções do resumo financeiro estão selecionadas (array - múltiplas seleções)
+    const [opcoesSelecionadas, setOpcoesSelecionadas] = useState(['entrada', 'saida', 'lucro']);
     
     // Estados para margem de lucro
     const [menorMargemLucro, setMenorMargemLucro] = useState(null);
@@ -87,60 +87,42 @@ export function DashFinancas(props) {
     // Hook de navegação
     const navigate = useNavigate();
     
-    // Função para obter o título do gráfico baseado na opção selecionada
+    // Função para alternar seleção de uma opção
+    const toggleOpcao = (opcao) => {
+        setOpcoesSelecionadas(prev => {
+            if (prev.includes(opcao)) {
+                // Remove a opção se já estiver selecionada
+                return prev.filter(o => o !== opcao);
+            } else {
+                // Adiciona a opção se não estiver selecionada
+                return [...prev, opcao];
+            }
+        });
+    };
+    
+    // Função para obter o título do gráfico baseado nas opções selecionadas
     const getTituloGrafico = () => {
-        switch (opcaoSelecionada) {
-            case 'entrada':
-                return 'Entrada por Período:';
-            case 'saida':
-                return 'Saída por Período:';
-            case 'lucro':
-                return 'Lucro por Período:';
-            default:
-                return 'Entrada por Período:';
+        if (opcoesSelecionadas.length === 0) {
+            return 'Selecione uma opção:';
         }
-    };
-    
-    // Função para obter a cor da linha baseado na opção selecionada
-    const getCorLinha = () => {
-        switch (opcaoSelecionada) {
-            case 'entrada':
-                return '#2e7d32'; // Verde
-            case 'saida':
-                return '#d32f2f'; // Vermelho
-            case 'lucro':
-                return '#a86b32'; // Laranja/Marrom
-            default:
-                return '#2e7d32';
+        if (opcoesSelecionadas.length === 3) {
+            return 'Entrada, Saída e Lucro por Período:';
         }
-    };
-    
-    // Função para obter o valor correto baseado na opção selecionada
-    const getValorSelecionado = () => {
-        switch (opcaoSelecionada) {
-            case 'entrada':
-                return faturamento;
-            case 'saida':
-                return custos;
-            case 'lucro':
-                return lucro;
-            default:
-                return faturamento;
+        if (opcoesSelecionadas.length === 2) {
+            const labels = opcoesSelecionadas.map(o => {
+                if (o === 'entrada') return 'Entrada';
+                if (o === 'saida') return 'Saída';
+                if (o === 'lucro') return 'Lucro';
+                return '';
+            });
+            return `${labels.join(' e ')} por Período:`;
         }
-    };
-    
-    // Função para obter o label do dataset
-    const getLabelDataset = () => {
-        switch (opcaoSelecionada) {
-            case 'entrada':
-                return 'Entrada';
-            case 'saida':
-                return 'Saída';
-            case 'lucro':
-                return 'Lucro';
-            default:
-                return 'Entrada';
-        }
+        // Apenas 1 selecionado
+        const opcao = opcoesSelecionadas[0];
+        if (opcao === 'entrada') return 'Entrada por Período:';
+        if (opcao === 'saida') return 'Saída por Período:';
+        if (opcao === 'lucro') return 'Lucro por Período:';
+        return 'Entrada por Período:';
     };
     
     // useEffect para buscar dados de margem de lucro e faturamento com base nas datas
@@ -243,13 +225,12 @@ export function DashFinancas(props) {
                     const itensDoPedido = itens.filter(item => item.pedidoId === pedido.id);
                     itensDoPedido.forEach(item => {
                         const quantidade = Number(item.quantidade || 0);
-                        const valorUnitario = Number(item.valorFinal || 0);
+                        const valorUnitario = Number(item.valorFinal || 0) / (quantidade || 1);
                         const custoUnitario = Number(item.custoProducao || 0);
-                        
-                        // valorFinal é o valor unitário, precisa multiplicar pela quantidade
+                       
                         const entradaItem = valorUnitario * quantidade;
                         const saidaItem = custoUnitario * quantidade;
-                        
+                       
                         dadosPorData[data].entrada += entradaItem;
                         dadosPorData[data].saida += saidaItem;
                         dadosPorData[data].lucro += entradaItem - saidaItem;
@@ -304,40 +285,51 @@ export function DashFinancas(props) {
         }
     };
 
-    // Dados e configuração do gráfico Chart.js (dinâmico baseado na opção selecionada)
-    const corAtual = getCorLinha();
-    
-    // Selecionar os dados corretos baseado na opção selecionada
-    const getDadosGrafico = () => {
-        switch (opcaoSelecionada) {
-            case 'entrada':
-                return dadosGraficoPorData.entrada;
-            case 'saida':
-                return dadosGraficoPorData.saida;
-            case 'lucro':
-                return dadosGraficoPorData.lucro;
-            default:
-                return dadosGraficoPorData.entrada;
+    // Configuração de cores para cada tipo de dado
+    const coresGrafico = {
+        entrada: {
+            border: '#2e7d32',
+            background: '#2e7d321a'
+        },
+        saida: {
+            border: '#d32f2f',
+            background: '#d32f2f1a'
+        },
+        lucro: {
+            border: '#ed8936',
+            background: '#ed89361a'
         }
+    };
+    
+    // Labels para cada tipo
+    const labelsGrafico = {
+        entrada: 'Entrada',
+        saida: 'Saída',
+        lucro: 'Lucro'
+    };
+    
+    // Construir datasets dinamicamente baseado nas opções selecionadas
+    const construirDatasets = () => {
+        return opcoesSelecionadas.map(opcao => ({
+            label: labelsGrafico[opcao],
+            data: dadosGraficoPorData[opcao] && dadosGraficoPorData[opcao].length > 0 
+                ? dadosGraficoPorData[opcao] 
+                : [0],
+            borderColor: coresGrafico[opcao].border,
+            backgroundColor: coresGrafico[opcao].background,
+            borderWidth: 3,
+            pointBackgroundColor: coresGrafico[opcao].border,
+            pointBorderColor: '#fff',
+            pointBorderWidth: 2,
+            pointRadius: 5,
+            pointHoverRadius: 7,
+            tension: 0.4,
+        }));
     };
     
     const chartData = {
         labels: dadosGraficoPorData.labels.length > 0 ? dadosGraficoPorData.labels : ['Sem dados'],
-        datasets: [
-            {
-                label: getLabelDataset(),
-                data: getDadosGrafico().length > 0 ? getDadosGrafico() : [0],
-                borderColor: corAtual,
-                backgroundColor: `${corAtual}1a`, // Adiciona transparência
-                borderWidth: 3,
-                pointBackgroundColor: corAtual,
-                pointBorderColor: '#fff',
-                pointBorderWidth: 2,
-                pointRadius: 5,
-                pointHoverRadius: 7,
-                tension: 0.4,
-            },
-        ],
+        datasets: construirDatasets(),
     };
 
     const chartOptions = {
@@ -352,6 +344,19 @@ export function DashFinancas(props) {
                         family: 'Montserrat, Arial, sans-serif',
                         size: 12,
                         weight: 600
+                    }
+                },
+                onClick: (e, legendItem, legend) => {
+                    // Mapear label da legenda para a opção correspondente
+                    const labelParaOpcao = {
+                        'Entrada': 'entrada',
+                        'Saída': 'saida',
+                        'Lucro': 'lucro'
+                    };
+                    
+                    const opcao = labelParaOpcao[legendItem.text];
+                    if (opcao) {
+                        toggleOpcao(opcao);
                     }
                 }
             },
@@ -497,7 +502,7 @@ export function DashFinancas(props) {
 
                         <section className={styles.dashCards}>
                             <div className={styles.dashCard}>
-                                <div className={styles.dashCardTitle + ' ' + styles.dashCardTitleLucro}>Margem de Lucro por Produto</div>
+                                <div className={styles.dashCardTitle + ' ' + styles.dashCardTitleLucro}>Margem de Lucro sobre Produto</div>
                                 <div className={styles.dashCardContent + ' ' + styles.lucroCardContainer}>
                                     <div className={styles.lucroSection}>
                                         <span className={styles.lucroLabel}>Mínima:</span>
@@ -545,8 +550,8 @@ export function DashFinancas(props) {
                                 <div className={styles.dashCardTitle + ' ' + styles.dashCardTitleResumo}>Resumo Financeiro</div>
                                 <div className={styles.dashCardContent + ' ' + styles.resumoCardContainer}>
                                     <div 
-                                        className={`${styles.resumoItem} ${styles.resumoEntrada} ${opcaoSelecionada === 'entrada' ? styles.selected : ''}`}
-                                        onClick={() => setOpcaoSelecionada('entrada')}
+                                        className={`${styles.resumoItem} ${styles.resumoEntrada} ${opcoesSelecionadas.includes('entrada') ? styles.selected : ''}`}
+                                        onClick={() => toggleOpcao('entrada')}
                                         style={{ cursor: 'pointer' }}
                                     >
                                         <span className={styles.resumoItemLabel}>Entrada:</span>
@@ -555,8 +560,8 @@ export function DashFinancas(props) {
                                         </span>
                                     </div>
                                     <div 
-                                        className={`${styles.resumoItem} ${styles.resumoSaida} ${opcaoSelecionada === 'saida' ? styles.selected : ''}`}
-                                        onClick={() => setOpcaoSelecionada('saida')}
+                                        className={`${styles.resumoItem} ${styles.resumoSaida} ${opcoesSelecionadas.includes('saida') ? styles.selected : ''}`}
+                                        onClick={() => toggleOpcao('saida')}
                                         style={{ cursor: 'pointer' }}
                                     >
                                         <span className={styles.resumoItemLabel}>Saída:</span>
@@ -565,8 +570,8 @@ export function DashFinancas(props) {
                                         </span>
                                     </div>
                                     <div 
-                                        className={`${styles.resumoItem} ${styles.resumoLucro} ${opcaoSelecionada === 'lucro' ? styles.selected : ''}`}
-                                        onClick={() => setOpcaoSelecionada('lucro')}
+                                        className={`${styles.resumoItem} ${styles.resumoLucro} ${opcoesSelecionadas.includes('lucro') ? styles.selected : ''}`}
+                                        onClick={() => toggleOpcao('lucro')}
                                         style={{ cursor: 'pointer' }}
                                     >
                                         <span className={styles.resumoItemLabel}>Lucro Aproximado:</span>

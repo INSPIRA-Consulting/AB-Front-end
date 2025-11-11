@@ -14,18 +14,20 @@ import {
 	LinearScale,
 	PointElement,
 	LineElement,
+	BarElement,
 	Title,
 	Tooltip,
 	Legend
 } from 'chart.js';
-import { Line } from 'react-chartjs-2';
+import { Line, Bar } from 'react-chartjs-2';
 
-// Registrar apenas os módulos necessários para o gráfico de linha nesta página
+// Registrar módulos para gráficos de linha e barras
 ChartJS.register(
 	CategoryScale,
 	LinearScale,
 	PointElement,
 	LineElement,
+	BarElement,
 	Title,
 	Tooltip,
 	Legend
@@ -68,9 +70,13 @@ export function DashVendas(props) {
 	const [faturamentoTotal, setFaturamentoTotal] = useState("Selecione um período");
 	const [loading, setLoading] = useState(false);
 	
-	// Estados para o gráfico
+	// Estados para os gráficos
 	const [chartLabels, setChartLabels] = useState([]);
 	const [chartDataValues, setChartDataValues] = useState([]);
+	const [graficoAtivo, setGraficoAtivo] = useState('periodo'); // 'periodo' ou 'semana'
+	
+	// Estados para gráfico de vendas por dia da semana
+	const [vendasPorDiaSemana, setVendasPorDiaSemana] = useState([]);
 
 	// Função para buscar produtos mais vendidos (seguindo o padrão do CatalogoProdutos)
 	const fetchProdutosMaisVendidos = async () => {
@@ -245,6 +251,32 @@ export function DashVendas(props) {
 		}
 	};
 
+	// Função para buscar vendas distribuídas por dia da semana
+	const fetchVendasPorDiaSemana = async () => {
+		if (!startDate || !endDate) {
+			setVendasPorDiaSemana([]);
+			return;
+		}
+
+		try {
+			const url = `/dashboards/vendas-por-dia-semana?inicio=${startDate}&fim=${endDate}`;
+			console.log('🔍 Buscando vendas por dia da semana em:', url);
+			
+			const response = await api.get(url);
+			console.log('✅ Vendas por dia da semana carregadas:', response.data);
+			
+			// Espera-se um array com objetos {diaSemana: string, quantidade: number}
+			if (response.data && Array.isArray(response.data)) {
+				setVendasPorDiaSemana(response.data);
+			} else {
+				setVendasPorDiaSemana([]);
+			}
+		} catch (error) {
+			console.error("❌ Erro ao buscar vendas por dia da semana:", error);
+			setVendasPorDiaSemana([]);
+		}
+	};
+
 	// Função para buscar dados do gráfico (vendas por dia)
 	const fetchDadosGrafico = async () => {
 		if (!startDate || !endDate) {
@@ -306,6 +338,7 @@ export function DashVendas(props) {
 			fetchDiaSemanaComMaisVendas();
 			fetchFaturamento();
 			fetchDadosGrafico();
+			fetchVendasPorDiaSemana();
 		}
 	}, [startDate, endDate]);
 
@@ -397,7 +430,101 @@ export function DashVendas(props) {
 		}
 	};
 
-		return (
+	// Dados para o gráfico de barras (vendas por dia da semana)
+	const diasSemanaOrdenados = ['Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado', 'Domingo'];
+	
+	const chartDataSemana = {
+		labels: diasSemanaOrdenados,
+		datasets: [
+			{
+				label: 'Vendas por Dia da Semana',
+				data: diasSemanaOrdenados.map(dia => {
+					const vendaDia = vendasPorDiaSemana.find(v => traduzirDiaSemana(v.diaSemana) === dia);
+					return vendaDia?.quantidade || 0;
+				}),
+				backgroundColor: [
+					'rgba(168, 107, 50, 0.8)',
+					'rgba(138, 90, 43, 0.8)',
+					'rgba(168, 107, 50, 0.8)',
+					'rgba(138, 90, 43, 0.8)',
+					'rgba(168, 107, 50, 0.8)',
+					'rgba(138, 90, 43, 0.8)',
+					'rgba(168, 107, 50, 0.8)',
+				],
+				borderColor: '#4d2c0c',
+				borderWidth: 2,
+			},
+		],
+	};
+
+	const chartOptionsSemana = {
+		responsive: true,
+		maintainAspectRatio: false,
+		plugins: {
+			legend: {
+				position: 'top',
+				labels: {
+					color: '#6b3a13',
+					font: {
+						family: 'Montserrat, Arial, sans-serif',
+						size: 12,
+						weight: 600
+					}
+				}
+			},
+			tooltip: {
+				backgroundColor: 'rgba(255, 255, 255, 0.9)',
+				titleColor: '#6b3a13',
+				bodyColor: '#6b3a13',
+				borderColor: '#a86b32',
+				borderWidth: 1,
+				titleFont: {
+					family: 'Montserrat, Arial, sans-serif'
+				},
+				bodyFont: {
+					family: 'Montserrat, Arial, sans-serif'
+				}
+			}
+		},
+		scales: {
+			x: {
+				ticks: {
+					color: '#6b3a13',
+					font: {
+						family: 'Montserrat, Arial, sans-serif',
+						size: 11,
+						weight: 600
+					}
+				},
+				grid: {
+					display: false
+				}
+			},
+			y: {
+				beginAtZero: true,
+				ticks: {
+					color: '#6b3a13',
+					font: {
+						family: 'Montserrat, Arial, sans-serif',
+						size: 11,
+						weight: 600
+					},
+					stepSize: 1,
+					callback: function(value) {
+						if (Number.isInteger(value)) {
+							return value;
+						}
+					}
+				},
+				grid: {
+					display: true,
+					color: 'rgba(229, 229, 229, 0.5)'
+				}
+			}
+		}
+	};
+
+	return (
 			<div className={styles.dashContainer}>
 				   <Navbar logado={true} activePage="vendas" />
 				<div className={styles.dashMain}>
@@ -472,41 +599,65 @@ export function DashVendas(props) {
 								</div>
 							</div>
 						</section>
-					<section className={styles.dashCards}>
-						<div className={styles.dashCard}>
-							<div className={styles.dashCardTitle + ' ' + styles.dashCardTitleVendido}>Produto mais vendido</div>
-							<div className={styles.dashCardContent}>
-								{loading ? "Carregando..." : produtoMaisVendido}
-							</div>
+						
+						{/* Layout principal: Gráficos à esquerda, Cards à direita */}
+						<div className={styles.dashMainLayout}>
+							{/* Seção de gráficos (esquerda) */}
+							<section className={styles.graficosSection}>
+								{/* Botões de seleção de gráfico */}
+								<div className={styles.graficoSelector}>
+									<button 
+										className={`${styles.graficoBtn} ${graficoAtivo === 'periodo' ? styles.graficoBtnActive : ''}`}
+										onClick={() => setGraficoAtivo('periodo')}
+									>
+										Vendas por Período
+									</button>
+									<button 
+										className={`${styles.graficoBtn} ${graficoAtivo === 'semana' ? styles.graficoBtnActive : ''}`}
+										onClick={() => setGraficoAtivo('semana')}
+									>
+										Vendas por Dia da Semana
+									</button>
+								</div>
+								
+								{/* Gráfico ativo */}
+								<div className={styles.graficoPlaceholder}>
+									<div className={styles.totalVendasCard}>
+										<div className={styles.totalVendasTitle}>Total de vendas</div>
+										<div className={styles.totalVendasValue}>
+											{loading ? "Carregando..." : totalVendas}
+										</div>
+									</div>
+									{graficoAtivo === 'periodo' ? (
+										<Line 
+											data={chartData}
+											options={chartOptions}
+										/>
+									) : (
+										<Bar 
+											data={chartDataSemana}
+											options={chartOptionsSemana}
+										/>
+									)}
+								</div>
+							</section>
+							
+							{/* Seção de cards (direita) */}
+							<section className={styles.cardsSection}>
+								<div className={styles.dashCard}>
+									<div className={styles.dashCardTitle + ' ' + styles.dashCardTitleTotal}>Produto mais vendido</div>
+									<div className={styles.dashCardContent}>
+										{loading ? "Carregando..." : produtoMaisVendido}
+									</div>
+								</div>
+								<div className={styles.dashCard}>
+									<div className={styles.dashCardTitle + ' ' + styles.dashCardTitleVendido}>Faturamento Total</div>
+									<div className={styles.dashCardContent}>
+										{loading ? "Carregando..." : faturamentoTotal}
+									</div>
+								</div>
+							</section>
 						</div>
-						<div className={styles.dashCard}>
-							<div className={styles.dashCardTitle + ' ' + styles.dashCardTitleTotal}>Total de vendas</div>
-							<div className={styles.dashCardContent}>
-								{loading ? "Carregando..." : totalVendas}
-							</div>
-						</div>
-						<div className={styles.dashCard}>
-							<div className={styles.dashCardTitle + ' ' + styles.dashCardTitleDia}>Dia com mais vendas</div>
-							<div className={styles.dashCardContent}>
-								{loading ? "Carregando..." : diaSemanaComMaisVendas}
-							</div>
-						</div>
-						<div className={styles.dashCard}>
-							<div className={styles.dashCardTitle + ' ' + styles.dashCardTitleTotal}>Faturamento Total</div>
-							<div className={styles.dashCardContent}>
-								{loading ? "Carregando..." : faturamentoTotal}
-							</div>
-						</div>
-					</section>
-						<section className={styles.dashGrafico}>
-							<h2>Quantidade de Venda por Período:</h2>
-							<div className={styles.graficoPlaceholder}>
-								<Line 
-									data={chartData}
-									options={chartOptions}
-								/>
-							</div>
-						</section>
 					</main>
 				</div>
 			</div>

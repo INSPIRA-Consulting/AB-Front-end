@@ -263,48 +263,49 @@
 }
 
 .resumoEntrada.selected {
-	background: rgba(46, 125, 50, 0.12);
-	border-left: 3px solid #2e7d32;
+	background: rgba(46, 125, 50, 0.15);
+	border-left: 4px solid #2e7d32;
 	border-radius: 4px;
-	box-shadow: 0 2px 6px rgba(46, 125, 50, 0.15);
+	box-shadow: 0 2px 8px rgba(46, 125, 50, 0.2);
 }
 
 .resumoSaida.selected {
-	background: rgba(211, 47, 47, 0.08);
-	border-left: 3px solid #d32f2f;
+	background: rgba(211, 47, 47, 0.12);
+	border-left: 4px solid #d32f2f;
 	border-radius: 4px;
-	box-shadow: 0 2px 6px rgba(211, 47, 47, 0.15);
+	box-shadow: 0 2px 8px rgba(211, 47, 47, 0.2);
 }
 
 .resumoLucro.selected {
-	background: rgba(168, 107, 50, 0.12);
-	border-left: 3px solid #a86b32;
+	background: rgba(237, 137, 54, 0.15);
+	border-left: 4px solid #ed8936;
 	border-radius: 4px;
-	box-shadow: 0 2px 6px rgba(168, 107, 50, 0.15);
+	box-shadow: 0 2px 8px rgba(237, 137, 54, 0.2);
 }
 
 .resumoItemLabel {
 	font-weight: 700;
-	color: #4d2c0c;
+	color: #2d1810;
 	font-size: 1rem;
+	letter-spacing: 0.3px;
 }
 
 .resumoEntrada .resumoItemValue {
 	font-weight: 700;
-	color: #2e7d32;
-	font-size: 1.05rem;
+	color: #1b5e20;
+	font-size: 1.1rem;
 }
 
 .resumoSaida .resumoItemValue {
 	font-weight: 700;
-	color: #d32f2f;
-	font-size: 1.05rem;
+	color: #b71c1c;
+	font-size: 1.1rem;
 }
 
 .resumoLucro .resumoItemValue {
 	font-weight: 700;
-	color: #4d2c0c;
-	font-size: 1.05rem;
+	color: #d97419;
+	font-size: 1.1rem;
 }
 
 .resumoLabel {

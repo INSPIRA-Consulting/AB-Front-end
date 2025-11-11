@@ -30,7 +30,7 @@
 
 .cardGrid {
 	display: grid;
-	grid-template-columns: repeat(2, 200px);
+	grid-template-columns: repeat(3, 200px);
 	grid-template-rows: repeat(2, 200px);
 	gap: 24px;
 	margin-bottom: 20px;
@@ -39,9 +39,10 @@
 	align-items: center;
 }
 
-/* Quando há 5 cards - adiciona terceira coluna */
-.cardGrid:has(.modernCard:nth-child(5)) {
-	grid-template-columns: repeat(3, 200px);
+/* Quando há apenas 4 cards - grid 2x2 */
+.cardGrid:not(:has(.modernCard:nth-child(5))) {
+	grid-template-columns: repeat(2, 200px);
+	grid-template-rows: repeat(2, 200px);
 }
 
 .cardGrid .modernCard:nth-child(1) {
@@ -49,35 +50,41 @@
 	grid-row: 1;
 }
 
-/* Margin do card 1 quando card 5 existe */
-.cardGrid:has(.modernCard:nth-child(5)) .modernCard:nth-child(1) {
-	margin-left: 110px;
-}
-
 .cardGrid .modernCard:nth-child(2) {
 	grid-column: 2;
 	grid-row: 1;
 }
 
-/* Margin do card 2 quando card 5 existe */
-.cardGrid:has(.modernCard:nth-child(5)) .modernCard:nth-child(2) {
-	margin-left: 110px;
+.cardGrid .modernCard:nth-child(3) {
+	grid-column: 3;
+	grid-row: 1;
 }
 
-.cardGrid .modernCard:nth-child(3) {
+/* Quando 4 cards - card 3 fica na posição 1,2 */
+.cardGrid:not(:has(.modernCard:nth-child(5))) .modernCard:nth-child(3) {
 	grid-column: 1;
 	grid-row: 2;
 }
 
 .cardGrid .modernCard:nth-child(4) {
+	grid-column: 1;
+	grid-row: 2;
+}
+
+/* Quando 4 cards - card 4 fica na posição 2,2 */
+.cardGrid:not(:has(.modernCard:nth-child(5))) .modernCard:nth-child(4) {
 	grid-column: 2;
 	grid-row: 2;
 }
 
 .cardGrid .modernCard:nth-child(5) {
+	grid-column: 2;
+	grid-row: 2;
+}
+
+.cardGrid .modernCard:nth-child(6) {
 	grid-column: 3;
 	grid-row: 2;
-	align-self: center;
 }
 
 /* Cards Modernos */
