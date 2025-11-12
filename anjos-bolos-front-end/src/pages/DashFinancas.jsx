@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef } from "react";
 import { FaRegCalendarAlt, FaSearch } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import styles from '../styles/DashFinancas.module.css';
@@ -6,7 +6,6 @@ import '../styles/fonts/fonts.css';
 import { Navbar } from '../components/Navbar';
 import { DashSidebar } from '../components/DashSidebar';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
-import api from '../provider/api';
 
 
 import {
@@ -65,23 +64,29 @@ export function DashFinancas(props) {
     // Estado para controlar quais opções do resumo financeiro estão selecionadas (array - múltiplas seleções)
     const [opcoesSelecionadas, setOpcoesSelecionadas] = useState(['entrada', 'saida', 'lucro']);
     
-    // Estados para margem de lucro
-    const [menorMargemLucro, setMenorMargemLucro] = useState(null);
-    const [maiorMargemLucro, setMaiorMargemLucro] = useState(null);
-    const [loadingMargem, setLoadingMargem] = useState(false);
+    // Estados para margem de lucro (dados mockados)
+    const [menorMargemLucro] = useState({
+        nomeProduto: 'Bolo de Chocolate',
+        margemLucro: 25.5
+    });
+    const [maiorMargemLucro] = useState({
+        nomeProduto: 'Bolo de Morango',
+        margemLucro: 45.8
+    });
+    const [loadingMargem] = useState(false);
     
-    // Estados para resumo financeiro
-    const [faturamento, setFaturamento] = useState(null);
-    const [custos, setCustos] = useState(null);
-    const [lucro, setLucro] = useState(null);
-    const [loadingResumo, setLoadingResumo] = useState(false);
+    // Estados para resumo financeiro (dados mockados)
+    const [faturamento] = useState(5420.50);
+    const [custos] = useState(3180.30);
+    const [lucro] = useState(2240.20);
+    const [loadingResumo] = useState(false);
     
-    // Estados para dados do gráfico
-    const [dadosGraficoPorData, setDadosGraficoPorData] = useState({
-        labels: [],
-        entrada: [],
-        saida: [],
-        lucro: []
+    // Estados para dados do gráfico (dados mockados)
+    const [dadosGraficoPorData] = useState({
+        labels: ['01/11', '02/11', '03/11', '04/11', '05/11', '06/11', '07/11'],
+        entrada: [780, 920, 650, 1100, 890, 740, 340],
+        saida: [450, 520, 380, 680, 510, 420, 220],
+        lucro: [330, 400, 270, 420, 380, 320, 120]
     });
     
     // Hook de navegação
@@ -124,157 +129,6 @@ export function DashFinancas(props) {
         if (opcao === 'lucro') return 'Lucro por Período:';
         return 'Entrada por Período:';
     };
-    
-    // useEffect para buscar dados de margem de lucro e faturamento com base nas datas
-    useEffect(() => {
-        const fetchDadosDashboard = async () => {
-            // Só busca se ambas as datas estiverem definidas
-            if (!startDate || !endDate) return;
-            
-            setLoadingMargem(true);
-            setLoadingResumo(true);
-            
-            try {
-                const [menorResponse, maiorResponse, faturamentoResponse, pedidosResponse, itensResponse] = await Promise.all([
-                    api.get('/dashboards/menor-margem-lucro', {
-                        params: {
-                            dataInicio: startDate,
-                            dataFim: endDate
-                        }
-                    }),
-                    api.get('/dashboards/maior-margem-lucro', {
-                        params: {
-                            dataInicio: startDate,
-                            dataFim: endDate
-                        }
-                    }),
-                    api.get('/dashboards/pedidos-faturamento', {
-                        params: {
-                            inicio: startDate,
-                            fim: endDate
-                        }
-                    }),
-                    api.get('/pedidos'),
-                    api.get('/itens-pedido')
-                ]);
-                
-                // Setar dados de margem de lucro
-                setMenorMargemLucro(menorResponse.data);
-                setMaiorMargemLucro(maiorResponse.data);
-                
-                // Setar dados do Resumo Financeiro usando o endpoint
-                const dadosFaturamento = faturamentoResponse.data;
-                setFaturamento(dadosFaturamento.faturamento);  // Entrada
-                setCustos(dadosFaturamento.custos);             // Saída
-                setLucro(dadosFaturamento.faturamento - dadosFaturamento.custos); // Lucro
-                
-                console.log('💰 Resumo Financeiro do endpoint:', {
-                    entrada: dadosFaturamento.faturamento,
-                    saida: dadosFaturamento.custos,
-                    lucro: dadosFaturamento.faturamento - dadosFaturamento.custos
-                });
-                
-                // Processar dados para o gráfico
-                const pedidos = Array.isArray(pedidosResponse.data) ? pedidosResponse.data : [];
-                const itens = Array.isArray(itensResponse.data) ? itensResponse.data : [];
-                
-                console.log('📦 Total de pedidos:', pedidos.length);
-                console.log('📦 Total de itens:', itens.length);
-                
-                // Filtrar pedidos por data e status FINALIZADO
-                const pedidosFiltrados = pedidos.filter(pedido => {
-                    // Filtrar apenas pedidos finalizados
-                    if (pedido.status !== 'Finalizado' && pedido.status !== 'FINALIZADO') {
-                        return false;
-                    }
-                    
-                    const dataStr = pedido.dataPedido || pedido.dataPedidoString || pedido.dataPedidoAt || '';
-                    if (!dataStr) return false;
-                    
-                    const dataPedido = new Date(dataStr);
-                    dataPedido.setHours(0, 0, 0, 0);
-                    
-                    const dataInicio = new Date(startDate);
-                    const dataFim = new Date(endDate);
-                    dataInicio.setHours(0, 0, 0, 0);
-                    dataFim.setHours(23, 59, 59, 999);
-                    
-                    return dataPedido >= dataInicio && dataPedido <= dataFim;
-                });
-                
-                console.log('✅ Pedidos finalizados no período:', pedidosFiltrados.length);
-                console.log('📋 IDs dos pedidos:', pedidosFiltrados.map(p => p.id));
-                
-                // Agrupar dados por data
-                const dadosPorData = {};
-                
-                pedidosFiltrados.forEach(pedido => {
-                    const dataStr = pedido.dataPedido || pedido.dataPedidoString || pedido.dataPedidoAt || '';
-                    // Extrair apenas a data no formato yyyy-MM-dd (remove hora se houver)
-                    const data = dataStr.split(' ')[0]; // Remove "10:00:00" se houver
-                    
-                    if (!dadosPorData[data]) {
-                        dadosPorData[data] = {
-                            entrada: 0,
-                            saida: 0,
-                            lucro: 0
-                        };
-                    }
-                    
-                    // Somar valores dos itens deste pedido
-                    const itensDoPedido = itens.filter(item => item.pedidoId === pedido.id);
-                    itensDoPedido.forEach(item => {
-                        const quantidade = Number(item.quantidade || 0);
-                        const valorUnitario = Number(item.valorFinal || 0) / (quantidade || 1);
-                        const custoUnitario = Number(item.custoProducao || 0);
-                       
-                        const entradaItem = valorUnitario * quantidade;
-                        const saidaItem = custoUnitario * quantidade;
-                       
-                        dadosPorData[data].entrada += entradaItem;
-                        dadosPorData[data].saida += saidaItem;
-                        dadosPorData[data].lucro += entradaItem - saidaItem;
-                    });
-                    
-                    console.log(`📅 ${data}: Pedido #${pedido.id} - ${itensDoPedido.length} itens - Entrada: R$ ${dadosPorData[data].entrada.toFixed(2)}`);
-                });
-                
-                // Ordenar datas e preparar arrays para o gráfico
-                const datasOrdenadas = Object.keys(dadosPorData).sort();
-                const labels = datasOrdenadas.map(data => {
-                    const [ano, mes, dia] = data.split('-');
-                    return `${dia}/${mes}`;
-                });
-                const entrada = datasOrdenadas.map(data => dadosPorData[data].entrada);
-                const saida = datasOrdenadas.map(data => dadosPorData[data].saida);
-                const lucroArray = datasOrdenadas.map(data => dadosPorData[data].lucro);
-                
-                console.log('📊 Dados do gráfico por dia:', {
-                    labels,
-                    entrada,
-                    saida,
-                    lucro: lucroArray
-                });
-                
-                // Setar dados do gráfico
-                setDadosGraficoPorData({
-                    labels,
-                    entrada,
-                    saida,
-                    lucro: lucroArray
-                });
-                
-            } catch (error) {
-                console.error('Erro ao buscar dados do dashboard:', error);
-                // Em caso de erro, manter valores null para exibir placeholders
-            } finally {
-                setLoadingMargem(false);
-                setLoadingResumo(false);
-            }
-        };
-        
-        fetchDadosDashboard();
-    }, [startDate, endDate]); // Reexecuta sempre que as datas mudarem
     
     // Função para redirecionar para catálogo de produtos com filtro de nome
     const handleSearchClick = (nomeProduto) => {
@@ -556,7 +410,7 @@ export function DashFinancas(props) {
                                     >
                                         <span className={styles.resumoItemLabel}>Entrada:</span>
                                         <span className={styles.resumoItemValue}>
-                                            {loadingResumo ? 'Carregando...' : faturamento !== null ? `R$ ${faturamento.toFixed(2).replace('.', ',')}` : 'R$ 0,00'}
+                                            {loadingResumo ? 'Carregando...' : (faturamento !== null && faturamento !== undefined) ? `R$ ${faturamento.toFixed(2).replace('.', ',')}` : 'R$ 0,00'}
                                         </span>
                                     </div>
                                     <div 
@@ -566,7 +420,7 @@ export function DashFinancas(props) {
                                     >
                                         <span className={styles.resumoItemLabel}>Saída:</span>
                                         <span className={styles.resumoItemValue}>
-                                            {loadingResumo ? 'Carregando...' : custos !== null ? `R$ ${custos.toFixed(2).replace('.', ',')}` : 'R$ 0,00'}
+                                            {loadingResumo ? 'Carregando...' : (custos !== null && custos !== undefined) ? `R$ ${custos.toFixed(2).replace('.', ',')}` : 'R$ 0,00'}
                                         </span>
                                     </div>
                                     <div 
@@ -578,10 +432,10 @@ export function DashFinancas(props) {
                                         <span 
                                             className={styles.resumoItemValue}
                                             style={{
-                                                color: lucro !== null && lucro < 0 ? '#d32f2f' : 'inherit'
+                                                color: (lucro !== null && lucro !== undefined && lucro < 0) ? '#d32f2f' : 'inherit'
                                             }}
                                         >
-                                            {loadingResumo ? 'Carregando...' : lucro !== null ? `R$ ${lucro.toFixed(2).replace('.', ',')}` : 'R$ 0,00'}
+                                            {loadingResumo ? 'Carregando...' : (lucro !== null && lucro !== undefined) ? `R$ ${lucro.toFixed(2).replace('.', ',')}` : 'R$ 0,00'}
                                         </span>
                                     </div>
                                 </div>
