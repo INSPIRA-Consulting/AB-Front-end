@@ -57,6 +57,15 @@ export function DashVendas(props) {
 		return `${ano}-${mesFormatado}-${dia}`;
 	};
 	
+	// Função para obter a data de hoje no formato yyyy-MM-dd
+	const getDataHoje = () => {
+		const hoje = new Date();
+		const ano = hoje.getFullYear();
+		const mes = String(hoje.getMonth() + 1).padStart(2, '0');
+		const dia = String(hoje.getDate()).padStart(2, '0');
+		return `${ano}-${mes}-${dia}`;
+	};
+	
 	// Estados para datas - inicializados com primeiro e último dia do mês atual
 	const [startDate, setStartDate] = useState(getPrimeiroDiaDoMes());
 	const [endDate, setEndDate] = useState(getUltimoDiaDoMes());
@@ -201,7 +210,7 @@ export function DashVendas(props) {
 		return traducoes[dia] || traducoes[diaLower] || dia;
 	};
 
-	// Função para buscar faturamento e total de vendas
+	// Função para buscar faturamento e total de vendas usando o novo endpoint
 	const fetchFaturamento = async () => {
 		if (!startDate || !endDate) {
 			setTotalVendas("Selecione um período");
@@ -218,19 +227,26 @@ export function DashVendas(props) {
 			
 			console.log('✅ Faturamento carregado:', response.data);
 			
-			// O backend retorna um objeto com quantidadePedidos e faturamento
-			if (response.data) {
+			// O backend retorna um array de objetos com dados por dia
+			if (response.data && Array.isArray(response.data)) {
+				// Somar os totais de todos os dias
+				const totais = response.data.reduce((acc, dia) => {
+					return {
+						quantidadePedidos: acc.quantidadePedidos + (dia.quantidadePedidos || 0),
+						faturamento: acc.faturamento + (dia.faturamento || 0)
+					};
+				}, { quantidadePedidos: 0, faturamento: 0 });
+				
 				// Total de vendas (quantidadePedidos)
-				const quantidade = response.data.quantidadePedidos || 0;
+				const quantidade = totais.quantidadePedidos;
 				setTotalVendas(`${quantidade} ${quantidade === 1 ? 'venda' : 'vendas'}`);
 				
 				// Faturamento Total
-				const faturamento = response.data.faturamento || 0;
 				setFaturamentoTotal(
 					new Intl.NumberFormat('pt-BR', {
 						style: 'currency',
 						currency: 'BRL'
-					}).format(faturamento)
+					}).format(totais.faturamento)
 				);
 			} else {
 				setTotalVendas("0 vendas");
@@ -277,7 +293,7 @@ export function DashVendas(props) {
 		}
 	};
 
-	// Função para buscar dados do gráfico (vendas por dia)
+	// Função para buscar dados do gráfico (vendas por dia) usando o novo endpoint
 	const fetchDadosGrafico = async () => {
 		if (!startDate || !endDate) {
 			setChartLabels([]);
@@ -286,43 +302,38 @@ export function DashVendas(props) {
 		}
 
 		try {
-			// Gerar array de datas entre início e fim
-			const inicio = new Date(startDate + 'T00:00:00');
-			const fim = new Date(endDate + 'T00:00:00');
-			const diasPeriodo = [];
-			const labels = [];
-			const valores = [];
-
-			// Gerar todas as datas do período
-			for (let d = new Date(inicio); d <= fim; d.setDate(d.getDate() + 1)) {
-				const dataFormatada = d.toISOString().split('T')[0];
-				diasPeriodo.push(dataFormatada);
+			const url = `/dashboards/pedidos-faturamento?inicio=${startDate}&fim=${endDate}`;
+			const response = await api.get(url);
+			
+			console.log('📊 Response do backend:', response.data);
+			
+			// O backend retorna um array com dados por dia
+			if (response.data && Array.isArray(response.data) && response.data.length > 0) {
+				// Mapear os dados do array para labels (eixo X) e valores (eixo Y)
+				// Eixo X: dataPedido formatado como "DD MMM"
+				const labels = response.data.map(dia => {
+					// Converter dataPedido (yyyy-MM-dd) para formato "DD MMM"
+					const data = new Date(dia.dataPedido + 'T00:00:00');
+					const diaNum = String(data.getDate()).padStart(2, '0');
+					const meses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+					const mes = meses[data.getMonth()];
+					return `${diaNum} ${mes}`;
+				});
 				
-				// Formatar label (ex: "01 Nov")
-				const dia = String(d.getDate()).padStart(2, '0');
-				const meses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
-				const mes = meses[d.getMonth()];
-				labels.push(`${dia} ${mes}`);
+				// Eixo Y: quantidadePedidos
+				const valores = response.data.map(dia => dia.quantidadePedidos || 0);
+				
+				setChartLabels(labels);
+				setChartDataValues(valores);
+				
+				console.log('📊 Gráfico montado - Eixo X (datas):', labels);
+				console.log('📊 Gráfico montado - Eixo Y (pedidos):', valores);
+			} else {
+				// Se não houver dados, criar array vazio
+				console.log('⚠️ Nenhum dado retornado do backend');
+				setChartLabels([]);
+				setChartDataValues([]);
 			}
-
-			// Buscar dados de cada dia
-			const promessas = diasPeriodo.map(async (data) => {
-				try {
-					const url = `/dashboards/pedidos-faturamento?inicio=${data}&fim=${data}`;
-					const response = await api.get(url);
-					return response.data?.quantidadePedidos || 0;
-				} catch (error) {
-					console.warn(`Erro ao buscar dados do dia ${data}:`, error);
-					return 0;
-				}
-			});
-
-			const resultados = await Promise.all(promessas);
-			
-			setChartLabels(labels);
-			setChartDataValues(resultados);
-			
-			console.log('📊 Dados do gráfico carregados:', { labels, valores: resultados });
 
 		} catch (error) {
 			console.error("❌ Erro ao buscar dados do gráfico:", error);
@@ -549,6 +560,7 @@ export function DashVendas(props) {
 										type="date"
 										value={startDate}
 										onChange={e => setStartDate(e.target.value)}
+										max={getDataHoje()}
 										className={styles.invisibleDateInput}
 										style={{
 											position: "absolute",
@@ -581,6 +593,7 @@ export function DashVendas(props) {
 										type="date"
 										value={endDate}
 										onChange={e => setEndDate(e.target.value)}
+										max={getDataHoje()}
 										className={styles.invisibleDateInput}
 										style={{
 											position: "absolute",

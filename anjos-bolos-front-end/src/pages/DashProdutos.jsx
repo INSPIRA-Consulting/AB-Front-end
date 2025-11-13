@@ -32,6 +32,15 @@ export function DashProdutos(props) {
 		return `${ano}-${mesFormatado}-${dia}`;
 	};
 	
+	// Função para obter a data de hoje no formato yyyy-MM-dd
+	const getDataHoje = () => {
+		const hoje = new Date();
+		const ano = hoje.getFullYear();
+		const mes = String(hoje.getMonth() + 1).padStart(2, '0');
+		const dia = String(hoje.getDate()).padStart(2, '0');
+		return `${ano}-${mes}-${dia}`;
+	};
+	
 	// Estados para datas - inicializados com primeiro e último dia do mês atual
 	const [startDate, setStartDate] = useState(getPrimeiroDiaDoMes());
 	const [endDate, setEndDate] = useState(getUltimoDiaDoMes());
@@ -324,6 +333,7 @@ export function DashProdutos(props) {
 									type="date"
 									value={startDate}
 									onChange={e => setStartDate(e.target.value)}
+									max={getDataHoje()}
 									className={styles.invisibleDateInput}
 									style={{
 										position: "absolute",
@@ -355,6 +365,7 @@ export function DashProdutos(props) {
 									type="date"
 									value={endDate}
 									onChange={e => setEndDate(e.target.value)}
+									max={getDataHoje()}
 									className={styles.invisibleDateInput}
 									style={{
 										position: "absolute",

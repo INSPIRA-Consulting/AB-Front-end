@@ -131,13 +131,26 @@
 	text-align: center;
 	font-size: 1rem;
 	font-weight: 700;
-	padding: 8px 0 6px 0;
+	padding: 6px 0 4px 0;
 	border-radius: 12px 12px 0 0;
 	letter-spacing: 0.2px;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 1px;
 }
+
+.dashCardSubtitle {
+	font-size: 0.65rem;
+	font-weight: 500;
+	opacity: 0.9;
+	font-style: italic;
+}
+
 .dashCardTitleLucro {
-	background: #a86b32;
+	background: #4d2c0c;
 	color: #fff;
+	padding: 10px 0 8px 0;
 }
 .dashCardTitleResumo {
 	background: #4d2c0c;
@@ -171,7 +184,7 @@
 	justify-content: center;
 	flex: 1;
 	height: 100%;
-	padding: 8px 8px;
+	padding: 4px 8px;
 	position: relative;
 }
 
@@ -192,10 +205,10 @@
 }
 
 .lucroLabel {
-	font-size: 1rem;
+	font-size: 0.9rem;
 	font-weight: 700;
 	color: #4d2c0c;
-	margin-bottom: 8px;
+	margin-bottom: 4px;
 	text-align: center;
 }
 
@@ -203,25 +216,25 @@
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	margin-bottom: 8px;
+	margin-bottom: 4px;
 }
 
 .lucroValueMin {
-	font-size: 1.5rem;
+	font-size: 1.3rem;
 	font-weight: 700;
 	color: #d32f2f;
 	text-align: center;
 }
 
 .lucroValueMax {
-	font-size: 1.5rem;
+	font-size: 1.3rem;
 	font-weight: 700;
 	color: #2e7d32;
 	text-align: center;
 }
 
 .produtoNome {
-	font-size: 1.05rem;
+	font-size: 0.95rem;
 	font-weight: 600;
 	color: #6b3a13;
 	text-align: center;
@@ -245,66 +258,84 @@
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
-	padding: 8px 16px;
+	padding: 6px 18px;
 	font-size: 0.9rem;
 	width: 100%;
 	box-sizing: border-box;
-	border-bottom: 1px solid rgba(168, 107, 50, 0.2);
-	transition: all 0.2s ease;
+	border-bottom: 1px solid rgba(168, 107, 50, 0.12);
+	transition: all 0.25s ease;
+	cursor: pointer;
+	user-select: none;
 }
 
 .resumoItem:hover {
 	background: rgba(168, 107, 50, 0.05);
 	transform: translateX(2px);
+	box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+}
+
+.resumoItem:active {
+	transform: scale(0.99);
 }
 
 .resumoItem:last-child {
 	border-bottom: none;
 }
 
+/* Estados selecionados */
 .resumoEntrada.selected {
-	background: rgba(46, 125, 50, 0.15);
-	border-left: 4px solid #2e7d32;
-	border-radius: 4px;
-	box-shadow: 0 2px 8px rgba(46, 125, 50, 0.2);
+	background: rgba(46, 125, 50, 0.08);
+	border-left: 3px solid #2e7d32;
+	border-radius: 3px;
+	box-shadow: 0 1px 4px rgba(46, 125, 50, 0.12);
 }
 
 .resumoSaida.selected {
-	background: rgba(211, 47, 47, 0.12);
-	border-left: 4px solid #d32f2f;
-	border-radius: 4px;
-	box-shadow: 0 2px 8px rgba(211, 47, 47, 0.2);
+	background: rgba(211, 47, 47, 0.08);
+	border-left: 3px solid #d32f2f;
+	border-radius: 3px;
+	box-shadow: 0 1px 4px rgba(211, 47, 47, 0.12);
 }
 
 .resumoLucro.selected {
-	background: rgba(237, 137, 54, 0.15);
-	border-left: 4px solid #ed8936;
-	border-radius: 4px;
-	box-shadow: 0 2px 8px rgba(237, 137, 54, 0.2);
+	background: rgba(237, 137, 54, 0.08);
+	border-left: 3px solid #ed8936;
+	border-radius: 3px;
+	box-shadow: 0 1px 4px rgba(237, 137, 54, 0.12);
+}
+
+/* Estados não selecionados */
+.resumoItem.unselected {
+	opacity: 0.55;
+	background: rgba(168, 107, 50, 0.02);
+}
+
+.resumoItem.unselected:hover {
+	opacity: 0.75;
 }
 
 .resumoItemLabel {
-	font-weight: 700;
-	color: #2d1810;
-	font-size: 1rem;
-	letter-spacing: 0.3px;
+	font-weight: 600;
+	color: #3d2414;
+	font-size: 0.95rem;
+	letter-spacing: 0.2px;
 }
 
 .resumoEntrada .resumoItemValue {
 	font-weight: 700;
-	color: #1b5e20;
+	color: #2e7d32;
 	font-size: 1.1rem;
 }
 
 .resumoSaida .resumoItemValue {
 	font-weight: 700;
-	color: #b71c1c;
+	color: #d32f2f;
 	font-size: 1.1rem;
 }
 
 .resumoLucro .resumoItemValue {
 	font-weight: 700;
-	color: #d97419;
+	color: #ed8936;
 	font-size: 1.1rem;
 }
 

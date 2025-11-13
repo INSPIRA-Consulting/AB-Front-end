@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { FaRegCalendarAlt, FaSearch } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import styles from '../styles/DashFinancas.module.css';
@@ -6,6 +6,7 @@ import '../styles/fonts/fonts.css';
 import { Navbar } from '../components/Navbar';
 import { DashSidebar } from '../components/DashSidebar';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
+import api from '../provider/api';
 
 
 import {
@@ -55,6 +56,15 @@ export function DashFinancas(props) {
         return `${ano}-${mesFormatado}-${dia}`;
     };
     
+    // Função para obter a data de hoje no formato yyyy-MM-dd
+    const getDataHoje = () => {
+        const hoje = new Date();
+        const ano = hoje.getFullYear();
+        const mes = String(hoje.getMonth() + 1).padStart(2, '0');
+        const dia = String(hoje.getDate()).padStart(2, '0');
+        return `${ano}-${mes}-${dia}`;
+    };
+    
     // Estados para datas - inicializados com primeiro e último dia do mês atual
     const [startDate, setStartDate] = useState(getPrimeiroDiaDoMes());
     const [endDate, setEndDate] = useState(getUltimoDiaDoMes());
@@ -64,33 +74,158 @@ export function DashFinancas(props) {
     // Estado para controlar quais opções do resumo financeiro estão selecionadas (array - múltiplas seleções)
     const [opcoesSelecionadas, setOpcoesSelecionadas] = useState(['entrada', 'saida', 'lucro']);
     
-    // Estados para margem de lucro (dados mockados)
-    const [menorMargemLucro] = useState({
-        nomeProduto: 'Bolo de Chocolate',
-        margemLucro: 25.5
-    });
-    const [maiorMargemLucro] = useState({
-        nomeProduto: 'Bolo de Morango',
-        margemLucro: 45.8
-    });
-    const [loadingMargem] = useState(false);
+    // Estados para margem de lucro
+    const [menorMargemLucro, setMenorMargemLucro] = useState(null);
+    const [maiorMargemLucro, setMaiorMargemLucro] = useState(null);
+    const [loadingMargem, setLoadingMargem] = useState(false);
     
-    // Estados para resumo financeiro (dados mockados)
-    const [faturamento] = useState(5420.50);
-    const [custos] = useState(3180.30);
-    const [lucro] = useState(2240.20);
-    const [loadingResumo] = useState(false);
+    // Estados para resumo financeiro
+    const [faturamento, setFaturamento] = useState(0);
+    const [custos, setCustos] = useState(0);
+    const [lucro, setLucro] = useState(0);
+    const [loadingResumo, setLoadingResumo] = useState(false);
     
-    // Estados para dados do gráfico (dados mockados)
-    const [dadosGraficoPorData] = useState({
-        labels: ['01/11', '02/11', '03/11', '04/11', '05/11', '06/11', '07/11'],
-        entrada: [780, 920, 650, 1100, 890, 740, 340],
-        saida: [450, 520, 380, 680, 510, 420, 220],
-        lucro: [330, 400, 270, 420, 380, 320, 120]
+    // Estados para dados do gráfico
+    const [dadosGraficoPorData, setDadosGraficoPorData] = useState({
+        labels: [],
+        entrada: [],
+        saida: [],
+        lucro: []
     });
     
     // Hook de navegação
     const navigate = useNavigate();
+    
+    // Função para buscar produto com menor margem de lucro
+    const fetchMenorMargemLucro = async () => {
+        try {
+            setLoadingMargem(true);
+            const response = await api.get('/dashboards/menor-margem-lucro');
+            
+            console.log('📉 Menor margem de lucro:', response.data);
+            
+            if (response.data) {
+                setMenorMargemLucro({
+                    nomeProduto: response.data.nomeProduto,
+                    // margemLucro já vem em percentual (ex: 0.1 = 0.1%)
+                    margemLucro: Number(response.data.margemLucro).toFixed(1)
+                });
+            }
+        } catch (error) {
+            console.error('❌ Erro ao buscar menor margem de lucro:', error);
+            setMenorMargemLucro(null);
+        } finally {
+            setLoadingMargem(false);
+        }
+    };
+    
+    // Função para buscar produto com maior margem de lucro
+    const fetchMaiorMargemLucro = async () => {
+        try {
+            setLoadingMargem(true);
+            const response = await api.get('/dashboards/maior-margem-lucro');
+            
+            console.log('📈 Maior margem de lucro:', response.data);
+            
+            if (response.data) {
+                setMaiorMargemLucro({
+                    nomeProduto: response.data.nomeProduto,
+                    // margemLucro já vem em percentual (ex: 0.1 = 0.1%)
+                    margemLucro: Number(response.data.margemLucro).toFixed(1)
+                });
+            }
+        } catch (error) {
+            console.error('❌ Erro ao buscar maior margem de lucro:', error);
+            setMaiorMargemLucro(null);
+        } finally {
+            setLoadingMargem(false);
+        }
+    };
+    
+    // Buscar dados ao carregar a página
+    useEffect(() => {
+        fetchMenorMargemLucro();
+        fetchMaiorMargemLucro();
+    }, []);
+    
+    // Função para buscar dados financeiros (faturamento, custos, lucro e gráfico)
+    const fetchDadosFinanceiros = async () => {
+        if (!startDate || !endDate) {
+            return;
+        }
+
+        try {
+            setLoadingResumo(true);
+            const url = `/dashboards/pedidos-faturamento?inicio=${startDate}&fim=${endDate}`;
+            const response = await api.get(url);
+            
+            console.log('💰 Dados financeiros recebidos:', response.data);
+            
+            if (response.data && Array.isArray(response.data) && response.data.length > 0) {
+                // Calcular totais agregados
+                const totais = response.data.reduce((acc, dia) => {
+                    return {
+                        faturamento: acc.faturamento + (dia.faturamento || 0),
+                        custos: acc.custos + (dia.custos || 0)
+                    };
+                }, { faturamento: 0, custos: 0 });
+                
+                const lucroTotal = totais.faturamento - totais.custos;
+                
+                // Atualizar cards de resumo
+                setFaturamento(totais.faturamento);
+                setCustos(totais.custos);
+                setLucro(lucroTotal);
+                
+                // Preparar dados do gráfico
+                const labels = response.data.map(dia => {
+                    // Converter dataPedido (yyyy-MM-dd) para formato "DD/MM"
+                    const data = new Date(dia.dataPedido + 'T00:00:00');
+                    const diaNum = String(data.getDate()).padStart(2, '0');
+                    const mes = String(data.getMonth() + 1).padStart(2, '0');
+                    return `${diaNum}/${mes}`;
+                });
+                
+                const entrada = response.data.map(dia => dia.faturamento || 0);
+                const saida = response.data.map(dia => dia.custos || 0);
+                const lucroArray = response.data.map(dia => (dia.faturamento || 0) - (dia.custos || 0));
+                
+                setDadosGraficoPorData({
+                    labels,
+                    entrada,
+                    saida,
+                    lucro: lucroArray
+                });
+                
+                console.log('📊 Gráfico atualizado:', { labels, entrada, saida, lucro: lucroArray });
+            } else {
+                // Sem dados
+                setFaturamento(0);
+                setCustos(0);
+                setLucro(0);
+                setDadosGraficoPorData({
+                    labels: [],
+                    entrada: [],
+                    saida: [],
+                    lucro: []
+                });
+            }
+        } catch (error) {
+            console.error('❌ Erro ao buscar dados financeiros:', error);
+            setFaturamento(0);
+            setCustos(0);
+            setLucro(0);
+        } finally {
+            setLoadingResumo(false);
+        }
+    };
+    
+    // Buscar dados financeiros quando as datas mudarem
+    useEffect(() => {
+        if (startDate && endDate) {
+            fetchDadosFinanceiros();
+        }
+    }, [startDate, endDate]);
     
     // Função para alternar seleção de uma opção
     const toggleOpcao = (opcao) => {
@@ -303,6 +438,7 @@ export function DashFinancas(props) {
                                         type="date"
                                         value={startDate}
                                         onChange={e => setStartDate(e.target.value)}
+                                        max={getDataHoje()}
                                         className={styles.invisibleDateInput}
                                         style={{
                                             position: "absolute",
@@ -335,6 +471,7 @@ export function DashFinancas(props) {
                                         type="date"
                                         value={endDate}
                                         onChange={e => setEndDate(e.target.value)}
+                                        max={getDataHoje()}
                                         className={styles.invisibleDateInput}
                                         style={{
                                             position: "absolute",
@@ -401,12 +538,15 @@ export function DashFinancas(props) {
                                 </div>
                             </div>
                             <div className={styles.dashCard}>
-                                <div className={styles.dashCardTitle + ' ' + styles.dashCardTitleResumo}>Resumo Financeiro</div>
+                                <div className={styles.dashCardTitle + ' ' + styles.dashCardTitleResumo}>
+                                    Resumo Financeiro
+                                    <span className={styles.dashCardSubtitle}>Clique para exibir/ocultar no gráfico</span>
+                                </div>
                                 <div className={styles.dashCardContent + ' ' + styles.resumoCardContainer}>
                                     <div 
-                                        className={`${styles.resumoItem} ${styles.resumoEntrada} ${opcoesSelecionadas.includes('entrada') ? styles.selected : ''}`}
+                                        className={`${styles.resumoItem} ${styles.resumoEntrada} ${opcoesSelecionadas.includes('entrada') ? styles.selected : styles.unselected}`}
                                         onClick={() => toggleOpcao('entrada')}
-                                        style={{ cursor: 'pointer' }}
+                                        title="Clique para exibir/ocultar no gráfico"
                                     >
                                         <span className={styles.resumoItemLabel}>Entrada:</span>
                                         <span className={styles.resumoItemValue}>
@@ -414,9 +554,9 @@ export function DashFinancas(props) {
                                         </span>
                                     </div>
                                     <div 
-                                        className={`${styles.resumoItem} ${styles.resumoSaida} ${opcoesSelecionadas.includes('saida') ? styles.selected : ''}`}
+                                        className={`${styles.resumoItem} ${styles.resumoSaida} ${opcoesSelecionadas.includes('saida') ? styles.selected : styles.unselected}`}
                                         onClick={() => toggleOpcao('saida')}
-                                        style={{ cursor: 'pointer' }}
+                                        title="Clique para exibir/ocultar no gráfico"
                                     >
                                         <span className={styles.resumoItemLabel}>Saída:</span>
                                         <span className={styles.resumoItemValue}>
@@ -424,9 +564,9 @@ export function DashFinancas(props) {
                                         </span>
                                     </div>
                                     <div 
-                                        className={`${styles.resumoItem} ${styles.resumoLucro} ${opcoesSelecionadas.includes('lucro') ? styles.selected : ''}`}
+                                        className={`${styles.resumoItem} ${styles.resumoLucro} ${opcoesSelecionadas.includes('lucro') ? styles.selected : styles.unselected}`}
                                         onClick={() => toggleOpcao('lucro')}
-                                        style={{ cursor: 'pointer' }}
+                                        title="Clique para exibir/ocultar no gráfico"
                                     >
                                         <span className={styles.resumoItemLabel}>Lucro Aproximado:</span>
                                         <span 

@@ -30,6 +30,15 @@ export function HistoricoVendas(props) {
     const mesFormatado = String(mes + 1).padStart(2, '0');
     return `${ano}-${mesFormatado}-${dia}`;
   };
+  
+  // Função para obter a data de hoje no formato yyyy-MM-dd
+  const getDataHoje = () => {
+    const hoje = new Date();
+    const ano = hoje.getFullYear();
+    const mes = String(hoje.getMonth() + 1).padStart(2, '0');
+    const dia = String(hoje.getDate()).padStart(2, '0');
+    return `${ano}-${mes}-${dia}`;
+  };
 
   // Ler parâmetros da URL (vindos da DashProdutos)
   const [searchParams] = useSearchParams();
@@ -316,6 +325,7 @@ export function HistoricoVendas(props) {
                 type="date"
                 value={startDate}
                 onChange={e => setStartDate(e.target.value)}
+                max={getDataHoje()}
                 className={styles.invisibleDateInput}
               />
               {startDate && (
@@ -339,6 +349,7 @@ export function HistoricoVendas(props) {
                 type="date"
                 value={endDate}
                 onChange={e => setEndDate(e.target.value)}
+                max={getDataHoje()}
                 className={styles.invisibleDateInput}
               />
               {endDate && (
