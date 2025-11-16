@@ -183,7 +183,7 @@ export function Encomendas(props) {
         dataRetirada: dataRetiradaFormatada,
         dataRetiradaCompleta: dataRetiradaStr.split(' ')[0],
         status: pedido.status || 'PENDENTE',
-        nomeCliente: pedido.nomeCliente || 'Cliente',
+        nomeCliente: pedido.Cliente || pedido.nomeCliente || 'Cliente',
         pedidoCompleto: pedido
       };
     });
@@ -247,28 +247,66 @@ export function Encomendas(props) {
       const pedidoResp = await api.get(`/pedidos/${pedidoId}`);
       const pedidoAtual = pedidoResp.data;
 
-      // Atualizar apenas o status
+
+      // Montar objeto conforme esperado pelo backend
+
+      // Garantir formato ISO para datas
+      function toISO(data) {
+        if (!data) return '';
+        if (typeof data === 'string' && data.includes('T')) return data; // já está ISO
+        // Se vier como '2025-11-16 22:10:39', converter para ISO
+        return new Date(data.replace(' ', 'T')).toISOString();
+      }
+
       const pedidoAtualizado = {
-        ...pedidoAtual,
-        status: novoStatus
+        dataPedido: toISO(pedidoAtual.dataPedido),
+        dataRetirada: toISO(pedidoAtual.dataRetirada),
+        dataPagamento: toISO(pedidoAtual.dataPagamento),
+        formaPagamento: pedidoAtual.formaPagamento || '',
+        status: novoStatus,
+        observacao: pedidoAtual.observacao || '',
+        usuarioId: pedidoAtual.usuarioId || pedidoAtual.usuario?.id || pedidoAtual.usuario || '',
+        clienteId: pedidoAtual.clienteId || pedidoAtual.cliente?.id || pedidoAtual.cliente || '',
       };
+
+      // Validação básica
+      for (const campo of [
+        'dataPedido','dataRetirada','dataPagamento','formaPagamento','status','observacao','usuarioId','clienteId']) {
+        if (!pedidoAtualizado[campo]) {
+          showToast(`Campo obrigatório ausente: ${campo}`,'error');
+          return;
+        }
+      }
+
+      console.log('🔼 Enviando para PUT:', pedidoAtualizado);
 
       await api.put(`/pedidos/${pedidoId}`, pedidoAtualizado);
 
       showToast('Status atualizado com sucesso!', 'success');
 
-      // Atualizar lista local
-      setEncomendas(prev => prev.map(enc => 
-        enc.pedidoId === pedidoId 
-          ? { ...enc, status: novoStatus }
-          : enc
-      ));
-
-      setPedidosFull(prev => prev.map(p => 
-        p.id === pedidoId 
-          ? { ...p, status: novoStatus }
-          : p
-      ));
+      // Recarregar pedidos do backend para garantir atualização
+      try {
+        let pedidosResp = await api.get('/pedidos');
+        let itensResp = await api.get('/itens-pedido');
+        const pedidos = Array.isArray(pedidosResp.data) ? pedidosResp.data : (pedidosResp.data && pedidosResp.data.content) ? pedidosResp.data.content : [];
+        const itens = Array.isArray(itensResp.data) ? itensResp.data : (itensResp.data && itensResp.data.content) ? itensResp.data.content : [];
+        const encomendasFiltradas = pedidos.filter(pedido => {
+          const dataPedidoStr = pedido.dataPedido || '';
+          const dataRetiradaStr = pedido.dataRetirada || '';
+          if (!dataPedidoStr || !dataRetiradaStr) return false;
+          const dataPedido = new Date(dataPedidoStr);
+          const dataRetirada = new Date(dataRetiradaStr);
+          return dataRetirada > dataPedido;
+        });
+        const pedidosIdsFiltrados = new Set(encomendasFiltradas.map(p => Number(p.id)));
+        const itensFiltrados = itens.filter(it => pedidosIdsFiltrados.has(Number(it.pedidoId)));
+        const resultado = aplicarFiltrosEAgregar(encomendasFiltradas, itensFiltrados, filtros);
+        setEncomendas(resultado);
+        setPedidosFull(encomendasFiltradas);
+        setItensFull(itensFiltrados);
+      } catch (e) {
+        // fallback: não recarregou
+      }
 
       // Limpar status editando
       setStatusEditando(prev => {
@@ -423,14 +461,13 @@ export function Encomendas(props) {
                   <th>Valor total</th>
                   <th>Itens</th>
                   <th>Data Retirada</th>
-                  <th>Status</th>
-                  <th>Ações</th>
+                  <th>Status Pedido</th>
                 </tr>
               </thead>
               <tbody>
                 {encomendas.length === 0 ? (
                   <tr>
-                    <td colSpan="6" className={styles.emptyMessage}>
+                    <td colSpan="5" className={styles.emptyMessage}>
                       Nenhuma encomenda encontrada para o período selecionado
                     </td>
                   </tr>
@@ -443,41 +480,71 @@ export function Encomendas(props) {
                       <td>{enc.dataRetirada}</td>
                       <td>
                         <div className={styles.statusCell}>
-                          <select
-                            value={statusEditando[enc.pedidoId] || enc.status}
-                            onChange={(e) => handleStatusChange(enc.pedidoId, e.target.value)}
-                            className={styles.statusSelectInline}
-                          >
-                            <option value="CONFIRMADO">Confirmado</option>
-                            <option value="PENDENTE_PAGAMENTO">Pendente Pag.</option>
-                            <option value="FINALIZADO">Finalizado</option>
-                            <option value="CANCELADO">Cancelado</option>
-                          </select>
-                          {statusEditando[enc.pedidoId] && statusEditando[enc.pedidoId] !== enc.status && (
-                            <button
-                              className={styles.btnSalvarInline}
-                              onClick={() => handleSalvarStatus(enc.pedidoId)}
-                              title="Salvar alteração"
-                            >
-                              ✓
-                            </button>
+                          {statusEditando[enc.pedidoId] ? (
+                            <>
+                              <select
+                                value={statusEditando[enc.pedidoId]}
+                                onChange={(e) => handleStatusChange(enc.pedidoId, e.target.value)}
+                                className={styles.statusSelectInline}
+                              >
+                                <option value="CONFIRMADO">Confirmado</option>
+                                <option value="PENDENTE_PAGAMENTO">Pendente Pag.</option>
+                                <option value="FINALIZADO">Finalizado</option>
+                                <option value="CANCELADO">Cancelado</option>
+                              </select>
+                              <button
+                                className={styles.btnIconRound}
+                                onClick={() => setStatusEditando(prev => { const n = { ...prev }; delete n[enc.pedidoId]; return n; })}
+                                title="Cancelar edição"
+                              >
+                                <span style={{fontSize: 18, lineHeight: 1}}>&#10005;</span>
+                              </button>
+                              <button
+                                className={styles.btnIconRound}
+                                onClick={() => handleSalvarStatus(enc.pedidoId)}
+                                title="Salvar alteração"
+                              >
+                                <span style={{fontSize: 18, lineHeight: 1}}>&#10003;</span>
+                              </button>
+                              <button
+                                className={styles.btnIconRound}
+                                onClick={() => handleCancelarPedido(enc.pedidoId)}
+                                title="Excluir pedido"
+                              >
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+                              </button>
+                            </>
+                          ) : (
+                            <>
+                              <select
+                                value={enc.status}
+                                disabled
+                                className={styles.statusSelectInline}
+                              >
+                                <option value="CONFIRMADO">Confirmado</option>
+                                <option value="PENDENTE_PAGAMENTO">Pendente Pag.</option>
+                                <option value="FINALIZADO">Finalizado</option>
+                                <option value="CANCELADO">Cancelado</option>
+                              </select>
+                              <button
+                                className={styles.btnIconRound}
+                                onClick={() => setStatusEditando(prev => ({ ...prev, [enc.pedidoId]: enc.status }))}
+                                title="Editar status"
+                              >
+                                <span style={{fontSize: 18, lineHeight: 1}}>&#9998;</span>
+                              </button>
+                              <button
+                                className={styles.btnIconRound}
+                                onClick={() => handleCancelarPedido(enc.pedidoId)}
+                                title="Excluir pedido"
+                              >
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+                              </button>
+                            </>
                           )}
                         </div>
                       </td>
-                      <td>
-                        <button
-                          className={styles.btnExcluir}
-                          onClick={() => handleCancelarPedido(enc.pedidoId)}
-                          title="Excluir encomenda"
-                        >
-                          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <polyline points="3 6 5 6 21 6"></polyline>
-                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                            <line x1="10" y1="11" x2="10" y2="17"></line>
-                            <line x1="14" y1="11" x2="14" y2="17"></line>
-                          </svg>
-                        </button>
-                      </td>
+
                     </tr>
                   ))
                 )}

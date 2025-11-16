@@ -10,14 +10,64 @@ import addIcon from '../assets/add.png';
 import { useNavigate } from 'react-router-dom';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
 import { useState, useEffect } from 'react';
+import api from '../provider/api';
 
 export function Menu(props) {
     useDocumentTitle(props.titulo);
     const navigate = useNavigate();
     const [showNotification, setShowNotification] = useState(false);
+    const [notificacoes, setNotificacoes] = useState({
+        hoje: 0,
+        pendentes: 0,
+        pendentesPagamento: 0
+    });
+
 
     useEffect(() => {
-        // Mostrar notificação após 500ms
+        async function fetchNotificacoes() {
+            try {
+                const pedidosResp = await api.get('/pedidos');
+                const pedidos = Array.isArray(pedidosResp.data)
+                    ? pedidosResp.data
+                    : (pedidosResp.data && pedidosResp.data.content)
+                        ? pedidosResp.data.content
+                        : [];
+
+                const hoje = new Date();
+                hoje.setHours(0, 0, 0, 0);
+                const hojeStr = hoje.toISOString().slice(0, 10);
+
+                let hojeCount = 0;
+                let pendentesCount = 0;
+                let pendentesPagamentoCount = 0;
+
+                pedidos.forEach(pedido => {
+                    const dataRetirada = pedido.dataRetirada ? pedido.dataRetirada.slice(0, 10) : null;
+                    const status = (pedido.status || '').toUpperCase();
+                    // Encomenda para hoje
+                    if (dataRetirada === hojeStr && status !== 'CANCELADO') {
+                        hojeCount++;
+                    }
+                    // Encomenda pendente (não finalizado nem cancelado)
+                    if (status === 'PENDENTE' || status === 'PENDENTE_PAGAMENTO') {
+                        pendentesCount++;
+                    }
+                    // Pagamento pendente
+                    if (status === 'PENDENTE_PAGAMENTO') {
+                        pendentesPagamentoCount++;
+                    }
+                });
+
+                setNotificacoes({
+                    hoje: hojeCount,
+                    pendentes: pendentesCount,
+                    pendentesPagamento: pendentesPagamentoCount
+                });
+            } catch (err) {
+                setNotificacoes({ hoje: 0, pendentes: 0, pendentesPagamento: 0 });
+            }
+        }
+        fetchNotificacoes();
         const timer = setTimeout(() => {
             setShowNotification(true);
         }, 500);
@@ -29,44 +79,53 @@ export function Menu(props) {
             <Navbar logado={true} />
             
             {/* Card de Notificações Fixo */}
-            <div 
-                className={`${styles.notificationCard} ${showNotification ? styles.notificationShow : ''}`}
-                onClick={() => navigate('/encomendas')}
-            >
-                <div className={styles.notificationHeader}>
-                    <div className={styles.bellIconContainer}>
-                        <svg className={styles.bellIcon} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M18 8C18 6.4087 17.3679 4.88258 16.2426 3.75736C15.1174 2.63214 13.5913 2 12 2C10.4087 2 8.88258 2.63214 7.75736 3.75736C6.63214 4.88258 6 6.4087 6 8C6 15 3 17 3 17H21C21 17 18 15 18 8Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                            <path d="M13.73 21C13.5542 21.3031 13.3019 21.5547 12.9982 21.7295C12.6946 21.9044 12.3504 21.9965 12 21.9965C11.6496 21.9965 11.3054 21.9044 11.0018 21.7295C10.6982 21.5547 10.4458 21.3031 10.27 21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                        </svg>
-                        <span className={styles.notificationBadge}>3</span>
-                    </div>
-                    <h3 className={styles.notificationTitle}>Notificações</h3>
-                </div>
-                
-                <div className={styles.notificationBody}>
-                    <div className={styles.notificationItem}>
-                        <div className={styles.notificationDotRed}></div>
-                        <div className={styles.notificationText}>
-                            <strong>1 encomenda</strong> pendente para hoje
-                        </div>
-                    </div>
-                    
-                    <div className={styles.notificationItem}>
-                        <div className={styles.notificationDotOrange}></div>
-                        <div className={styles.notificationText}>
-                            <strong>2 encomendas</strong> pendentes
-                        </div>
-                    </div>
 
-                    <div className={styles.notificationItem}>
-                        <div className={styles.notificationDotOrange}></div>
-                        <div className={styles.notificationText}>
-                            <strong>1 pedido</strong> pendente de pagamento
+            {/* Notificações dinâmicas - só exibe se houver notificações */}
+            {(notificacoes.hoje > 0 || notificacoes.pendentes > 0 || notificacoes.pendentesPagamento > 0) && (
+                <div 
+                    className={`${styles.notificationCard} ${showNotification ? styles.notificationShow : ''}`}
+                    onClick={() => navigate('/encomendas')}
+                >
+                    <div className={styles.notificationHeader}>
+                        <div className={styles.bellIconContainer}>
+                            <svg className={styles.bellIcon} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M18 8C18 6.4087 17.3679 4.88258 16.2426 3.75736C15.1174 2.63214 13.5913 2 12 2C10.4087 2 8.88258 2.63214 7.75736 3.75736C6.63214 4.88258 6 6.4087 6 8C6 15 3 17 3 17H21C21 17 18 15 18 8Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                <path d="M13.73 21C13.5542 21.3031 13.3019 21.5547 12.9982 21.7295C12.6946 21.9044 12.3504 21.9965 12 21.9965C11.6496 21.9965 11.3054 21.9044 11.0018 21.7295C10.6982 21.5547 10.4458 21.3031 10.27 21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                            </svg>
+                            <span className={styles.notificationBadge}>
+                                {notificacoes.hoje + notificacoes.pendentes + notificacoes.pendentesPagamento}
+                            </span>
                         </div>
+                        <h3 className={styles.notificationTitle}>Notificações</h3>
+                    </div>
+                    <div className={styles.notificationBody}>
+                        {notificacoes.hoje > 0 && (
+                            <div className={styles.notificationItem}>
+                                <div className={styles.notificationDotRed}></div>
+                                <div className={styles.notificationText}>
+                                    <strong>{notificacoes.hoje} encomenda{notificacoes.hoje > 1 ? 's' : ''}</strong> pendente{notificacoes.hoje > 1 ? 's' : ''} para hoje
+                                </div>
+                            </div>
+                        )}
+                        {notificacoes.pendentes > 0 && (
+                            <div className={styles.notificationItem}>
+                                <div className={styles.notificationDotOrange}></div>
+                                <div className={styles.notificationText}>
+                                    <strong>{notificacoes.pendentes} encomenda{notificacoes.pendentes > 1 ? 's' : ''}</strong> pendente{notificacoes.pendentes > 1 ? 's' : ''}
+                                </div>
+                            </div>
+                        )}
+                        {notificacoes.pendentesPagamento > 0 && (
+                            <div className={styles.notificationItem}>
+                                <div className={styles.notificationDotOrange}></div>
+                                <div className={styles.notificationText}>
+                                    <strong>{notificacoes.pendentesPagamento} pedido{notificacoes.pendentesPagamento > 1 ? 's' : ''}</strong> pendente{notificacoes.pendentesPagamento > 1 ? 's' : ''} de pagamento
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </div>
-            </div>
+            )}
 
             <div className={styles.centerContentMenu}>
                 <h1 className={styles.title}>Gigante pela própria natureza!</h1>
