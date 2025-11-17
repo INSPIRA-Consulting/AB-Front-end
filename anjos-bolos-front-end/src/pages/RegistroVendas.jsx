@@ -720,7 +720,7 @@ export function RegistroVendas(props) {
       {/* Lista de Produtos */}
       <div className={styles.produtos}>
         {produtos
-          .filter(produto => produto.categoria === categoria)
+          .filter(produto => produto.categoria === categoria && categoria !== 'festa')
           .map(produto => (
             <Produto
               key={produto.id || produto.titulo}

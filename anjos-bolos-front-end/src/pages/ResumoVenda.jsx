@@ -9,6 +9,9 @@ import api from '../provider/api';
 export function ResumoVenda() {
 
   const [vendas, setVendas] = React.useState([]);
+  // controles do menu lateral
+  const [formaPagamentoSelect, setFormaPagamentoSelect] = React.useState('DINHEIRO');
+  const [statusPedidoSelect, setStatusPedidoSelect] = React.useState('FINALIZADO');
 
   const handleVoltar = () => {
     window.location.href = '/registro-vendas';
@@ -85,8 +88,9 @@ export function ResumoVenda() {
           dataPedido: formatDateTime(now),
           dataRetirada: formatDateTime(now),
           dataPagamento: formatDateTime(now),
-          formaPagamento: parsed.formaPagamento || 'VOUCHER',
-          status: 'CONFIRMADO',
+          // prioriza valor salvo em parsed (quando houver), senão usa o select do componente
+          formaPagamento: parsed.formaPagamento || formaPagamentoSelect || 'VOUCHER',
+          status: parsed.status || statusPedidoSelect || 'CONFIRMADO',
           observacao: parsed.observacao || 'Sem observação',
           usuarioId: parsed.usuarioId || 1,
           clienteId: clienteId || 1
@@ -256,9 +260,10 @@ export function ResumoVenda() {
         >
           {'< Voltar'}
         </button>
+
+        <h1 className={styles.pageTitle}>Resumo da Venda</h1>
       </div>
       
-      <h1 className={styles.pageTitle}>Resumo da Venda</h1>
 
       <div className={styles.contentResumoVendas}>
 
@@ -307,16 +312,43 @@ export function ResumoVenda() {
                             <label>Nome do cliente (Opcional):</label>
                             <input type="text" />
                           </div>
+                          <div className={styles.formaPagamento} style={{ marginTop: 8 }}>
+                            <label>Forma de Pagamento:</label>
+                            <select
+                              value={formaPagamentoSelect}
+                              onChange={e => setFormaPagamentoSelect(e.target.value)}
+                              style={{ width: '100%', padding: 8, marginTop: 6 }}
+                            >
+                              <option value="DINHEIRO">Dinheiro</option>
+                              <option value="CARTAO_CREDITO">Cartão de Crédito</option>
+                              <option value="CARTAO_DEBITO">Cartão de Débito</option>
+                              <option value="VOUCHER">Voucher</option>
+                              <option value="PIX">Pix</option>
+                            </select>
+                          </div>
+                          <div className={styles.statusPedido} style={{ marginTop: 8 }}>
+                            <label>Status do Pedido:</label>
+                            <select
+                              value={statusPedidoSelect}
+                              onChange={e => setStatusPedidoSelect(e.target.value)}
+                              style={{ width: '100%', padding: 8, marginTop: 6 }}
+                            >
+                              <option value="CONFIRMADO">Confirmado</option>
+                              <option value="PENDENTE_PAGAMENTO">Pagamento Pendente</option>
+                              <option value="CANCELADO">Cancelado</option>
+                              <option value="FINALIZADO">Finalizado</option>
+                            </select>
+                          </div>
                           <div className={styles.valorTotal}>
                             <label>R$ {vendas.reduce((total, v) => total + (v.valorFinal || 0), 0)},00</label>
                           </div>
                           {/* <label>Nome Cliente (opcional):</label>
                           <input type="text" /> */}
                         </div>
+                <button className={styles.btnPesquisar} onClick={handleConfirmRegister}>
+                  Registrar
+                </button>
               </div>
-          <button className={styles.btnPesquisar} onClick={handleConfirmRegister}>
-            Registrar
-          </button>
         </div>
       </div>
     </div>
