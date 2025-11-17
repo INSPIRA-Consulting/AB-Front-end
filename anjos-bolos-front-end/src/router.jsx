@@ -15,6 +15,7 @@ import { CatalogoProdutos } from "./pages/CatalogoProdutos";
 import { CatalogoIngredientes } from "./pages/CatalogoIngredientes";
 import { PaginaNaoEncontrada } from "./pages/PaginaNaoEncontrada";
 import { ResumoVenda } from "./pages/ResumoVenda";
+import { Encomendas } from "./pages/Encomendas";
 
 export const router = createBrowserRouter([
     {
@@ -72,6 +73,10 @@ export const router = createBrowserRouter([
     {
       path: "/catalogo-ingredientes",
       element: <CatalogoIngredientes titulo="Catalogo de Ingredientes" />
+    },
+    {
+        path: "/encomendas",
+        element: <Encomendas titulo="Encomendas" />
     },
     {
         path: "*",

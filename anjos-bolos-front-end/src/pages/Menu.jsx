@@ -31,7 +31,7 @@ export function Menu(props) {
             {/* Card de Notificações Fixo */}
             <div 
                 className={`${styles.notificationCard} ${showNotification ? styles.notificationShow : ''}`}
-                onClick={() => navigate('/historico-vendas')}
+                onClick={() => navigate('/encomendas')}
             >
                 <div className={styles.notificationHeader}>
                     <div className={styles.bellIconContainer}>

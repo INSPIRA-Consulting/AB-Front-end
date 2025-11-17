@@ -1,14 +1,12 @@
 import React, { useRef, useState, useEffect } from "react";
 import { Navbar } from "../components/Navbar";
-import styles from "../styles/HistoricoVendas.module.css";
-import { DateInput } from 'rsuite';
+import styles from "../styles/Encomendas.module.css";
 import { FaRegCalendarAlt } from "react-icons/fa";
 import { useDocumentTitle } from "../hooks/useDocumentTitle";
-import { useSearchParams } from "react-router-dom";
 import api from '../provider/api';
-import { Modal } from '../components/Modal';
+import { ModernToast } from '../components/ModernToast';
 
-export function HistoricoVendas(props) {
+export function Encomendas(props) {
   useDocumentTitle(props.titulo);
 
   // Função para obter o primeiro dia do mês atual no formato yyyy-MM-dd
@@ -24,7 +22,6 @@ export function HistoricoVendas(props) {
     const hoje = new Date();
     const ano = hoje.getFullYear();
     const mes = hoje.getMonth();
-    // Criar data do próximo mês, dia 0 (que é o último dia do mês atual)
     const ultimoDia = new Date(ano, mes + 1, 0);
     const dia = String(ultimoDia.getDate()).padStart(2, '0');
     const mesFormatado = String(mes + 1).padStart(2, '0');
@@ -40,16 +37,8 @@ export function HistoricoVendas(props) {
     return `${ano}-${mes}-${dia}`;
   };
 
-  // Ler parâmetros da URL (vindos da DashProdutos)
-  const [searchParams] = useSearchParams();
-  
-  // Inicializar datas: se vier da URL usa os parâmetros, senão usa primeiro e último dia do mês atual
-  const dataInicioParam = searchParams.get('dataInicio') || getPrimeiroDiaDoMes();
-  const dataFimParam = searchParams.get('dataFim') || getUltimoDiaDoMes();
-  const statusParam = searchParams.get('status') || "Todos"; // Ler status da URL
-
-  const [startDate, setStartDate] = useState(dataInicioParam);
-  const [endDate, setEndDate] = useState(dataFimParam);
+  const [startDate, setStartDate] = useState(getPrimeiroDiaDoMes());
+  const [endDate, setEndDate] = useState(getUltimoDiaDoMes());
   const startInputRef = useRef(null);
   const endInputRef = useRef(null);
 
@@ -58,43 +47,29 @@ export function HistoricoVendas(props) {
     mes: endDate,
     valor: "Todos",
     categoria: 'Todos',
-    status: statusParam // Inicializar com status da URL
+    status: 'Todos'
   });
 
-  const [vendas, setVendas] = useState([]);
+  const [encomendas, setEncomendas] = useState([]);
   const [pedidosFull, setPedidosFull] = useState([]);
   const [itensFull, setItensFull] = useState([]);
-  const [pedidosOriginais, setPedidosOriginais] = useState([]); // Guardar pedidos sem filtro
-  const [itensOriginais, setItensOriginais] = useState([]); // Guardar itens sem filtro
-  const [modalAberto, setModalAberto] = useState(false);
-  const [itensDoDia, setItensDoDia] = useState([]);
+  const [statusEditando, setStatusEditando] = useState({});
+  
+  const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
 
-  // Atualizar filtros quando os parâmetros mudarem
-  useEffect(() => {
-    if (dataInicioParam || dataFimParam) {
-      setFiltros(prev => ({
-        ...prev,
-        dia: dataInicioParam || startDate,
-        mes: dataFimParam || endDate
-      }));
-      
-      console.log('📋 Histórico carregado com filtros da DashProdutos:');
-      console.log('  📅 Data Início:', dataInicioParam);
-      console.log('  📅 Data Fim:', dataFimParam);
-    }
-  }, [dataInicioParam, dataFimParam]);
+  const showToast = (message, type = 'success') => {
+    setToast({ show: true, message, type });
+  };
 
-  // carregar pedidos e itens do backend e agregá-los por dia
+  // Carregar pedidos onde dataRetirada > dataPedido (encomendas futuras)
   useEffect(() => {
     let mounted = true;
 
-    async function loadPedidosEItens() {
+    async function loadEncomendas() {
       try {
-        console.log('🔍 Buscando pedidos e itens-pedido...');
+        console.log('🔍 Buscando encomendas...');
         console.log('  📅 Período:', startDate, 'até', endDate);
 
-        // Backend não tem endpoint de intervalo de datas, então:
-        // 1. Buscar todos os pedidos
         let pedidosResp = await api.get('/pedidos');
         let itensResp = await api.get('/itens-pedido');
 
@@ -102,77 +77,77 @@ export function HistoricoVendas(props) {
         const itens = Array.isArray(itensResp.data) ? itensResp.data : (itensResp.data && itensResp.data.content) ? itensResp.data.content : [];
 
         console.log('✅ Total de pedidos no sistema:', pedidos.length);
-        console.log('✅ Total de itens no sistema:', itens.length);
 
-        // Guardar dados originais para filtragem
-        if (mounted) {
-          setPedidosOriginais(pedidos);
-          setItensOriginais(itens);
-        }
+        // Filtrar apenas encomendas: dataRetirada > dataPedido
+        let encomendasFiltradas = pedidos.filter(pedido => {
+          const dataPedidoStr = pedido.dataPedido || '';
+          const dataRetiradaStr = pedido.dataRetirada || '';
+          
+          if (!dataPedidoStr || !dataRetiradaStr) return false;
+          
+          const dataPedido = new Date(dataPedidoStr);
+          const dataRetirada = new Date(dataRetiradaStr);
+          
+          return dataRetirada > dataPedido;
+        });
 
-        // 2. Filtrar pedidos por intervalo de datas
-        let pedidosFiltrados = pedidos;
+        console.log('📦 Encomendas encontradas:', encomendasFiltradas.length);
+
+        // Filtrar por intervalo de datas de retirada
         if (startDate || endDate) {
-          pedidosFiltrados = pedidos.filter(pedido => {
-            const dataStr = pedido.dataPedido || pedido.dataPedidoString || pedido.dataPedidoAt || '';
+          encomendasFiltradas = encomendasFiltradas.filter(pedido => {
+            const dataStr = pedido.dataRetirada || '';
             if (!dataStr) return false;
             
-            // Parse da data (pode vir como "2025-01-15" ou "2025-01-15T10:30:00")
-            const dataPedido = new Date(dataStr);
-            dataPedido.setHours(0, 0, 0, 0); // Normalizar para início do dia
+            const dataRetirada = new Date(dataStr);
+            dataRetirada.setHours(0, 0, 0, 0);
             
             const dataInicio = startDate ? new Date(startDate) : null;
             const dataFim = endDate ? new Date(endDate) : null;
             
             if (dataInicio) dataInicio.setHours(0, 0, 0, 0);
-            if (dataFim) dataFim.setHours(23, 59, 59, 999); // Final do dia
+            if (dataFim) dataFim.setHours(23, 59, 59, 999);
             
-            if (dataInicio && dataPedido < dataInicio) return false;
-            if (dataFim && dataPedido > dataFim) return false;
+            if (dataInicio && dataRetirada < dataInicio) return false;
+            if (dataFim && dataRetirada > dataFim) return false;
             
             return true;
           });
         }
 
-        console.log('📊 Pedidos no período selecionado:', pedidosFiltrados.length);
+        console.log('📊 Encomendas no período selecionado:', encomendasFiltradas.length);
 
-        // Filtrar itens apenas dos pedidos do período
-        const pedidosIdsFiltrados = new Set(pedidosFiltrados.map(p => Number(p.id)));
+        const pedidosIdsFiltrados = new Set(encomendasFiltradas.map(p => Number(p.id)));
         const itensFiltrados = itens.filter(it => pedidosIdsFiltrados.has(Number(it.pedidoId)));
-        
-        console.log('📦 Itens dos pedidos filtrados:', itensFiltrados.length);
 
-        // Aplicar filtros adicionais (status, categoria, valor) se já existirem
-        const resultado = aplicarFiltrosEAgregar(pedidosFiltrados, itensFiltrados, filtros);
+        const resultado = aplicarFiltrosEAgregar(encomendasFiltradas, itensFiltrados, filtros);
         
         if (mounted) {
-          setVendas(resultado);
-          setPedidosFull(pedidosFiltrados);
+          setEncomendas(resultado);
+          setPedidosFull(encomendasFiltradas);
           setItensFull(itensFiltrados);
         }
       } catch (err) {
-        console.error('❌ Erro ao carregar pedidos/itens:', err);
+        console.error('❌ Erro ao carregar encomendas:', err);
       }
     }
 
-    loadPedidosEItens();
+    loadEncomendas();
     return () => { mounted = false; };
   }, [startDate, endDate]);
 
-  // Função para aplicar filtros e agregar dados
   const aplicarFiltrosEAgregar = (pedidos, itens, filtrosAplicados) => {
     let pedidosFiltrados = [...pedidos];
     let itensFiltrados = [...itens];
 
-    // Filtrar por status do pedido
+    // Filtrar por status
     if (filtrosAplicados.status && filtrosAplicados.status !== 'Todos') {
       pedidosFiltrados = pedidosFiltrados.filter(p => {
-        const status = (p.status || p.Status || '').toString().toUpperCase();
+        const status = (p.status || '').toString().toUpperCase();
         return status === filtrosAplicados.status;
       });
     }
 
-    // Atualizar itens após filtro de status
     const pedidoIds = new Set(pedidosFiltrados.map(p => Number(p.id)));
     itensFiltrados = itensFiltrados.filter(it => pedidoIds.has(Number(it.pedidoId)));
 
@@ -184,42 +159,39 @@ export function HistoricoVendas(props) {
         return cat === filtrosAplicados.categoria;
       });
 
-      // Manter apenas pedidos que tenham itens após filtro de categoria
       const pedidoIdsComItens = new Set(itensFiltrados.map(it => Number(it.pedidoId)));
       pedidosFiltrados = pedidosFiltrados.filter(p => pedidoIdsComItens.has(Number(p.id)));
     }
 
-    // Agregar por dia
-    const mapa = {};
-    pedidosFiltrados.forEach(pedido => {
-      const dataStr = pedido.dataPedido || pedido.dataPedidoString || pedido.dataPedidoAt || '';
-      const dt = dataStr ? new Date(dataStr) : null;
-      
-      if (!dt) return;
-      
-      const dataCompleta = dataStr.split(' ')[0];
-      // Formatar como dd/MM/yyyy
-      const dia = String(dt.getDate()).padStart(2, '0');
-      const mes = String(dt.getMonth() + 1).padStart(2, '0');
-      const ano = dt.getFullYear();
-      const diaFormatado = `${dia}/${mes}/${ano}`;
-
+    // Preparar dados agregados por pedido
+    const resultado = pedidosFiltrados.map(pedido => {
       const itensDoPedido = itensFiltrados.filter(it => Number(it.pedidoId) === Number(pedido.id));
       const valorTotal = itensDoPedido.reduce((s, it) => s + (Number(it.precoUnitario) * (Number(it.quantidade) || 1)), 0);
       const qtdItens = itensDoPedido.reduce((s, it) => s + (Number(it.quantidade) || 0), 0);
 
-      if (!mapa[dataCompleta]) {
-        mapa[dataCompleta] = { valor: 0, itens: 0, dia: diaFormatado, dataCompleta };
-      }
-      mapa[dataCompleta].valor += valorTotal;
-      mapa[dataCompleta].itens += qtdItens;
+      const dataRetiradaStr = pedido.dataRetirada || '';
+      const dt = dataRetiradaStr ? new Date(dataRetiradaStr) : null;
+      const dia = dt ? String(dt.getDate()).padStart(2, '0') : '??';
+      const mes = dt ? String(dt.getMonth() + 1).padStart(2, '0') : '??';
+      const ano = dt ? dt.getFullYear() : '????';
+      const dataRetiradaFormatada = `${dia}/${mes}/${ano}`;
+
+      return {
+        pedidoId: pedido.id,
+        valor: valorTotal,
+        itens: qtdItens,
+        dataRetirada: dataRetiradaFormatada,
+        dataRetiradaCompleta: dataRetiradaStr.split(' ')[0],
+        status: pedido.status || 'PENDENTE',
+        nomeCliente: pedido.nomeCliente || 'Cliente',
+        pedidoCompleto: pedido
+      };
     });
 
-    let resultado = Object.values(mapa);
-
-    // Filtrar por valor (após agregação)
+    // Filtrar por valor
+    let resultadoFinal = resultado;
     if (filtrosAplicados.valor && filtrosAplicados.valor !== 'Todos') {
-      resultado = resultado.filter(v => {
+      resultadoFinal = resultado.filter(v => {
         const valor = v.valor;
         if (filtrosAplicados.valor === 'Abaixo de R$ 50') return valor < 50;
         if (filtrosAplicados.valor === 'R$ 50 - R$ 100') return valor >= 50 && valor <= 100;
@@ -229,31 +201,23 @@ export function HistoricoVendas(props) {
       });
     }
 
-    resultado.sort((a, b) => new Date(b.dataCompleta) - new Date(a.dataCompleta));
+    resultadoFinal.sort((a, b) => new Date(a.dataRetiradaCompleta) - new Date(b.dataRetiradaCompleta));
     
-    return resultado;
+    return resultadoFinal;
   };
-
 
   const handlePesquisar = () => {
     console.log("🔍 Filtros aplicados:", filtros);
 
     try {
-      // Começar com pedidos já filtrados por data
-      let pedidos = [...pedidosFull];
-      let itens = [...itensFull];
-
-      // Aplicar filtros e agregar
-      const resultado = aplicarFiltrosEAgregar(pedidos, itens, filtros);
-
-      setVendas(resultado);
+      const resultado = aplicarFiltrosEAgregar(pedidosFull, itensFull, filtros);
+      setEncomendas(resultado);
       console.log('✅ Pesquisa aplicada com sucesso. Registros encontrados:', resultado.length);
     } catch (err) {
       console.error('❌ Erro ao aplicar filtros:', err);
     }
   };
 
-  // Heurística simples para inferir categoria a partir do nome do produto
   function inferCategoryFromProductName(nome) {
     if (!nome) return 'Outros';
     const n = nome.toLowerCase();
@@ -265,55 +229,93 @@ export function HistoricoVendas(props) {
     return 'Outros';
   }
 
-  const handleDownload = () => {
-    console.log("Download solicitado");
-    // aqui você gera o CSV/Excel com base nas vendas filtradas
+  const handleStatusChange = (pedidoId, novoStatus) => {
+    setStatusEditando(prev => ({
+      ...prev,
+      [pedidoId]: novoStatus
+    }));
   };
 
-  // abre modal com itens do dia selecionado
-  const handleDetalhesDia = (vendaItem) => {
+  const handleSalvarStatus = async (pedidoId) => {
+    const novoStatus = statusEditando[pedidoId];
+    if (!novoStatus) return;
+
     try {
-      console.log('🔍 Abrindo detalhes para:', vendaItem);
-      
-      // Usar dataCompleta ao invés de só o número do dia
-      const dataAlvo = vendaItem.dataCompleta; // "2025-11-01"
-      
-      const pedidosDoDia = pedidosFull.filter(p => {
-        const dataStr = p.dataPedido || p.dataPedidoString || p.dataPedidoAt || '';
-        const dataCompleta = dataStr.split(' ')[0]; // "2025-11-01"
-        return dataCompleta === dataAlvo;
+      console.log('💾 Salvando status:', novoStatus);
+
+      // Buscar pedido completo
+      const pedidoResp = await api.get(`/pedidos/${pedidoId}`);
+      const pedidoAtual = pedidoResp.data;
+
+      // Atualizar apenas o status
+      const pedidoAtualizado = {
+        ...pedidoAtual,
+        status: novoStatus
+      };
+
+      await api.put(`/pedidos/${pedidoId}`, pedidoAtualizado);
+
+      showToast('Status atualizado com sucesso!', 'success');
+
+      // Atualizar lista local
+      setEncomendas(prev => prev.map(enc => 
+        enc.pedidoId === pedidoId 
+          ? { ...enc, status: novoStatus }
+          : enc
+      ));
+
+      setPedidosFull(prev => prev.map(p => 
+        p.id === pedidoId 
+          ? { ...p, status: novoStatus }
+          : p
+      ));
+
+      // Limpar status editando
+      setStatusEditando(prev => {
+        const newState = { ...prev };
+        delete newState[pedidoId];
+        return newState;
       });
 
-      console.log('📦 Pedidos do dia', dataAlvo, ':', pedidosDoDia.length);
-
-      const itens = [];
-      pedidosDoDia.forEach(p => {
-        const itensDoPedido = itensFull.filter(it => Number(it.pedidoId) === Number(p.id));
-        itens.push(...itensDoPedido);
-      });
-
-      console.log('🛒 Itens encontrados:', itens.length);
-      
-      setItensDoDia(itens);
-      setModalAberto(true);
     } catch (err) {
-      console.error('❌ Erro ao buscar itens do dia:', err);
-      setItensDoDia([]);
-      setModalAberto(true);
+      console.error('❌ Erro ao atualizar status:', err);
+      showToast('Erro ao atualizar status', 'error');
+    }
+  };
+
+  const handleCancelarPedido = async (pedidoId) => {
+    const confirmacao = window.confirm('Tem certeza que deseja excluir esta encomenda? Esta ação não pode ser desfeita.');
+    
+    if (!confirmacao) return;
+
+    try {
+      console.log('🗑️ Excluindo pedido:', pedidoId);
+
+      await api.delete(`/pedidos/${pedidoId}`);
+
+      showToast('Encomenda excluída com sucesso!', 'success');
+
+      // Remover da lista local
+      setEncomendas(prev => prev.filter(enc => enc.pedidoId !== pedidoId));
+      setPedidosFull(prev => prev.filter(p => p.id !== pedidoId));
+
+    } catch (err) {
+      console.error('❌ Erro ao excluir pedido:', err);
+      showToast('Erro ao excluir encomenda', 'error');
     }
   };
 
   return (
-    <div className={styles.containerHistoiricoVendas}>
+    <div className={styles.containerEncomendas}>
       <Navbar logado={true} />
 
-      <div className={styles.contentHistoiricoVendas}>
+      <div className={styles.contentEncomendas}>
         {/* Coluna de pesquisa */}
         <div className={styles.filtros}>
           <h1>Pesquisar</h1>
           
           <div className={styles.filtroItem}>
-            <label>Data Inicio</label>
+            <label>Data Início</label>
             <div className={styles.periodoDate}
               onClick={() => startInputRef.current && startInputRef.current.showPicker && startInputRef.current.showPicker()}>
               <FaRegCalendarAlt className={styles.calendarIcon} />
@@ -349,7 +351,6 @@ export function HistoricoVendas(props) {
                 type="date"
                 value={endDate}
                 onChange={e => setEndDate(e.target.value)}
-                max={getDataHoje()}
                 className={styles.invisibleDateInput}
               />
               {endDate && (
@@ -412,38 +413,69 @@ export function HistoricoVendas(props) {
         </div>
 
         <div className={styles.leftContent}>
-          <h1 className={styles.pageTitle}>Histórico de Venda</h1>
+          <h1 className={styles.pageTitle}>Encomendas</h1>
           
-          {/* Tabela de resultados */}
           <div className={styles.tabelaContainer}>
             <table className={styles.tabela}>
               <thead>
                 <tr>
+                  <th>Cliente</th>
                   <th>Valor total</th>
                   <th>Itens</th>
-                  <th>Data</th>
-                  <th>Detalhes</th>
+                  <th>Data Retirada</th>
+                  <th>Status</th>
+                  <th>Ações</th>
                 </tr>
               </thead>
               <tbody>
-                {vendas.length === 0 ? (
+                {encomendas.length === 0 ? (
                   <tr>
-                    <td colSpan="4" className={styles.emptyMessage}>
-                      Nenhum registro encontrado para o período selecionado
+                    <td colSpan="6" className={styles.emptyMessage}>
+                      Nenhuma encomenda encontrada para o período selecionado
                     </td>
                   </tr>
                 ) : (
-                  vendas.map((v, idx) => (
+                  encomendas.map((enc, idx) => (
                     <tr key={idx}>
-                      <td>R$ {v.valor.toFixed(2)}</td>
-                      <td>{v.itens}</td>
-                      <td>{v.dia}</td>
+                      <td>{enc.nomeCliente}</td>
+                      <td>R$ {enc.valor.toFixed(2)}</td>
+                      <td>{enc.itens}</td>
+                      <td>{enc.dataRetirada}</td>
+                      <td>
+                        <div className={styles.statusCell}>
+                          <select
+                            value={statusEditando[enc.pedidoId] || enc.status}
+                            onChange={(e) => handleStatusChange(enc.pedidoId, e.target.value)}
+                            className={styles.statusSelectInline}
+                          >
+                            <option value="CONFIRMADO">Confirmado</option>
+                            <option value="PENDENTE_PAGAMENTO">Pendente Pag.</option>
+                            <option value="FINALIZADO">Finalizado</option>
+                            <option value="CANCELADO">Cancelado</option>
+                          </select>
+                          {statusEditando[enc.pedidoId] && statusEditando[enc.pedidoId] !== enc.status && (
+                            <button
+                              className={styles.btnSalvarInline}
+                              onClick={() => handleSalvarStatus(enc.pedidoId)}
+                              title="Salvar alteração"
+                            >
+                              ✓
+                            </button>
+                          )}
+                        </div>
+                      </td>
                       <td>
                         <button
-                          className={styles.btnDetalhes}
-                          onClick={() => handleDetalhesDia(v)}
+                          className={styles.btnExcluir}
+                          onClick={() => handleCancelarPedido(enc.pedidoId)}
+                          title="Excluir encomenda"
                         >
-                          <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24"><path fill="#56270B" d="M15.5 14h-.79l-.28-.27A6.47 6.47 0 0 0 16 9.5A6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5S14 7.01 14 9.5S11.99 14 9.5 14" /></svg>
+                          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <polyline points="3 6 5 6 21 6"></polyline>
+                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                            <line x1="10" y1="11" x2="10" y2="17"></line>
+                            <line x1="14" y1="11" x2="14" y2="17"></line>
+                          </svg>
                         </button>
                       </td>
                     </tr>
@@ -451,70 +483,16 @@ export function HistoricoVendas(props) {
                 )}
               </tbody>
             </table>
-
           </div>
-          {/* <button className={styles.btnDownload} onClick={handleDownload}>
-            Fazer Download
-          </button> */}
         </div>
       </div>
 
-  {/* Modal de detalhes do dia - usar Modal reutilizável */}
-      <Modal isOpen={modalAberto} onClose={() => setModalAberto(false)}>
-        <div className={styles.modalContent}>
-          <div className={styles.modalHeader}>
-            <h2>Itens Vendidos do Dia</h2>
-          </div>
-          
-          {itensDoDia.length === 0 ? (
-            <div className={styles.emptyState}>
-              <p>Nenhum item encontrado para este dia.</p>
-            </div>
-          ) : (
-            <div className={styles.tableWrapper}>
-              <table className={styles.modalTable}>
-                <thead>
-                  <tr>
-                    <th>Produto</th>
-                    <th>Qtd.</th>
-                    <th>Valor unit.</th>
-                    <th>Valor total</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {itensDoDia.map((it, i) => {
-                    const precoUnitario = Number(it.precoUnitario || 1);
-                    const valorTotal = Number(it.precoUnitario || 0) * (Number(it.quantidade) || 1);
-                    
-                    return (
-                      <tr key={i}>
-                        <td className={styles.productName}>
-                          {it.produto || it.nomeProduto || it.descricao || 'Item'}
-                        </td>
-                        <td className={styles.centered}>{it.quantidade || 0}</td>
-                        <td className={styles.currency}>
-                          R$ {precoUnitario.toFixed(2)}
-                        </td>
-                        <td className={styles.currencyBold}>
-                          R$ {valorTotal.toFixed(2)} 
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-                <tfoot>
-                  <tr className={styles.totalRow}>
-                    <td colSpan="3">Total</td>
-                    <td className={styles.totalValue}>
-                      R$ {itensDoDia.reduce((sum, it) => sum + (Number(it.precoUnitario || 0) * (Number(it.quantidade) || 1)), 0).toFixed(2)};
-                    </td>
-                  </tr>
-                </tfoot>
-              </table>
-            </div>
-          )}
-        </div>
-      </Modal>
+      <ModernToast
+        message={toast.message}
+        type={toast.type}
+        show={toast.show}
+        onClose={() => setToast({ ...toast, show: false })}
+      />
     </div>
   );
 
@@ -522,5 +500,15 @@ export function HistoricoVendas(props) {
     if (!dateStr) return "";
     const [y, m, d] = dateStr.split("-");
     return `${d}/${m}/${y}`;
+  }
+
+  function formatStatus(status) {
+    const statusMap = {
+      'CONFIRMADO': 'Confirmado',
+      'PENDENTE_PAGAMENTO': 'Pendente Pagamento',
+      'CANCELADO': 'Cancelado',
+      'FINALIZADO': 'Finalizado'
+    };
+    return statusMap[status] || status;
   }
 }
