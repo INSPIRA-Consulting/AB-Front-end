@@ -141,23 +141,95 @@ export function ResumoVenda() {
           return;
         }
 
+        // obter receitas para mapear nomes -> ids (usado para detalhamentos de bolos de festa)
+        let receitasList = [];
+        try {
+          const respReceitas = await api.get('/receitas');
+          receitasList = Array.isArray(respReceitas.data) ? respReceitas.data : (respReceitas.data && respReceitas.data.content) ? respReceitas.data.content : [];
+        } catch (errReceitas) {
+          console.warn('Não foi possível carregar receitas para detalhamentos:', errReceitas);
+          receitasList = [];
+        }
+
+        const receitaMap = new Map();
+        receitasList.forEach(r => {
+          if (r && r.nome) receitaMap.set(String(r.nome).toLowerCase(), r.id);
+        });
+
         // postar itens do pedido
         // tentativa de mapear produtoId quando disponível em cada venda
         for (const v of vendasPayload) {
-          const isBolo = v.nome && String(v.nome).toLowerCase().includes('bolo');
+          const isBolo = v.nome && String(v.nome).toLowerCase().includes('festa');
           const itemPayload = {
             pedidoId: pedidoId,
-            produtoId: v.produtoId || v.produto?.id || null,
+            // para bolos de festa, o fkProduto deve ser 1 conforme solicitado
+            produtoId: isBolo ? 1 : (v.produtoId || v.produto?.id || null),
             quantidade: Number(v.quantidade || 1),
             peso: isBolo ? (Number(v.peso) || 0) : (Number(v.peso) || 1000.0)
           };
 
-          // enviar item (usa /api/itens-pedido)
+          // para bolo de festa, passar o preço informado pelo usuário como precoUnitario
+          if (isBolo) {
+            itemPayload.precoUnitario = Number(v.valorFinal || 0);
+          }
+
+          // enviar item (usa /api/itens-pedido) e capturar id retornado para detalhamentos
+          let itemId = null;
           try {
-            await api.post('/itens-pedido', itemPayload);
+            const itemResp = await api.post('/itens-pedido', itemPayload);
+            // tentar extrair id conforme diferentes formatos de API
+            itemId = itemResp?.data?.id || itemResp?.data?.itemId || itemResp?.data?.idItem || null;
           } catch (err) {
             console.error('Erro ao criar item do pedido:', err, 'payload:', itemPayload);
             // continuar com os próximos itens mesmo se um falhar
+            itemId = null;
+          }
+
+          // se for bolo de festa, inserir detalhamentos (massa, recheio, cobertura)
+          if (isBolo && itemId) {
+            // assumimos que os campos v.massa, v.recheio e v.cobertura podem vir como strings separadas por ' | '
+            const pickFirst = (s) => {
+              if (!s) return null;
+              if (Array.isArray(s)) return String(s[0] || '').trim();
+              return String(s).split('|')[0].trim();
+            };
+
+            const massaName = pickFirst(v.massa);
+            const recheioName = pickFirst(v.recheio);
+            const coberturaName = pickFirst(v.cobertura);
+
+            const findReceitaId = (name) => {
+              if (!name) return null;
+              const key = name.toLowerCase();
+              if (receitaMap.has(key)) return receitaMap.get(key);
+              // tentativa mais flexível: procurar por inclusão
+              const found = receitasList.find(r => String(r.nome || '').toLowerCase().includes(key) || key.includes(String(r.nome || '').toLowerCase()));
+              return found?.id || null;
+            };
+
+            const detalhar = async (fkReceita, observacao) => {
+              if (!fkReceita) return;
+              const detalhePayload = {
+                fkItemPedido: itemId,
+                fkReceita: fkReceita,
+                observacao: observacao
+              };
+              try {
+                await api.post('/detalhamentos-pedidos', detalhePayload);
+              } catch (errDetal) {
+                console.error('Erro ao criar detalhamento do pedido:', errDetal, 'payload:', detalhePayload);
+                // não interrompe o fluxo
+              }
+            };
+
+            const massaId = findReceitaId(massaName);
+            const recheioId = findReceitaId(recheioName);
+            const coberturaId = findReceitaId(coberturaName);
+
+            // Criar um detalhamento para cada categoria (quando disponível)
+            if (massaId) await detalhar(massaId, 'Massa');
+            if (recheioId) await detalhar(recheioId, 'Recheio');
+            if (coberturaId) await detalhar(coberturaId, 'Cobertura');
           }
         }
 
