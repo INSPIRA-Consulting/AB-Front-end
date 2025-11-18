@@ -84,9 +84,29 @@ export function ResumoVenda() {
 
         const clienteId = parsed.orderDetails?.clientId || parsed.clienteId || null;
 
+        // determine dataRetirada: use parsed.orderDetails.date/time (encomenda) when available, else use now
+        let retiradaDate = now;
+        try {
+          const od = parsed.orderDetails;
+          if (od && od.date) {
+            // od.date expected format: YYYY-MM-DD; od.time expected: HH:MM
+            const dateParts = String(od.date).split('-').map(n => Number(n)); // [yyyy, mm, dd]
+            const timeParts = String(od.time || '00:00').split(':').map(n => Number(n)); // [hh, mm]
+            if (dateParts.length === 3) {
+              const [y, m, d] = dateParts;
+              const hh = timeParts[0] || 0;
+              const mm = timeParts[1] || 0;
+              retiradaDate = new Date(y, (m || 1) - 1, d, hh, mm, 0);
+            }
+          }
+        } catch (e) {
+          console.warn('Erro ao parsear data de retirada da encomenda, usando data atual', e);
+          retiradaDate = now;
+        }
+
         const pedidoPayload = {
           dataPedido: formatDateTime(now),
-          dataRetirada: formatDateTime(now),
+          dataRetirada: formatDateTime(retiradaDate),
           dataPagamento: formatDateTime(now),
           // prioriza valor salvo em parsed (quando houver), senão usa o select do componente
           formaPagamento: parsed.formaPagamento || formaPagamentoSelect || 'VOUCHER',
@@ -335,7 +355,6 @@ export function ResumoVenda() {
                             >
                               <option value="CONFIRMADO">Confirmado</option>
                               <option value="PENDENTE_PAGAMENTO">Pagamento Pendente</option>
-                              <option value="CANCELADO">Cancelado</option>
                               <option value="FINALIZADO">Finalizado</option>
                             </select>
                           </div>
