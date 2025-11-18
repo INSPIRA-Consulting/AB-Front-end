@@ -1,7 +1,7 @@
 import React, { useRef, useState, useEffect } from "react";
 import { Navbar } from "../components/Navbar";
 import styles from "../styles/Encomendas.module.css";
-import { FaRegCalendarAlt } from "react-icons/fa";
+import { FaRegCalendarAlt, FaSearch, FaLock, FaLockOpen } from "react-icons/fa";
 import { useDocumentTitle } from "../hooks/useDocumentTitle";
 import api from '../provider/api';
 import { ModernToast } from '../components/ModernToast';
@@ -64,64 +64,46 @@ export function Encomendas(props) {
   // Carregar pedidos onde dataRetirada > dataPedido (encomendas futuras)
   useEffect(() => {
     let mounted = true;
+    let intervalId;
 
     async function loadEncomendas() {
       try {
-        console.log('🔍 Buscando encomendas...');
-        console.log('  📅 Período:', startDate, 'até', endDate);
-
-        let pedidosResp = await api.get('/pedidos');
-        let itensResp = await api.get('/itens-pedido');
+        // ...existing code...
+        let pedidosResp = await api.get('/pedidos', { headers: { 'Cache-Control': 'no-cache' } });
+        let itensResp = await api.get('/itens-pedido', { headers: { 'Cache-Control': 'no-cache' } });
 
         const pedidos = Array.isArray(pedidosResp.data) ? pedidosResp.data : (pedidosResp.data && pedidosResp.data.content) ? pedidosResp.data.content : [];
         const itens = Array.isArray(itensResp.data) ? itensResp.data : (itensResp.data && itensResp.data.content) ? itensResp.data.content : [];
 
-        console.log('✅ Total de pedidos no sistema:', pedidos.length);
-
-        // Filtrar apenas encomendas: dataRetirada > dataPedido
+        // ...existing code...
         let encomendasFiltradas = pedidos.filter(pedido => {
           const dataPedidoStr = pedido.dataPedido || '';
           const dataRetiradaStr = pedido.dataRetirada || '';
-          
           if (!dataPedidoStr || !dataRetiradaStr) return false;
-          
           const dataPedido = new Date(dataPedidoStr);
           const dataRetirada = new Date(dataRetiradaStr);
-          
           return dataRetirada > dataPedido;
         });
 
-        console.log('📦 Encomendas encontradas:', encomendasFiltradas.length);
-
-        // Filtrar por intervalo de datas de retirada
         if (startDate || endDate) {
           encomendasFiltradas = encomendasFiltradas.filter(pedido => {
             const dataStr = pedido.dataRetirada || '';
             if (!dataStr) return false;
-            
             const dataRetirada = new Date(dataStr);
             dataRetirada.setHours(0, 0, 0, 0);
-            
             const dataInicio = startDate ? new Date(startDate) : null;
             const dataFim = endDate ? new Date(endDate) : null;
-            
             if (dataInicio) dataInicio.setHours(0, 0, 0, 0);
             if (dataFim) dataFim.setHours(23, 59, 59, 999);
-            
             if (dataInicio && dataRetirada < dataInicio) return false;
             if (dataFim && dataRetirada > dataFim) return false;
-            
             return true;
           });
         }
 
-        console.log('📊 Encomendas no período selecionado:', encomendasFiltradas.length);
-
         const pedidosIdsFiltrados = new Set(encomendasFiltradas.map(p => Number(p.id)));
         const itensFiltrados = itens.filter(it => pedidosIdsFiltrados.has(Number(it.pedidoId)));
-
         const resultado = aplicarFiltrosEAgregar(encomendasFiltradas, itensFiltrados, filtros);
-        
         if (mounted) {
           setEncomendas(resultado);
           setPedidosFull(encomendasFiltradas);
@@ -133,7 +115,14 @@ export function Encomendas(props) {
     }
 
     loadEncomendas();
-    return () => { mounted = false; };
+    intervalId = setInterval(() => {
+      loadEncomendas();
+    }, 10000); // Atualiza a cada 10 segundos
+
+    return () => {
+      mounted = false;
+      if (intervalId) clearInterval(intervalId);
+    };
   }, [startDate, endDate]);
 
   const aplicarFiltrosEAgregar = (pedidos, itens, filtrosAplicados) => {
@@ -143,8 +132,9 @@ export function Encomendas(props) {
     // Filtrar por status
     if (filtrosAplicados.status && filtrosAplicados.status !== 'Todos') {
       pedidosFiltrados = pedidosFiltrados.filter(p => {
-        const status = (p.status || '').toString().toUpperCase();
-        return status === filtrosAplicados.status;
+        // Normaliza para comparar ignorando maiúsculas/minúsculas e underscores
+        const normalize = s => (s || '').toString().replace(/_/g, '').replace(/ /g, '').toLowerCase();
+        return normalize(p.status) === normalize(filtrosAplicados.status);
       });
     }
 
@@ -237,6 +227,33 @@ export function Encomendas(props) {
   };
 
   const handleSalvarStatus = async (pedidoId) => {
+    // Mostrar informações do usuário logado
+    // Buscar o usuário logado no localStorage e obter o id pelo nome
+    let usuarioId = '';
+    try {
+      const usuarioStr = localStorage.getItem('usuario');
+      if (usuarioStr) {
+        const usuarioObj = JSON.parse(usuarioStr);
+        console.log('Usuário logado (localStorage.usuario):', usuarioObj);
+        // Buscar usuário pelo nome no backend
+        if (usuarioObj.nome) {
+          const resp = await api.get(`/usuarios/filtro-nome`, { params: { nome: usuarioObj.nome } });
+          if (Array.isArray(resp.data) && resp.data.length > 0) {
+            usuarioId = resp.data[0].id;
+            console.log('Id do usuário encontrado pelo nome:', usuarioId);
+          } else {
+            console.log('Usuário não encontrado pelo nome no backend.');
+          }
+        } else {
+          console.log('Nome do usuário não encontrado no localStorage.');
+        }
+      } else {
+        console.log('Nenhum usuário logado encontrado em localStorage.');
+      }
+    } catch (e) {
+      console.log('Erro ao buscar usuário logado:', e);
+    }
+
     const novoStatus = statusEditando[pedidoId];
     if (!novoStatus) return;
 
@@ -247,27 +264,61 @@ export function Encomendas(props) {
       const pedidoResp = await api.get(`/pedidos/${pedidoId}`);
       const pedidoAtual = pedidoResp.data;
 
+      // Buscar o cliente pelo nome do pedido e obter o id pelo nome
+      let clienteId = '';
+      try {
+        let nomeCliente = pedidoAtual.nomeCliente || pedidoAtual.Cliente || (pedidoAtual.cliente && (pedidoAtual.cliente.nome || pedidoAtual.cliente.nomeCliente));
+        if (!nomeCliente && pedidoAtual.cliente && typeof pedidoAtual.cliente === 'string') nomeCliente = pedidoAtual.cliente;
+        if (nomeCliente) {
+          const resp = await api.get(`/clientes/filtro-nome`, { params: { nome: nomeCliente } });
+          if (Array.isArray(resp.data) && resp.data.length > 0) {
+            clienteId = resp.data[0].id;
+            console.log('Id do cliente encontrado pelo nome:', clienteId);
+          } else {
+            console.log('Cliente não encontrado pelo nome no backend.');
+          }
+        } else {
+          console.log('Nome do cliente não encontrado no pedido.');
+        }
+      } catch (e) {
+        console.log('Erro ao buscar cliente pelo nome:', e);
+      }
 
       // Montar objeto conforme esperado pelo backend
 
       // Garantir formato ISO para datas
-      function toISO(data) {
+      function toDateTimeString(data) {
         if (!data) return '';
-        if (typeof data === 'string' && data.includes('T')) return data; // já está ISO
-        // Se vier como '2025-11-16 22:10:39', converter para ISO
-        return new Date(data.replace(' ', 'T')).toISOString();
+        // Se já está no formato 'yyyy-MM-dd HH:mm:ss', retorna como está
+        if (typeof data === 'string' && /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(data)) return data;
+        // Se está no formato ISO, converte para 'yyyy-MM-dd HH:mm:ss'
+        let dateObj;
+        if (typeof data === 'string' && data.includes('T')) {
+          dateObj = new Date(data);
+        } else if (typeof data === 'string') {
+          // Se vier como '2025-11-16 22:10:39', converte para Date
+          dateObj = new Date(data.replace(' ', 'T'));
+        } else {
+          dateObj = new Date(data);
+        }
+        if (isNaN(dateObj.getTime())) return '';
+        const pad = n => String(n).padStart(2, '0');
+        return `${dateObj.getFullYear()}-${pad(dateObj.getMonth()+1)}-${pad(dateObj.getDate())} ${pad(dateObj.getHours())}:${pad(dateObj.getMinutes())}:${pad(dateObj.getSeconds())}`;
       }
 
       const pedidoAtualizado = {
-        dataPedido: toISO(pedidoAtual.dataPedido),
-        dataRetirada: toISO(pedidoAtual.dataRetirada),
-        dataPagamento: toISO(pedidoAtual.dataPagamento),
-        formaPagamento: pedidoAtual.formaPagamento || '',
+        dataPedido: toDateTimeString(pedidoAtual.dataPedido) || null,
+        dataRetirada: toDateTimeString(pedidoAtual.dataRetirada) || null,
+        dataPagamento: toDateTimeString(pedidoAtual.dataPagamento) || null,
+        formaPagamento: pedidoAtual.formaPagamento ? pedidoAtual.formaPagamento : null,
         status: novoStatus,
-        observacao: pedidoAtual.observacao || '',
-        usuarioId: pedidoAtual.usuarioId || pedidoAtual.usuario?.id || pedidoAtual.usuario || '',
-        clienteId: pedidoAtual.clienteId || pedidoAtual.cliente?.id || pedidoAtual.cliente || '',
+        observacao: pedidoAtual.observacao ? pedidoAtual.observacao : null,
+        usuarioId: usuarioId || null,
+        clienteId: clienteId || null,
       };
+
+      // Log do JSON enviado para o PUT
+      console.log('🔼 Enviando para PUT (JSON):', JSON.stringify(pedidoAtualizado, null, 2));
 
       // Validação básica
       for (const campo of [
@@ -278,7 +329,10 @@ export function Encomendas(props) {
         }
       }
 
-      console.log('🔼 Enviando para PUT:', pedidoAtualizado);
+      console.log('🔼 Enviando para PUT (JSON):', JSON.stringify(pedidoAtualizado, null, 2));
+      Object.entries(pedidoAtualizado).forEach(([k,v]) => {
+        console.log(`  ${k}:`, v, '| typeof:', typeof v);
+      });
 
       await api.put(`/pedidos/${pedidoId}`, pedidoAtualizado);
 
@@ -321,27 +375,7 @@ export function Encomendas(props) {
     }
   };
 
-  const handleCancelarPedido = async (pedidoId) => {
-    const confirmacao = window.confirm('Tem certeza que deseja excluir esta encomenda? Esta ação não pode ser desfeita.');
-    
-    if (!confirmacao) return;
 
-    try {
-      console.log('🗑️ Excluindo pedido:', pedidoId);
-
-      await api.delete(`/pedidos/${pedidoId}`);
-
-      showToast('Encomenda excluída com sucesso!', 'success');
-
-      // Remover da lista local
-      setEncomendas(prev => prev.filter(enc => enc.pedidoId !== pedidoId));
-      setPedidosFull(prev => prev.filter(p => p.id !== pedidoId));
-
-    } catch (err) {
-      console.error('❌ Erro ao excluir pedido:', err);
-      showToast('Erro ao excluir encomenda', 'error');
-    }
-  };
 
   return (
     <div className={styles.containerEncomendas}>
@@ -422,10 +456,10 @@ export function Encomendas(props) {
                 className={styles.compactSelect}
               >
                 <option value="Todos">Todos</option>
-                <option value="CONFIRMADO">Confirmado</option>
-                <option value="PENDENTE_PAGAMENTO">Pendente Pag.</option>
-                <option value="CANCELADO">Cancelado</option>
-                <option value="FINALIZADO">Finalizado</option>
+                <option value="Confirmado">Confirmado</option>
+                <option value="Pendente de Pagamento">Pendente de Pagamento</option>
+                <option value="Cancelado">Cancelado</option>
+                <option value="Finalizado">Finalizado</option>
               </select>
             </div>
 
@@ -482,16 +516,19 @@ export function Encomendas(props) {
                         <div className={styles.statusCell}>
                           {statusEditando[enc.pedidoId] ? (
                             <>
-                              <select
-                                value={statusEditando[enc.pedidoId]}
-                                onChange={(e) => handleStatusChange(enc.pedidoId, e.target.value)}
-                                className={styles.statusSelectInline}
-                              >
-                                <option value="CONFIRMADO">Confirmado</option>
-                                <option value="PENDENTE_PAGAMENTO">Pendente Pag.</option>
-                                <option value="FINALIZADO">Finalizado</option>
-                                <option value="CANCELADO">Cancelado</option>
-                              </select>
+                              <div className={styles.selectLockWrapper}>
+                                <select
+                                  value={statusEditando[enc.pedidoId]}
+                                  onChange={(e) => handleStatusChange(enc.pedidoId, e.target.value)}
+                                  className={styles.statusSelectInline}
+                                >
+                                  <option value="Confirmado">Confirmado</option>
+                                  <option value="Pendente de Pagamento">Pendente de Pagamento</option>
+                                  <option value="Finalizado">Finalizado</option>
+                                  <option value="Cancelado">Cancelado</option>
+                                </select>
+                                <FaLockOpen className={styles.lockIcon} title="Edição habilitada" />
+                              </div>
                               <button
                                 className={styles.btnIconRound}
                                 onClick={() => setStatusEditando(prev => { const n = { ...prev }; delete n[enc.pedidoId]; return n; })}
@@ -506,26 +543,31 @@ export function Encomendas(props) {
                               >
                                 <span style={{fontSize: 18, lineHeight: 1}}>&#10003;</span>
                               </button>
+
                               <button
                                 className={styles.btnIconRound}
-                                onClick={() => handleCancelarPedido(enc.pedidoId)}
-                                title="Excluir pedido"
+                                title="Visualizar"
+                                tabIndex={-1}
+                                onClick={() => {}}
                               >
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+                                <FaSearch size={18} color="#7a5230" />
                               </button>
                             </>
                           ) : (
                             <>
-                              <select
-                                value={enc.status}
-                                disabled
-                                className={styles.statusSelectInline}
-                              >
-                                <option value="CONFIRMADO">Confirmado</option>
-                                <option value="PENDENTE_PAGAMENTO">Pendente Pag.</option>
-                                <option value="FINALIZADO">Finalizado</option>
-                                <option value="CANCELADO">Cancelado</option>
-                              </select>
+                              <div className={styles.selectLockWrapper}>
+                                <select
+                                  value={enc.status}
+                                  disabled
+                                  className={styles.statusSelectInline}
+                                >
+                                  <option value="Confirmado">Confirmado</option>
+                                  <option value="Pendente de Pagamento">Pendente de Pagamento</option>
+                                  <option value="Finalizado">Finalizado</option>
+                                  <option value="Cancelado">Cancelado</option>
+                                </select>
+                                <FaLock className={styles.lockIcon + ' ' + styles.locked} title="Edição bloqueada" />
+                              </div>
                               <button
                                 className={styles.btnIconRound}
                                 onClick={() => setStatusEditando(prev => ({ ...prev, [enc.pedidoId]: enc.status }))}
@@ -533,12 +575,14 @@ export function Encomendas(props) {
                               >
                                 <span style={{fontSize: 18, lineHeight: 1}}>&#9998;</span>
                               </button>
+
                               <button
                                 className={styles.btnIconRound}
-                                onClick={() => handleCancelarPedido(enc.pedidoId)}
-                                title="Excluir pedido"
+                                title="Visualizar"
+                                tabIndex={-1}
+                                onClick={() => {}}
                               >
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+                                <FaSearch size={18} color="#7a5230" />
                               </button>
                             </>
                           )}

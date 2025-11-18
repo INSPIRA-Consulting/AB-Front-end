@@ -1,3 +1,31 @@
+/* Wrapper para select com ícone de cadeado */
+.selectLockWrapper {
+    position: relative;
+    display: inline-block;
+}
+
+/* Ícone de cadeado menor e mais à esquerda */
+/* Ícone de cadeado (ambos) em cinza */
+.lockIcon {
+    position: absolute;
+    right: 2.2em;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #888;
+    pointer-events: none;
+    font-size: 0.95em;
+    z-index: 2;
+}
+
+/* Cadeado bloqueado menor */
+.lockIcon.locked {
+    font-size: 0.82em;
+}
+
+/* Espaço extra à direita do select para o ícone */
+.statusSelectInline {
+    padding-right: 3em;
+}
 @import '../styles/fonts/fonts.css';
 
 .containerEncomendas {
