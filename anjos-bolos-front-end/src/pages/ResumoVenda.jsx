@@ -9,6 +9,9 @@ import api from '../provider/api';
 export function ResumoVenda() {
 
   const [vendas, setVendas] = React.useState([]);
+  const [resumoParsed, setResumoParsed] = React.useState(null);
+  const [clienteCpfInput, setClienteCpfInput] = React.useState('');
+  const [clienteIdLocal, setClienteIdLocal] = React.useState(null);
   // controles do menu lateral
   const [formaPagamentoSelect, setFormaPagamentoSelect] = React.useState('DINHEIRO');
   const [statusPedidoSelect, setStatusPedidoSelect] = React.useState('FINALIZADO');
@@ -22,10 +25,16 @@ export function ResumoVenda() {
       const raw = localStorage.getItem('resumoVendas');
       if (raw) {
         const parsed = JSON.parse(raw);
+        setResumoParsed(parsed);
         // parsed may contain { vendas, tipoVenda }
         if (Array.isArray(parsed.vendas)) {
           setVendas(parsed.vendas);
           console.log('Vendas carregadas do localStorage:', parsed.vendas);
+          // if orderDetails contains cpf/clientId (encomenda), prefill
+          if (parsed.orderDetails) {
+            if (parsed.orderDetails.cpf) setClienteCpfInput(formatCpf(parsed.orderDetails.cpf || ''));
+            if (parsed.orderDetails.clientId) setClienteIdLocal(parsed.orderDetails.clientId);
+          }
         } else if (Array.isArray(parsed)) {
           // backward compatibility if only array was saved
           setVendas(parsed);
@@ -36,6 +45,37 @@ export function ResumoVenda() {
       console.error('Erro ao ler vendas do localStorage:', error);
     }
   }, []);
+
+  function normalizeDigits(str = '') {
+    return String(str).replace(/\D/g, '');
+  }
+
+  function formatCpf(value = '') {
+    const digits = normalizeDigits(value).slice(0, 11);
+    if (!digits) return '';
+    if (digits.length <= 3) return digits;
+    if (digits.length <= 6) return `${digits.slice(0,3)}.${digits.slice(3)}`;
+    if (digits.length <= 9) return `${digits.slice(0,3)}.${digits.slice(3,6)}.${digits.slice(6)}`;
+    return `${digits.slice(0,3)}.${digits.slice(3,6)}.${digits.slice(6,9)}-${digits.slice(9)}`;
+  }
+
+  // Buscar cliente por CPF (usado na tela de resumo quando o usuário fornece CPF)
+  async function fetchClientByCpfResumo(cpf) {
+    try {
+      const resp = await api.get('/clientes');
+      const list = Array.isArray(resp.data) ? resp.data : [];
+      const found = list.find(c => normalizeDigits(c.cpf) === normalizeDigits(cpf));
+      if (found) {
+        setClienteIdLocal(found.id);
+        console.log('Cliente encontrado na ResumoVenda:', found);
+      } else {
+        setClienteIdLocal(null);
+        console.log('Cliente não encontrado na ResumoVenda para CPF:', cpf);
+      }
+    } catch (err) {
+      console.error('Erro ao buscar cliente por CPF na ResumoVenda:', err);
+    }
+  }
 
   const [startDate, setStartDate] = useState("2025-06-01");
   const [endDate, setEndDate] = useState("2025-06-12");
@@ -82,7 +122,19 @@ export function ResumoVenda() {
           return `${yyyy}-${mm}-${dd} ${hh}:${min}:${ss}`;
         };
 
-        const clienteId = parsed.orderDetails?.clientId || parsed.clienteId || null;
+        const clienteId = clienteIdLocal || parsed.orderDetails?.clientId || parsed.clienteId || null;
+
+        // obter usuarioId do localStorage (chave 'usuario') quando disponível
+        let usuarioIdFromStorage = null;
+        try {
+          const rawUser = localStorage.getItem('usuario');
+          if (rawUser) {
+            const u = JSON.parse(rawUser);
+            usuarioIdFromStorage = u?.id || null;
+          }
+        } catch (e) {
+          console.warn('Erro ao ler usuario do localStorage:', e);
+        }
 
         // determine dataRetirada: use parsed.orderDetails.date/time (encomenda) when available, else use now
         let retiradaDate = now;
@@ -112,7 +164,7 @@ export function ResumoVenda() {
           formaPagamento: parsed.formaPagamento || formaPagamentoSelect || 'VOUCHER',
           status: parsed.status || statusPedidoSelect || 'CONFIRMADO',
           observacao: parsed.observacao || 'Sem observação',
-          usuarioId: parsed.usuarioId || 1,
+          usuarioId: usuarioIdFromStorage || parsed.usuarioId || 1,
           clienteId: clienteId || 1
         };
 
@@ -329,8 +381,26 @@ export function ResumoVenda() {
                             <label>Tipo Venda: </label> <label> {vendas.length > 0 ? vendas[vendas.length - 1].categoriaEntrega : "N/A"}</label> <br />
                           </div>
                           <div className={styles.nomeCliente}>
-                            <label>Nome do cliente (Opcional):</label>
-                            <input type="text" />
+                            <label>CPF do cliente (Opcional):</label>
+                            <input
+                              type="text"
+                              placeholder="000.000.000-00"
+                              value={clienteCpfInput}
+                              onChange={e => {
+                                const val = e.target.value;
+                                const masked = formatCpf(val);
+                                setClienteCpfInput(masked);
+                                if (!masked || normalizeDigits(masked).length < 11) setClienteIdLocal(null);
+                              }}
+                              onBlur={e => {
+                                const val = e.target.value;
+                                // se for Pronta-Entrega e foi informado CPF, buscar cliente para preencher clienteId
+                                const tipo = resumoParsed?.tipoVenda || (vendas.length > 0 ? vendas[vendas.length - 1].categoriaEntrega : null);
+                                if (tipo === 'Pronta-Entrega' && val && normalizeDigits(val).length >= 11) {
+                                  fetchClientByCpfResumo(val);
+                                }
+                              }}
+                            />
                           </div>
                           <div className={styles.formaPagamento} style={{ marginTop: 8 }}>
                             <label>Forma de Pagamento:</label>
