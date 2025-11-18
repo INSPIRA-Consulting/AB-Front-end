@@ -9,6 +9,12 @@ import api from '../provider/api';
 export function ResumoVenda() {
 
   const [vendas, setVendas] = React.useState([]);
+  const [resumoParsed, setResumoParsed] = React.useState(null);
+  const [clienteCpfInput, setClienteCpfInput] = React.useState('');
+  const [clienteIdLocal, setClienteIdLocal] = React.useState(null);
+  // controles do menu lateral
+  const [formaPagamentoSelect, setFormaPagamentoSelect] = React.useState('DINHEIRO');
+  const [statusPedidoSelect, setStatusPedidoSelect] = React.useState('FINALIZADO');
 
   const handleVoltar = () => {
     window.location.href = '/registro-vendas';
@@ -19,10 +25,16 @@ export function ResumoVenda() {
       const raw = localStorage.getItem('resumoVendas');
       if (raw) {
         const parsed = JSON.parse(raw);
+        setResumoParsed(parsed);
         // parsed may contain { vendas, tipoVenda }
         if (Array.isArray(parsed.vendas)) {
           setVendas(parsed.vendas);
           console.log('Vendas carregadas do localStorage:', parsed.vendas);
+          // if orderDetails contains cpf/clientId (encomenda), prefill
+          if (parsed.orderDetails) {
+            if (parsed.orderDetails.cpf) setClienteCpfInput(formatCpf(parsed.orderDetails.cpf || ''));
+            if (parsed.orderDetails.clientId) setClienteIdLocal(parsed.orderDetails.clientId);
+          }
         } else if (Array.isArray(parsed)) {
           // backward compatibility if only array was saved
           setVendas(parsed);
@@ -33,6 +45,37 @@ export function ResumoVenda() {
       console.error('Erro ao ler vendas do localStorage:', error);
     }
   }, []);
+
+  function normalizeDigits(str = '') {
+    return String(str).replace(/\D/g, '');
+  }
+
+  function formatCpf(value = '') {
+    const digits = normalizeDigits(value).slice(0, 11);
+    if (!digits) return '';
+    if (digits.length <= 3) return digits;
+    if (digits.length <= 6) return `${digits.slice(0,3)}.${digits.slice(3)}`;
+    if (digits.length <= 9) return `${digits.slice(0,3)}.${digits.slice(3,6)}.${digits.slice(6)}`;
+    return `${digits.slice(0,3)}.${digits.slice(3,6)}.${digits.slice(6,9)}-${digits.slice(9)}`;
+  }
+
+  // Buscar cliente por CPF (usado na tela de resumo quando o usuário fornece CPF)
+  async function fetchClientByCpfResumo(cpf) {
+    try {
+      const resp = await api.get('/clientes');
+      const list = Array.isArray(resp.data) ? resp.data : [];
+      const found = list.find(c => normalizeDigits(c.cpf) === normalizeDigits(cpf));
+      if (found) {
+        setClienteIdLocal(found.id);
+        console.log('Cliente encontrado na ResumoVenda:', found);
+      } else {
+        setClienteIdLocal(null);
+        console.log('Cliente não encontrado na ResumoVenda para CPF:', cpf);
+      }
+    } catch (err) {
+      console.error('Erro ao buscar cliente por CPF na ResumoVenda:', err);
+    }
+  }
 
   const [startDate, setStartDate] = useState("2025-06-01");
   const [endDate, setEndDate] = useState("2025-06-12");
@@ -79,16 +122,49 @@ export function ResumoVenda() {
           return `${yyyy}-${mm}-${dd} ${hh}:${min}:${ss}`;
         };
 
-        const clienteId = parsed.orderDetails?.clientId || parsed.clienteId || null;
+        const clienteId = clienteIdLocal || parsed.orderDetails?.clientId || parsed.clienteId || null;
+
+        // obter usuarioId do localStorage (chave 'usuario') quando disponível
+        let usuarioIdFromStorage = null;
+        try {
+          const rawUser = localStorage.getItem('usuario');
+          if (rawUser) {
+            const u = JSON.parse(rawUser);
+            usuarioIdFromStorage = u?.id || null;
+          }
+        } catch (e) {
+          console.warn('Erro ao ler usuario do localStorage:', e);
+        }
+
+        // determine dataRetirada: use parsed.orderDetails.date/time (encomenda) when available, else use now
+        let retiradaDate = now;
+        try {
+          const od = parsed.orderDetails;
+          if (od && od.date) {
+            // od.date expected format: YYYY-MM-DD; od.time expected: HH:MM
+            const dateParts = String(od.date).split('-').map(n => Number(n)); // [yyyy, mm, dd]
+            const timeParts = String(od.time || '00:00').split(':').map(n => Number(n)); // [hh, mm]
+            if (dateParts.length === 3) {
+              const [y, m, d] = dateParts;
+              const hh = timeParts[0] || 0;
+              const mm = timeParts[1] || 0;
+              retiradaDate = new Date(y, (m || 1) - 1, d, hh, mm, 0);
+            }
+          }
+        } catch (e) {
+          console.warn('Erro ao parsear data de retirada da encomenda, usando data atual', e);
+          retiradaDate = now;
+        }
 
         const pedidoPayload = {
           dataPedido: formatDateTime(now),
-          dataRetirada: formatDateTime(now),
+          dataRetirada: formatDateTime(retiradaDate),
           dataPagamento: formatDateTime(now),
-          formaPagamento: parsed.formaPagamento || 'VOUCHER',
-          status: 'CONFIRMADO',
+          // prioriza valor salvo em parsed (quando houver), senão usa o select do componente
+          formaPagamento: parsed.formaPagamento || formaPagamentoSelect || 'VOUCHER',
+          status: parsed.status || statusPedidoSelect || 'CONFIRMADO',
           observacao: parsed.observacao || 'Sem observação',
-          usuarioId: parsed.usuarioId || 1,
+          usuarioId: usuarioIdFromStorage || parsed.usuarioId || 1,
           clienteId: clienteId || 1
         };
 
@@ -141,23 +217,95 @@ export function ResumoVenda() {
           return;
         }
 
+        // obter receitas para mapear nomes -> ids (usado para detalhamentos de bolos de festa)
+        let receitasList = [];
+        try {
+          const respReceitas = await api.get('/receitas');
+          receitasList = Array.isArray(respReceitas.data) ? respReceitas.data : (respReceitas.data && respReceitas.data.content) ? respReceitas.data.content : [];
+        } catch (errReceitas) {
+          console.warn('Não foi possível carregar receitas para detalhamentos:', errReceitas);
+          receitasList = [];
+        }
+
+        const receitaMap = new Map();
+        receitasList.forEach(r => {
+          if (r && r.nome) receitaMap.set(String(r.nome).toLowerCase(), r.id);
+        });
+
         // postar itens do pedido
         // tentativa de mapear produtoId quando disponível em cada venda
         for (const v of vendasPayload) {
-          const isBolo = v.nome && String(v.nome).toLowerCase().includes('bolo');
+          const isBolo = v.nome && String(v.nome).toLowerCase().includes('festa');
           const itemPayload = {
             pedidoId: pedidoId,
-            produtoId: v.produtoId || v.produto?.id || null,
+            // para bolos de festa, o fkProduto deve ser 1 conforme solicitado
+            produtoId: isBolo ? 1 : (v.produtoId || v.produto?.id || null),
             quantidade: Number(v.quantidade || 1),
             peso: isBolo ? (Number(v.peso) || 0) : (Number(v.peso) || 1000.0)
           };
 
-          // enviar item (usa /api/itens-pedido)
+          // para bolo de festa, passar o preço informado pelo usuário como precoUnitario
+          if (isBolo) {
+            itemPayload.precoUnitario = Number(v.valorFinal || 0);
+          }
+
+          // enviar item (usa /api/itens-pedido) e capturar id retornado para detalhamentos
+          let itemId = null;
           try {
-            await api.post('/itens-pedido', itemPayload);
+            const itemResp = await api.post('/itens-pedido', itemPayload);
+            // tentar extrair id conforme diferentes formatos de API
+            itemId = itemResp?.data?.id || itemResp?.data?.itemId || itemResp?.data?.idItem || null;
           } catch (err) {
             console.error('Erro ao criar item do pedido:', err, 'payload:', itemPayload);
             // continuar com os próximos itens mesmo se um falhar
+            itemId = null;
+          }
+
+          // se for bolo de festa, inserir detalhamentos (massa, recheio, cobertura)
+          if (isBolo && itemId) {
+            // assumimos que os campos v.massa, v.recheio e v.cobertura podem vir como strings separadas por ' | '
+            const pickFirst = (s) => {
+              if (!s) return null;
+              if (Array.isArray(s)) return String(s[0] || '').trim();
+              return String(s).split('|')[0].trim();
+            };
+
+            const massaName = pickFirst(v.massa);
+            const recheioName = pickFirst(v.recheio);
+            const coberturaName = pickFirst(v.cobertura);
+
+            const findReceitaId = (name) => {
+              if (!name) return null;
+              const key = name.toLowerCase();
+              if (receitaMap.has(key)) return receitaMap.get(key);
+              // tentativa mais flexível: procurar por inclusão
+              const found = receitasList.find(r => String(r.nome || '').toLowerCase().includes(key) || key.includes(String(r.nome || '').toLowerCase()));
+              return found?.id || null;
+            };
+
+            const detalhar = async (fkReceita, observacao) => {
+              if (!fkReceita) return;
+              const detalhePayload = {
+                fkItemPedido: itemId,
+                fkReceita: fkReceita,
+                observacao: observacao
+              };
+              try {
+                await api.post('/detalhamentos-pedidos', detalhePayload);
+              } catch (errDetal) {
+                console.error('Erro ao criar detalhamento do pedido:', errDetal, 'payload:', detalhePayload);
+                // não interrompe o fluxo
+              }
+            };
+
+            const massaId = findReceitaId(massaName);
+            const recheioId = findReceitaId(recheioName);
+            const coberturaId = findReceitaId(coberturaName);
+
+            // Criar um detalhamento para cada categoria (quando disponível)
+            if (massaId) await detalhar(massaId, 'Massa');
+            if (recheioId) await detalhar(recheioId, 'Recheio');
+            if (coberturaId) await detalhar(coberturaId, 'Cobertura');
           }
         }
 
@@ -184,9 +332,10 @@ export function ResumoVenda() {
         >
           {'< Voltar'}
         </button>
+
+        <h1 className={styles.pageTitle}>Resumo da Venda</h1>
       </div>
       
-      <h1 className={styles.pageTitle}>Resumo da Venda</h1>
 
       <div className={styles.contentResumoVendas}>
 
@@ -232,8 +381,52 @@ export function ResumoVenda() {
                             <label>Tipo Venda: </label> <label> {vendas.length > 0 ? vendas[vendas.length - 1].categoriaEntrega : "N/A"}</label> <br />
                           </div>
                           <div className={styles.nomeCliente}>
-                            <label>Nome do cliente (Opcional):</label>
-                            <input type="text" />
+                            <label>CPF do cliente (Opcional):</label>
+                            <input
+                              type="text"
+                              placeholder="000.000.000-00"
+                              value={clienteCpfInput}
+                              onChange={e => {
+                                const val = e.target.value;
+                                const masked = formatCpf(val);
+                                setClienteCpfInput(masked);
+                                if (!masked || normalizeDigits(masked).length < 11) setClienteIdLocal(null);
+                              }}
+                              onBlur={e => {
+                                const val = e.target.value;
+                                // se for Pronta-Entrega e foi informado CPF, buscar cliente para preencher clienteId
+                                const tipo = resumoParsed?.tipoVenda || (vendas.length > 0 ? vendas[vendas.length - 1].categoriaEntrega : null);
+                                if (tipo === 'Pronta-Entrega' && val && normalizeDigits(val).length >= 11) {
+                                  fetchClientByCpfResumo(val);
+                                }
+                              }}
+                            />
+                          </div>
+                          <div className={styles.formaPagamento} style={{ marginTop: 8 }}>
+                            <label>Forma de Pagamento:</label>
+                            <select
+                              value={formaPagamentoSelect}
+                              onChange={e => setFormaPagamentoSelect(e.target.value)}
+                              style={{ width: '100%', padding: 8, marginTop: 6 }}
+                            >
+                              <option value="DINHEIRO">Dinheiro</option>
+                              <option value="CARTAO_CREDITO">Cartão de Crédito</option>
+                              <option value="CARTAO_DEBITO">Cartão de Débito</option>
+                              <option value="VOUCHER">Voucher</option>
+                              <option value="PIX">Pix</option>
+                            </select>
+                          </div>
+                          <div className={styles.statusPedido} style={{ marginTop: 8 }}>
+                            <label>Status do Pedido:</label>
+                            <select
+                              value={statusPedidoSelect}
+                              onChange={e => setStatusPedidoSelect(e.target.value)}
+                              style={{ width: '100%', padding: 8, marginTop: 6 }}
+                            >
+                              <option value="CONFIRMADO">Confirmado</option>
+                              <option value="PENDENTE_PAGAMENTO">Pagamento Pendente</option>
+                              <option value="FINALIZADO">Finalizado</option>
+                            </select>
                           </div>
                           <div className={styles.valorTotal}>
                             <label>R$ {vendas.reduce((total, v) => total + (v.valorFinal || 0), 0)},00</label>
@@ -241,10 +434,10 @@ export function ResumoVenda() {
                           {/* <label>Nome Cliente (opcional):</label>
                           <input type="text" /> */}
                         </div>
+                <button className={styles.btnPesquisar} onClick={handleConfirmRegister}>
+                  Registrar
+                </button>
               </div>
-          <button className={styles.btnPesquisar} onClick={handleConfirmRegister}>
-            Registrar
-          </button>
         </div>
       </div>
     </div>

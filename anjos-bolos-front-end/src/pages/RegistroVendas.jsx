@@ -155,19 +155,40 @@ export function RegistroVendas(props) {
       const found = list.find(c => normalizeDigits(c.cpf) === normalizeDigits(cpf));
 
       if (found) {
-        setOrderDetails(prev => ({
-          ...prev,
-          clientId: found.id,
-          clientName: found.nome,
-          phone: found.telefone
-        }));
+        // update state and persist resumoVendas so ResumoVenda can read clientId immediately
+        setOrderDetails(prev => {
+          const updated = {
+            ...prev,
+            clientId: found.id,
+            clientName: found.nome,
+            phone: found.telefone
+          };
+          try {
+            const payload = { vendas, tipoVenda };
+            if (tipoVenda === 'Encomenda') payload.orderDetails = updated;
+            localStorage.setItem('resumoVendas', JSON.stringify(payload));
+          } catch (e) {
+            console.error('Erro ao atualizar resumoVendas no localStorage (fetchClientByCpf):', e);
+          }
+          return updated;
+        });
       } else {
-        setOrderDetails(prev => ({
-          ...prev,
-          clientId: null,
-          clientName: prev.clientName || '',
-          phone: prev.phone || ''
-        }));
+        setOrderDetails(prev => {
+          const updated = {
+            ...prev,
+            clientId: null,
+            clientName: prev.clientName || '',
+            phone: prev.phone || ''
+          };
+          try {
+            const payload = { vendas, tipoVenda };
+            if (tipoVenda === 'Encomenda') payload.orderDetails = updated;
+            localStorage.setItem('resumoVendas', JSON.stringify(payload));
+          } catch (e) {
+            console.error('Erro ao atualizar resumoVendas no localStorage (fetchClientByCpf):', e);
+          }
+          return updated;
+        });
       }
     } catch (err) {
       console.error('Erro ao buscar cliente por CPF:', err);
@@ -216,8 +237,18 @@ export function RegistroVendas(props) {
         const resp = await api.post(`/clientes`, payload);
         const newClient = resp?.data;
         if (newClient?.id) {
-          setOrderDetails(prev => ({ ...prev, clientId: newClient.id }));
-        }
+            setOrderDetails(prev => {
+              const updated = { ...prev, clientId: newClient.id };
+              try {
+                const payload = { vendas, tipoVenda };
+                if (tipoVenda === 'Encomenda') payload.orderDetails = updated;
+                localStorage.setItem('resumoVendas', JSON.stringify(payload));
+              } catch (e) {
+                console.error('Erro ao atualizar resumoVendas no localStorage (handleConfirmEncomenda):', e);
+              }
+              return updated;
+            });
+          }
       } catch (err) {
         console.error('Erro ao cadastrar cliente:', err);
         alert('Não foi possível cadastrar o cliente. Tente novamente.');
@@ -720,7 +751,7 @@ export function RegistroVendas(props) {
       {/* Lista de Produtos */}
       <div className={styles.produtos}>
         {produtos
-          .filter(produto => produto.categoria === categoria)
+          .filter(produto => produto.categoria === categoria && categoria !== 'festa')
           .map(produto => (
             <Produto
               key={produto.id || produto.titulo}
