@@ -325,7 +325,6 @@ export function HistoricoVendas(props) {
                 type="date"
                 value={startDate}
                 onChange={e => setStartDate(e.target.value)}
-                max={getDataHoje()}
                 className={styles.invisibleDateInput}
               />
               {startDate && (
@@ -349,7 +348,6 @@ export function HistoricoVendas(props) {
                 type="date"
                 value={endDate}
                 onChange={e => setEndDate(e.target.value)}
-                max={getDataHoje()}
                 className={styles.invisibleDateInput}
               />
               {endDate && (

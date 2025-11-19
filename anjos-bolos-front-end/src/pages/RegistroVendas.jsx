@@ -539,7 +539,7 @@ export function RegistroVendas(props) {
 
       {/* Modal de Bolo de Festa */}
       <Modal isOpen={showBoloFestaModal} onClose={handleCancelBoloFesta}>
-        <div style={{ padding: 20, maxWidth: 720 }}>
+        <div style={{ padding: 20, maxWidth: 720, backgroundColor: '#fff', borderRadius: "8px", paddingTop: "2px" }}>
           <h3>Detalhes do Bolo de Festa</h3>
           <div style={{ display: 'grid', gap: 12 }}>
             {!temMontagemAtual ? (
