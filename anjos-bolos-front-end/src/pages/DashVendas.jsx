@@ -275,20 +275,27 @@ export function DashVendas(props) {
 		}
 
 		try {
-			const url = `/dashboards/vendas-por-dia-semana?inicio=${startDate}&fim=${endDate}`;
+			const token = localStorage.getItem('token');
+			const url = `/dashboards/vendas-dia-semana?inicio=${startDate}&fim=${endDate}`;
 			console.log('🔍 Buscando vendas por dia da semana em:', url);
 			
-			const response = await api.get(url);
+			const response = await api.get(url, {
+				headers: { Authorization: `Bearer ${token}` }
+			});
 			console.log('✅ Vendas por dia da semana carregadas:', response.data);
 			
-			// Espera-se um array com objetos {diaSemana: string, quantidade: number}
+			// Espera-se um array com objetos {diaSemana: string, totalVendas: number}
 			if (response.data && Array.isArray(response.data)) {
+				console.log('📊 Dados recebidos para o gráfico:', response.data);
 				setVendasPorDiaSemana(response.data);
 			} else {
 				setVendasPorDiaSemana([]);
 			}
 		} catch (error) {
 			console.error("❌ Erro ao buscar vendas por dia da semana:", error);
+			console.error("📍 URL que falhou:", error.config?.url);
+			console.error("📍 Status:", error.response?.status);
+			console.error("📍 Resposta do servidor:", error.response?.data);
 			setVendasPorDiaSemana([]);
 		}
 	};
@@ -450,8 +457,9 @@ export function DashVendas(props) {
 			{
 				label: 'Vendas por Dia da Semana',
 				data: diasSemanaOrdenados.map(dia => {
-					const vendaDia = vendasPorDiaSemana.find(v => traduzirDiaSemana(v.diaSemana) === dia);
-					return vendaDia?.quantidade || 0;
+					const vendaDia = vendasPorDiaSemana.find(v => v.diaSemana === dia);
+					console.log(`🔍 Buscando vendas para ${dia}:`, vendaDia);
+					return vendaDia?.totalVendas || 0;
 				}),
 				backgroundColor: [
 					'rgba(168, 107, 50, 0.8)',
@@ -635,12 +643,6 @@ export function DashVendas(props) {
 								
 								{/* Gráfico ativo */}
 								<div className={styles.graficoPlaceholder}>
-									<div className={styles.totalVendasCard}>
-										<div className={styles.totalVendasTitle}>Total de vendas</div>
-										<div className={styles.totalVendasValue}>
-											{loading ? "Carregando..." : totalVendas}
-										</div>
-									</div>
 									{graficoAtivo === 'periodo' ? (
 										<Line 
 											data={chartData}
@@ -667,6 +669,12 @@ export function DashVendas(props) {
 									<div className={styles.dashCardTitle + ' ' + styles.dashCardTitleVendido}>Faturamento Total</div>
 									<div className={styles.dashCardContent}>
 										{loading ? "Carregando..." : faturamentoTotal}
+									</div>
+								</div>
+								<div className={styles.dashCard}>
+									<div className={styles.dashCardTitle + ' ' + styles.dashCardTitleVendido}>Total de Vendas</div>
+									<div className={styles.dashCardContent}>
+										{loading ? "Carregando..." : totalVendas}
 									</div>
 								</div>
 							</section>

@@ -142,7 +142,7 @@
 	gap: 14px;
 	width: 240px;
 	flex-shrink: 0;
-	margin-top: 80px;
+	margin-top: 0;
 }
 .graficoSelector {
 	display: flex;
@@ -189,7 +189,7 @@
 	gap: 14px;
 	width: 240px;
 	flex-shrink: 0;
-	margin-top: 60px; /* Alinha com a altura do gráfico */
+	margin-top: 0; /* Alinha com o topo */
 }
 
 .dashCard {

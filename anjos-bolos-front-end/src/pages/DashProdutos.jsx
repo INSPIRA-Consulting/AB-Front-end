@@ -78,6 +78,10 @@ export function DashProdutos(props) {
 	// Estado para dados da tabela TOP 5 do backend
 	const [top5Produtos, setTop5Produtos] = useState([]);
 	const [loading, setLoading] = useState(false);
+	
+	// Estados para recomendações de feriados
+	const [recomendacoes, setRecomendacoes] = useState([]);
+	const [loadingRecomendacoes, setLoadingRecomendacoes] = useState(false);
 
 	// Opções de filtro para recomendações (múltipla seleção)
 	const recomendOptions = [
@@ -116,6 +120,89 @@ export function DashProdutos(props) {
 		setShowCategoriasFilter(false);
 	};
 
+	// Função para buscar recomendações de produtos por feriado
+	const fetchRecomendacoesFeriados = async () => {
+		try {
+			setLoadingRecomendacoes(true);
+			const anoAtual = new Date().getFullYear();
+			const token = localStorage.getItem('token');
+			
+			console.log('🎉 Buscando feriados do ano:', anoAtual);
+			
+			// Buscar feriados do ano atual
+			const feriadosResponse = await api.get(`/feriados-nacionais?ano=${anoAtual}`, {
+				headers: { Authorization: `Bearer ${token}` }
+			});
+			
+			const feriados = feriadosResponse.data;
+			console.log('✅ Feriados recebidos:', feriados);
+			
+			if (!Array.isArray(feriados) || feriados.length === 0) {
+				setRecomendacoes([]);
+				return;
+			}
+			
+			// Categorias que queremos analisar
+			const categorias = [
+				{ nome: "Bolo Tradicional", display: "Bolos Tradicionais" },
+				{ nome: "Bebida", display: "Bebidas" },
+				{ nome: "Salgados", display: "Salgados" },
+				{ nome: "Bolo de Pote", display: "Bolos de Pote" },
+				{ nome: "Bolo de Festa", display: "Bolos de Festa" }
+			];
+			
+			const recomendacoesTemp = [];
+			
+			// Para cada feriado, buscar produto mais vendido de cada categoria
+			for (const feriado of feriados) {
+				const dataFeriado = feriado.date;
+				
+				console.log(`📅 Processando feriado: ${feriado.name} (${dataFeriado})`);
+				
+				// Para cada categoria, buscar o produto mais vendido
+				for (const categoria of categorias) {
+					try {
+						const produtosResponse = await api.get(
+							`/dashboards/produtos-mais-vendidos?inicio=${dataFeriado}&fim=${dataFeriado}`,
+							{ headers: { Authorization: `Bearer ${token}` } }
+						);
+						
+						// Filtrar por categoria
+						const produtosDaCategoria = produtosResponse.data.filter(
+							p => p.categoriaProduto === categoria.nome
+						);
+						
+						// Pegar o primeiro produto (mais vendido)
+						if (produtosDaCategoria.length > 0) {
+							const produtoMaisVendido = produtosDaCategoria[0];
+							
+							recomendacoesTemp.push({
+								data: dataFeriado,
+								feriado: feriado.name,
+								categoria: categoria.display,
+								produto: produtoMaisVendido.nomeProduto,
+								quantidade: produtoMaisVendido.quantidadeVendida
+							});
+							
+							console.log(`✅ ${categoria.display}: ${produtoMaisVendido.nomeProduto} (${produtoMaisVendido.quantidadeVendida} unidades)`);
+						}
+					} catch (error) {
+						console.log(`⚠️ Nenhum produto encontrado para ${categoria.display} em ${feriado.name}`);
+					}
+				}
+			}
+			
+			console.log('📊 Total de recomendações geradas:', recomendacoesTemp.length);
+			setRecomendacoes(recomendacoesTemp);
+			
+		} catch (error) {
+			console.error("❌ Erro ao buscar recomendações de feriados:", error);
+			setRecomendacoes([]);
+		} finally {
+			setLoadingRecomendacoes(false);
+		}
+	};
+	
 	// Função para buscar TOP 5 produtos do backend
 	const fetchTop5Produtos = async () => {
 		if (!startDate || !endDate) {
@@ -149,6 +236,11 @@ export function DashProdutos(props) {
 		}
 	};
 
+	// Buscar recomendações ao carregar a página
+	useEffect(() => {
+		fetchRecomendacoesFeriados();
+	}, []);
+	
 	// Buscar dados quando as datas ou filtro de categoria mudarem
 	useEffect(() => {
 		if (startDate && endDate) {
@@ -247,11 +339,17 @@ export function DashProdutos(props) {
 		};
 	}, []);
 
-	// Dados das recomendações
-	const recomendacoes = [
-		{ data: "30/06/2025", feriado: "Festa Junina", categoria: "Bolo Tradicional", produto: "Bolo de Milho" },
-		{ data: "10/08/2025", feriado: "Dia dos Pais", categoria: "Salgado", produto: "Esfirra de Carne" }
-	];
+	// Filtrar recomendações por categorias selecionadas
+	const recomendacoesFiltradas = recomendacoes.filter(rec => 
+		selectedRecomendFilters.includes(rec.categoria)
+	);
+	
+	// Função para formatar data no formato brasileiro
+	const formatDateBRFromISO = (dateString) => {
+		if (!dateString) return '';
+		const [ano, mes, dia] = dateString.split('-');
+		return `${dia}/${mes}/${ano}`;
+	};
 
 	return (
 		<div className={styles.dashContainer}>
@@ -299,17 +397,31 @@ export function DashProdutos(props) {
 										</th>
 										<th>Produto</th>
 									</tr>
-								</thead>
-								<tbody>
-									{recomendacoes.map((rec, i) => (
+							</thead>
+							<tbody>
+								{loadingRecomendacoes ? (
+									<tr>
+										<td colSpan="4" style={{ textAlign: 'center', padding: '20px' }}>
+											Carregando recomendações...
+										</td>
+									</tr>
+								) : recomendacoesFiltradas.length === 0 ? (
+									<tr>
+										<td colSpan="4" style={{ textAlign: 'center', padding: '20px' }}>
+											Nenhuma recomendação disponível
+										</td>
+									</tr>
+								) : (
+									recomendacoesFiltradas.map((rec, i) => (
 										<tr key={i}>
-											<td>{rec.data}</td>
+											<td>{formatDateBRFromISO(rec.data)}</td>
 											<td>{rec.feriado}</td>
 											<td>{rec.categoria}</td>
 											<td>{rec.produto}</td>
 										</tr>
-									))}
-								</tbody>
+									))
+								)}
+							</tbody>
 							</table>
 						</div>
 					</section>
