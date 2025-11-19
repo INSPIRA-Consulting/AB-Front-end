@@ -40,25 +40,39 @@ export function HistoricoVendas(props) {
     return `${ano}-${mes}-${dia}`;
   };
 
-  // Ler parâmetros da URL (vindos da DashProdutos)
+  // Ler parâmetros da URL (vindos da DashProdutos ou Menu)
   const [searchParams] = useSearchParams();
   
   // Inicializar datas: se vier da URL usa os parâmetros, senão usa primeiro e último dia do mês atual
   const dataInicioParam = searchParams.get('dataInicio') || getPrimeiroDiaDoMes();
   const dataFimParam = searchParams.get('dataFim') || getUltimoDiaDoMes();
-  const statusParam = searchParams.get('status') || "Todos"; // Ler status da URL
+  const statusParam = searchParams.get('status'); // Ler status da URL
 
   const [startDate, setStartDate] = useState(dataInicioParam);
   const [endDate, setEndDate] = useState(dataFimParam);
   const startInputRef = useRef(null);
   const endInputRef = useRef(null);
+  const statusDropdownRef = useRef(null);
+  const categoriaDropdownRef = useRef(null);
+
+  // Estados para seleção múltipla - inicializa com status da URL se houver
+  const [statusSelecionados, setStatusSelecionados] = useState(() => {
+    if (statusParam && statusParam !== 'Todos') {
+      return statusParam.includes(',') ? statusParam.split(',').map(s => s.trim()) : [statusParam];
+    }
+    return [];
+  });
+  const [categoriasSelecionadas, setCategoriasSelecionadas] = useState([]);
+  const [mostrarFiltroStatus, setMostrarFiltroStatus] = useState(false);
+  const [mostrarFiltroCategoria, setMostrarFiltroCategoria] = useState(false);
+  
+  const statusDisponiveis = ['CONFIRMADO', 'PENDENTE_PAGAMENTO', 'CANCELADO', 'FINALIZADO'];
+  const categoriasDisponiveis = ['Bolos Tradicionais', 'Bebidas', 'Salgados', 'Bolos de Pote', 'Bolos de Festa'];
 
   const [filtros, setFiltros] = useState({
     dia: startDate,
     mes: endDate,
-    valor: "Todos",
-    categoria: 'Todos',
-    status: statusParam // Inicializar com status da URL
+    valor: "Todos"
   });
 
   const [vendas, setVendas] = useState([]);
@@ -143,7 +157,7 @@ export function HistoricoVendas(props) {
         console.log('📦 Itens dos pedidos filtrados:', itensFiltrados.length);
 
         // Aplicar filtros adicionais (status, categoria, valor) se já existirem
-        const resultado = aplicarFiltrosEAgregar(pedidosFiltrados, itensFiltrados, filtros);
+        const resultado = aplicarFiltrosEAgregar(pedidosFiltrados, itensFiltrados);
         
         if (mounted) {
           setVendas(resultado);
@@ -157,36 +171,81 @@ export function HistoricoVendas(props) {
 
     loadPedidosEItens();
     return () => { mounted = false; };
-  }, [startDate, endDate]);
+  }, [startDate, endDate, statusSelecionados, categoriasSelecionadas, filtros.valor]);
 
-  // Função para aplicar filtros e agregar dados
-  const aplicarFiltrosEAgregar = (pedidos, itens, filtrosAplicados) => {
+  // Fechar dropdown de status ao clicar fora
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (statusDropdownRef.current && !statusDropdownRef.current.contains(event.target)) {
+        setMostrarFiltroStatus(false);
+      }
+    };
+    if (mostrarFiltroStatus) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [mostrarFiltroStatus]);
+
+  // Fechar dropdown de categoria ao clicar fora
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (categoriaDropdownRef.current && !categoriaDropdownRef.current.contains(event.target)) {
+        setMostrarFiltroCategoria(false);
+      }
+    };
+    if (mostrarFiltroCategoria) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [mostrarFiltroCategoria]);
+
+  // Função para aplicar filtros sobre pedidos e itens
+  const aplicarFiltrosEAgregar = (pedidos, itens) => {
+    console.log('🔍 [Histórico] Iniciando aplicarFiltrosEAgregar');
+    console.log('📥 [Histórico] Total pedidos recebidos:', pedidos.length);
+    console.log('📥 [Histórico] Total itens recebidos:', itens.length);
+    console.log('🎯 [Histórico] Status selecionados:', statusSelecionados);
+    console.log('🎯 [Histórico] Categorias selecionadas:', categoriasSelecionadas);
+    
     let pedidosFiltrados = [...pedidos];
     let itensFiltrados = [...itens];
 
-    // Filtrar por status do pedido
-    if (filtrosAplicados.status && filtrosAplicados.status !== 'Todos') {
+    // Filtrar por status (múltiplos)
+    if (statusSelecionados.length > 0) {
+      console.log('📋 [Histórico] Filtrando por status...');
       pedidosFiltrados = pedidosFiltrados.filter(p => {
         const status = (p.status || p.Status || '').toString().toUpperCase();
-        return status === filtrosAplicados.status;
+        const match = statusSelecionados.some(s => s === status);
+        console.log(`  Pedido ${p.id}: status="${status}" → match=${match}`);
+        return match;
       });
+      console.log('✅ [Histórico] Após filtro de status:', pedidosFiltrados.length, 'pedidos');
     }
 
     // Atualizar itens após filtro de status
     const pedidoIds = new Set(pedidosFiltrados.map(p => Number(p.id)));
     itensFiltrados = itensFiltrados.filter(it => pedidoIds.has(Number(it.pedidoId)));
 
-    // Filtrar por categoria
-    if (filtrosAplicados.categoria && filtrosAplicados.categoria !== 'Todos') {
+    // Filtrar por categoria (múltiplas)
+    if (categoriasSelecionadas.length > 0) {
+      console.log('🏷️ [Histórico] Filtrando por categoria...');
       itensFiltrados = itensFiltrados.filter(it => {
         const nome = (it.produto || it.nomeProduto || it.descricao || '').toString();
         const cat = inferCategoryFromProductName(nome);
-        return cat === filtrosAplicados.categoria;
+        const match = categoriasSelecionadas.includes(cat);
+        console.log(`  Item ${it.id}: produto="${nome}" → categoria="${cat}" → match=${match}`);
+        return match;
       });
+      console.log('✅ [Histórico] Após filtro de categoria:', itensFiltrados.length, 'itens');
 
       // Manter apenas pedidos que tenham itens após filtro de categoria
       const pedidoIdsComItens = new Set(itensFiltrados.map(it => Number(it.pedidoId)));
       pedidosFiltrados = pedidosFiltrados.filter(p => pedidoIdsComItens.has(Number(p.id)));
+      console.log('✅ [Histórico] Pedidos com itens filtrados:', pedidosFiltrados.length);
     }
 
     // Agregar por dia
@@ -218,22 +277,34 @@ export function HistoricoVendas(props) {
     let resultado = Object.values(mapa);
 
     // Filtrar por valor (após agregação)
-    if (filtrosAplicados.valor && filtrosAplicados.valor !== 'Todos') {
+    if (filtros.valor && filtros.valor !== 'Todos') {
       resultado = resultado.filter(v => {
         const valor = v.valor;
-        if (filtrosAplicados.valor === 'Abaixo de R$ 50') return valor < 50;
-        if (filtrosAplicados.valor === 'R$ 50 - R$ 100') return valor >= 50 && valor <= 100;
-        if (filtrosAplicados.valor === 'R$ 100 - R$ 200') return valor >= 100 && valor <= 200;
-        if (filtrosAplicados.valor === 'Acima de R$ 200') return valor > 200;
+        if (filtros.valor === 'Abaixo de R$ 50') return valor < 50;
+        if (filtros.valor === 'R$ 50 - R$ 100') return valor >= 50 && valor <= 100;
+        if (filtros.valor === 'R$ 100 - R$ 200') return valor >= 100 && valor <= 200;
+        if (filtros.valor === 'Acima de R$ 200') return valor > 200;
         return true;
       });
     }
 
     resultado.sort((a, b) => new Date(b.dataCompleta) - new Date(a.dataCompleta));
     
+    console.log('📊 [Histórico] Resultado final agregado:', resultado.length, 'dias com vendas');
+    console.log('📊 [Histórico] Dados agregados:', resultado);
+    
     return resultado;
   };
 
+
+  // Função para formatar status para exibição
+  const formatarStatusParaExibicao = (status) => {
+    if (status === 'PENDENTE_PAGAMENTO') return 'Pendente Pag.';
+    if (status === 'CONFIRMADO') return 'Confirmado';
+    if (status === 'CANCELADO') return 'Cancelado';
+    if (status === 'FINALIZADO') return 'Finalizado';
+    return status;
+  };
 
   const handlePesquisar = () => {
     console.log("🔍 Filtros aplicados:", filtros);
@@ -244,7 +315,7 @@ export function HistoricoVendas(props) {
       let itens = [...itensFull];
 
       // Aplicar filtros e agregar
-      const resultado = aplicarFiltrosEAgregar(pedidos, itens, filtros);
+      const resultado = aplicarFiltrosEAgregar(pedidos, itens);
 
       setVendas(resultado);
       console.log('✅ Pesquisa aplicada com sucesso. Registros encontrados:', resultado.length);
@@ -359,35 +430,118 @@ export function HistoricoVendas(props) {
           </div>
 
           <div className={styles.filterCompactRow}>
-            <div className={styles.filtroCompactItem}>
+            <div className={styles.filtroCompactItem} style={{position: 'relative'}} ref={categoriaDropdownRef}>
               <label>Categoria</label>
-              <select
-                value={filtros.categoria || 'Todos'}
-                onChange={e => setFiltros(prev => ({ ...prev, categoria: e.target.value }))}
+              <div 
                 className={styles.compactSelect}
+                onClick={() => setMostrarFiltroCategoria(!mostrarFiltroCategoria)}
+                style={{cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between'}}
               >
-                <option value="Todos">Todos</option>
-                <option value="Bolos Tradicionais">Bolos Tradicionais</option>
-                <option value="Bebidas">Bebidas</option>
-                <option value="Salgados">Salgados</option>
-                <option value="Bolos de Pote">Bolos de Pote</option>
-                <option value="Bolos de Festa">Bolos de Festa</option>
-              </select>
+                <span>
+                  {categoriasSelecionadas.length === 0 
+                    ? 'Todos' 
+                    : categoriasSelecionadas.length === 1
+                      ? categoriasSelecionadas[0]
+                      : `${categoriasSelecionadas.length} selecionados`}
+                </span>
+                <span style={{fontSize: '0.7rem'}}>▼</span>
+              </div>
+              {mostrarFiltroCategoria && (
+                <div className={styles.filtroStatusDropdown}>
+                  <div 
+                    className={styles.filtroStatusOpcao}
+                    onClick={() => {
+                      setCategoriasSelecionadas([]);
+                      setMostrarFiltroCategoria(false);
+                    }}
+                  >
+                    <input 
+                      type="checkbox" 
+                      checked={categoriasSelecionadas.length === 0}
+                      readOnly
+                    />
+                    <label>Todos</label>
+                  </div>
+                  {categoriasDisponiveis.map(categoria => (
+                    <div 
+                      key={categoria}
+                      className={styles.filtroStatusOpcao}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (categoriasSelecionadas.includes(categoria)) {
+                          setCategoriasSelecionadas(categoriasSelecionadas.filter(c => c !== categoria));
+                        } else {
+                          setCategoriasSelecionadas([...categoriasSelecionadas, categoria]);
+                        }
+                      }}
+                    >
+                      <input 
+                        type="checkbox" 
+                        checked={categoriasSelecionadas.includes(categoria)}
+                        readOnly
+                      />
+                      <label>{categoria}</label>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
-            <div className={styles.filtroCompactItem}>
+            <div className={styles.filtroCompactItem} style={{position: 'relative'}} ref={statusDropdownRef}>
               <label>Status</label>
-              <select
-                value={filtros.status || 'Todos'}
-                onChange={e => setFiltros(prev => ({ ...prev, status: e.target.value }))}
+              <div 
                 className={styles.compactSelect}
+                onClick={() => setMostrarFiltroStatus(!mostrarFiltroStatus)}
+                style={{cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between'}}
               >
-                <option value="Todos">Todos</option>
-                <option value="CONFIRMADO">Confirmado</option>
-                <option value="PENDENTE_PAGAMENTO">Pendente Pag.</option>
-                <option value="CANCELADO">Cancelado</option>
-                <option value="FINALIZADO">Finalizado</option>
-              </select>
+                <span>
+                  {statusSelecionados.length === 0 
+                    ? 'Todos' 
+                    : statusSelecionados.length === 1
+                      ? formatarStatusParaExibicao(statusSelecionados[0])
+                      : `${statusSelecionados.length} selecionados`}
+                </span>
+                <span style={{fontSize: '0.7rem'}}>▼</span>
+              </div>
+              {mostrarFiltroStatus && (
+                <div className={styles.filtroStatusDropdown}>
+                  <div 
+                    className={styles.filtroStatusOpcao}
+                    onClick={() => {
+                      setStatusSelecionados([]);
+                      setMostrarFiltroStatus(false);
+                    }}
+                  >
+                    <input 
+                      type="checkbox" 
+                      checked={statusSelecionados.length === 0}
+                      readOnly
+                    />
+                    <label>Todos</label>
+                  </div>
+                  {statusDisponiveis.map(status => (
+                    <div 
+                      key={status}
+                      className={styles.filtroStatusOpcao}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (statusSelecionados.includes(status)) {
+                          setStatusSelecionados(statusSelecionados.filter(s => s !== status));
+                        } else {
+                          setStatusSelecionados([...statusSelecionados, status]);
+                        }
+                      }}
+                    >
+                      <input 
+                        type="checkbox" 
+                        checked={statusSelecionados.includes(status)}
+                        readOnly
+                      />
+                      <label>{formatarStatusParaExibicao(status)}</label>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
             <div className={styles.filtroCompactItem}>

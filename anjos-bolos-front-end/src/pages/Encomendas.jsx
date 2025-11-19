@@ -3,6 +3,7 @@ import { Navbar } from "../components/Navbar";
 import styles from "../styles/Encomendas.module.css";
 import { FaRegCalendarAlt, FaSearch, FaLock, FaLockOpen } from "react-icons/fa";
 import { useDocumentTitle } from "../hooks/useDocumentTitle";
+import { useLocation } from "react-router-dom";
 import api from '../provider/api';
 import { ModernToast } from '../components/ModernToast';
 import ModalItensStyles from '../styles/ModalItensPedido.module.css';
@@ -10,6 +11,7 @@ import { Modal } from '../components/Modal';
 
 export function Encomendas(props) {
   useDocumentTitle(props.titulo);
+  const location = useLocation();
 
   // Função para formatar status para exibição
   const formatarStatusParaExibicao = (status) => {
@@ -47,17 +49,50 @@ export function Encomendas(props) {
     return `${ano}-${mes}-${dia}`;
   };
 
-  const [startDate, setStartDate] = useState(getPrimeiroDiaDoMes());
-  const [endDate, setEndDate] = useState(getUltimoDiaDoMes());
+  // Ler parâmetros da URL
+  const searchParams = new URLSearchParams(location.search);
+  const urlDataPedidoInicio = searchParams.get('dataPedidoInicio');
+  const urlDataRetiradaInicio = searchParams.get('dataRetiradaInicio');
+  const urlDataRetiradaFim = searchParams.get('dataRetiradaFim');
+  const urlStatus = searchParams.get('status');
+
+  // startDate = Data do Pedido (vem de dataPedidoInicio)
+  // endDate = Data de Retirada (não usado mais)
+  // endDateFim = Data de Retirada fim (vem de dataRetiradaFim)
+  const [startDate, setStartDate] = useState(urlDataPedidoInicio || '');
+  const [endDate, setEndDate] = useState('');
+  const [endDateFim, setEndDateFim] = useState(urlDataRetiradaFim || '');
+  
+  console.log('Parâmetros URL:', {
+    dataPedidoInicio: urlDataPedidoInicio,
+    dataRetiradaInicio: urlDataRetiradaInicio,
+    dataRetiradaFim: urlDataRetiradaFim,
+    status: urlStatus
+  });
+  console.log('Estados de data:', { startDate, endDate, endDateFim });
   const startInputRef = useRef(null);
   const endInputRef = useRef(null);
+  const statusDropdownRef = useRef(null);
+
+  // Estado para controlar seleção múltipla de status
+  // Se urlStatus contém vírgula, é múltiplo; caso contrário, é único
+  const [statusSelecionados, setStatusSelecionados] = useState(() => {
+    if (urlStatus && urlStatus !== 'Todos') {
+      const statusArray = urlStatus.includes(',') ? urlStatus.split(',').map(s => s.trim()) : [urlStatus];
+      console.log('Status iniciais da URL:', urlStatus, '-> array:', statusArray);
+      return statusArray;
+    }
+    console.log('Nenhum status na URL');
+    return [];
+  });
+  const [mostrarFiltroStatus, setMostrarFiltroStatus] = useState(false);
+  const statusDisponiveis = ['Confirmado', 'Pendente de Pagamento', 'Cancelado', 'Finalizado'];
 
   const [filtros, setFiltros] = useState({
-    dia: startDate,
-    mes: endDate,
+    dia: urlDataRetiradaInicio || startDate,
+    mes: urlDataRetiradaFim || endDate,
     valor: "Todos",
-    categoria: 'Todos',
-    status: 'Todos'
+    categoria: 'Todos'
   });
 
   const [encomendas, setEncomendas] = useState([]);
@@ -91,35 +126,52 @@ export function Encomendas(props) {
         const pedidos = Array.isArray(pedidosResp.data) ? pedidosResp.data : (pedidosResp.data && pedidosResp.data.content) ? pedidosResp.data.content : [];
         const itens = Array.isArray(itensResp.data) ? itensResp.data : (itensResp.data && itensResp.data.content) ? itensResp.data.content : [];
 
-        // ...existing code...
+        // Filtrar APENAS ENCOMENDAS (dataRetirada > dataPedido)
+        console.log('Total de pedidos recebidos:', pedidos.length);
         let encomendasFiltradas = pedidos.filter(pedido => {
           const dataPedidoStr = pedido.dataPedido || '';
           const dataRetiradaStr = pedido.dataRetirada || '';
-          if (!dataPedidoStr || !dataRetiradaStr) return false;
+          if (!dataPedidoStr || !dataRetiradaStr) {
+            console.log(`Pedido ${pedido.id}: dataRetirada ou dataPedido ausente, não é encomenda`);
+            return false;
+          }
           const dataPedido = new Date(dataPedidoStr);
           const dataRetirada = new Date(dataRetiradaStr);
-          return dataRetirada > dataPedido;
+          const isEncomenda = dataRetirada > dataPedido;
+          console.log(`Pedido ${pedido.id}: dataPedido=${dataPedidoStr}, dataRetirada=${dataRetiradaStr}, isEncomenda=${isEncomenda}, status=${pedido.status}`);
+          return isEncomenda;
         });
+        
+        console.log('Total de encomendas encontradas:', encomendasFiltradas.length);
 
-        if (startDate || endDate) {
+        // Filtrar por data de pedido E data de retirada
+        if (startDate || endDate || endDateFim) {
           encomendasFiltradas = encomendasFiltradas.filter(pedido => {
-            const dataStr = pedido.dataRetirada || '';
-            if (!dataStr) return false;
-            const dataRetirada = new Date(dataStr);
-            dataRetirada.setHours(0, 0, 0, 0);
-            const dataInicio = startDate ? new Date(startDate) : null;
-            const dataFim = endDate ? new Date(endDate) : null;
-            if (dataInicio) dataInicio.setHours(0, 0, 0, 0);
-            if (dataFim) dataFim.setHours(23, 59, 59, 999);
-            if (dataInicio && dataRetirada < dataInicio) return false;
-            if (dataFim && dataRetirada > dataFim) return false;
+            const dataPedidoStr = (pedido.dataPedido || '').slice(0, 10);
+            const dataRetiradaStr = (pedido.dataRetirada || '').slice(0, 10);
+            
+            // Filtro de data de pedido (startDate = início)
+            if (startDate && dataPedidoStr < startDate) {
+              console.log(`Pedido ${pedido.id}: dataPedido=${dataPedidoStr} < ${startDate} → excluído`);
+              return false;
+            }
+            
+            // Filtro de data de retirada (endDate = não usado, endDateFim = fim)
+            if (endDateFim && dataRetiradaStr > endDateFim) {
+              console.log(`Pedido ${pedido.id}: dataRetirada=${dataRetiradaStr} > ${endDateFim} → excluído`);
+              return false;
+            }
+            
+            console.log(`Pedido ${pedido.id}: passou no filtro de datas ✅`);
             return true;
           });
         }
+        
+        console.log('Encomendas após filtro de datas:', encomendasFiltradas.length);
 
         const pedidosIdsFiltrados = new Set(encomendasFiltradas.map(p => Number(p.id)));
         const itensFiltrados = itens.filter(it => pedidosIdsFiltrados.has(Number(it.pedidoId)));
-        const resultado = aplicarFiltrosEAgregar(encomendasFiltradas, itensFiltrados, filtros);
+        const resultado = aplicarFiltrosEAgregar(encomendasFiltradas, itensFiltrados);
         if (mounted) {
           setEncomendas(resultado);
           setPedidosFull(encomendasFiltradas);
@@ -139,30 +191,57 @@ export function Encomendas(props) {
       mounted = false;
       if (intervalId) clearInterval(intervalId);
     };
-  }, [startDate, endDate]);
+  }, [startDate, endDate, endDateFim, statusSelecionados, filtros.categoria, filtros.valor]);
 
-  const aplicarFiltrosEAgregar = (pedidos, itens, filtrosAplicados) => {
+  // Fechar dropdown ao clicar fora
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (statusDropdownRef.current && !statusDropdownRef.current.contains(event.target)) {
+        setMostrarFiltroStatus(false);
+      }
+    };
+
+    if (mostrarFiltroStatus) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [mostrarFiltroStatus]);
+
+  const aplicarFiltrosEAgregar = (pedidos, itens) => {
     let pedidosFiltrados = [...pedidos];
     let itensFiltrados = [...itens];
 
-    // Filtrar por status
-    if (filtrosAplicados.status && filtrosAplicados.status !== 'Todos') {
+    console.log('aplicarFiltrosEAgregar - statusSelecionados:', statusSelecionados);
+    console.log('aplicarFiltrosEAgregar - pedidos recebidos:', pedidos.length);
+
+    // Filtrar por status (múltiplos)
+    if (statusSelecionados.length > 0) {
+      console.log('Aplicando filtro de status...');
       pedidosFiltrados = pedidosFiltrados.filter(p => {
-        // Normaliza para comparar ignorando maiúsculas/minúsculas e underscores
         const normalize = s => (s || '').toString().replace(/_/g, '').replace(/ /g, '').toLowerCase();
-        return normalize(p.status) === normalize(filtrosAplicados.status);
+        const statusNorm = normalize(p.status);
+        const match = statusSelecionados.some(s => normalize(s) === statusNorm);
+        console.log(`Pedido ${p.id}: status="${p.status}" normalizado="${statusNorm}" match=${match}`);
+        console.log(`  Comparando com:`, statusSelecionados.map(s => `"${s}" -> "${normalize(s)}"`));
+        return match;
       });
+      console.log('Pedidos após filtro de status:', pedidosFiltrados.length);
+    } else {
+      console.log('Nenhum filtro de status aplicado, mostrando todos os pedidos');
     }
 
     const pedidoIds = new Set(pedidosFiltrados.map(p => Number(p.id)));
     itensFiltrados = itensFiltrados.filter(it => pedidoIds.has(Number(it.pedidoId)));
 
     // Filtrar por categoria
-    if (filtrosAplicados.categoria && filtrosAplicados.categoria !== 'Todos') {
+    if (filtros.categoria && filtros.categoria !== 'Todos') {
       itensFiltrados = itensFiltrados.filter(it => {
         const nome = (it.produto || it.nomeProduto || it.descricao || '').toString();
         const cat = inferCategoryFromProductName(nome);
-        return cat === filtrosAplicados.categoria;
+        return cat === filtros.categoria;
       });
 
       const pedidoIdsComItens = new Set(itensFiltrados.map(it => Number(it.pedidoId)));
@@ -196,13 +275,13 @@ export function Encomendas(props) {
 
     // Filtrar por valor
     let resultadoFinal = resultado;
-    if (filtrosAplicados.valor && filtrosAplicados.valor !== 'Todos') {
+    if (filtros.valor && filtros.valor !== 'Todos') {
       resultadoFinal = resultado.filter(v => {
         const valor = v.valor;
-        if (filtrosAplicados.valor === 'Abaixo de R$ 50') return valor < 50;
-        if (filtrosAplicados.valor === 'R$ 50 - R$ 100') return valor >= 50 && valor <= 100;
-        if (filtrosAplicados.valor === 'R$ 100 - R$ 200') return valor >= 100 && valor <= 200;
-        if (filtrosAplicados.valor === 'Acima de R$ 200') return valor > 200;
+        if (filtros.valor === 'Abaixo de R$ 50') return valor < 50;
+        if (filtros.valor === 'R$ 50 - R$ 100') return valor >= 50 && valor <= 100;
+        if (filtros.valor === 'R$ 100 - R$ 200') return valor >= 100 && valor <= 200;
+        if (filtros.valor === 'Acima de R$ 200') return valor > 200;
         return true;
       });
     }
@@ -370,7 +449,7 @@ export function Encomendas(props) {
         });
         const pedidosIdsFiltrados = new Set(encomendasFiltradas.map(p => Number(p.id)));
         const itensFiltrados = itens.filter(it => pedidosIdsFiltrados.has(Number(it.pedidoId)));
-        const resultado = aplicarFiltrosEAgregar(encomendasFiltradas, itensFiltrados, filtros);
+        const resultado = aplicarFiltrosEAgregar(encomendasFiltradas, itensFiltrados);
         setEncomendas(resultado);
         setPedidosFull(encomendasFiltradas);
         setItensFull(itensFiltrados);
@@ -431,18 +510,18 @@ export function Encomendas(props) {
               onClick={() => endInputRef.current && endInputRef.current.showPicker && endInputRef.current.showPicker()}
             >
               <FaRegCalendarAlt className={styles.calendarIcon} />
-              {!endDate && (
+              {!endDateFim && (
                 <span className={styles.datePlaceholder}>dd/mm/aaaa</span>
               )}
               <input
                 ref={endInputRef}
                 type="date"
-                value={endDate}
-                onChange={e => setEndDate(e.target.value)}
+                value={endDateFim}
+                onChange={e => setEndDateFim(e.target.value)}
                 className={styles.invisibleDateInput}
               />
-              {endDate && (
-                <span className={styles.dateValue}>{formatDateBR(endDate)}</span>
+              {endDateFim && (
+                <span className={styles.dateValue}>{formatDateBR(endDateFim)}</span>
               )}
             </div>
           </div>
@@ -464,19 +543,61 @@ export function Encomendas(props) {
               </select>
             </div>
 
-            <div className={styles.filtroCompactItem}>
+            <div className={styles.filtroCompactItem} style={{position: 'relative'}} ref={statusDropdownRef}>
               <label>Status</label>
-              <select
-                value={filtros.status || 'Todos'}
-                onChange={e => setFiltros(prev => ({ ...prev, status: e.target.value }))}
+              <div 
                 className={styles.compactSelect}
+                onClick={() => setMostrarFiltroStatus(!mostrarFiltroStatus)}
+                style={{cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between', maxWidth: '100%'}}
               >
-                <option value="Todos">Todos</option>
-                <option value="Confirmado">Confirmado</option>
-                <option value="Pendente de Pagamento">Pendente Pag</option>
-                <option value="Cancelado">Cancelado</option>
-                <option value="Finalizado">Finalizado</option>
-              </select>
+                <span>
+                  {statusSelecionados.length === 0 
+                    ? 'Todos' 
+                    : statusSelecionados.length === 1
+                      ? formatarStatusParaExibicao(statusSelecionados[0])
+                      : `${statusSelecionados.length} selecionados`}
+                </span>
+                <span style={{fontSize: '0.7rem'}}>▼</span>
+              </div>
+              {mostrarFiltroStatus && (
+                <div className={styles.filtroStatusDropdown}>
+                  <div 
+                    className={styles.filtroStatusOpcao}
+                    onClick={() => {
+                      setStatusSelecionados([]);
+                      setMostrarFiltroStatus(false);
+                    }}
+                  >
+                    <input 
+                      type="checkbox" 
+                      checked={statusSelecionados.length === 0}
+                      readOnly
+                    />
+                    <label>Todos</label>
+                  </div>
+                  {statusDisponiveis.map(status => (
+                    <div 
+                      key={status}
+                      className={styles.filtroStatusOpcao}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (statusSelecionados.includes(status)) {
+                          setStatusSelecionados(statusSelecionados.filter(s => s !== status));
+                        } else {
+                          setStatusSelecionados([...statusSelecionados, status]);
+                        }
+                      }}
+                    >
+                      <input 
+                        type="checkbox" 
+                        checked={statusSelecionados.includes(status)}
+                        readOnly
+                      />
+                      <label>{formatarStatusParaExibicao(status)}</label>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
             <div className={styles.filtroCompactItem}>

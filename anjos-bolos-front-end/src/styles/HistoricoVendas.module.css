@@ -152,6 +152,47 @@
                 box-shadow: 0 0 0 2px rgba(86, 39, 11, 0.1);
             }
 
+            .filtroStatusDropdown {
+                position: absolute;
+                top: 100%;
+                left: 0;
+                right: 0;
+                margin-top: 4px;
+                background-color: #EFE9E5;
+                border: #76533E 2px solid;
+                border-radius: 8px;
+                max-height: 250px;
+                overflow-y: auto;
+                z-index: 100;
+                box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+            }
+
+            .filtroStatusOpcao {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                padding: 10px 12px;
+                cursor: pointer;
+                font-family: 'Montserrat';
+                font-size: 0.9rem;
+                color: #56270B;
+                transition: background-color 0.2s ease;
+            }
+
+            .filtroStatusOpcao:hover {
+                background-color: #D1C8C2;
+            }
+
+            .filtroStatusOpcao input[type="checkbox"] {
+                cursor: pointer;
+            }
+
+            .filtroStatusOpcao label {
+                cursor: pointer;
+                margin: 0;
+                font-weight: normal;
+            }
+
             .btnPesquisar{
                 width: 100%;
                 height: 40px;
