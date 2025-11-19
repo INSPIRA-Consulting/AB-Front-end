@@ -330,8 +330,8 @@
     background: #fff;
     cursor: pointer;
     transition: border-color 0.2s;
-    min-width: 160px;
-    width: 170px;
+    min-width: 180px;
+    width: 190px;
     box-shadow: none;
 }
 

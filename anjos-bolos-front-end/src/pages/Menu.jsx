@@ -18,7 +18,7 @@ export function Menu(props) {
     const [showNotification, setShowNotification] = useState(false);
     const [notificacoes, setNotificacoes] = useState({
         hoje: 0,
-        pendentes: 0,
+        totalEncomendas: 0,
         pendentesPagamento: 0
     });
 
@@ -37,34 +37,58 @@ export function Menu(props) {
                 hoje.setHours(0, 0, 0, 0);
                 const hojeStr = hoje.toISOString().slice(0, 10);
 
+                console.log('Total de pedidos:', pedidos.length);
+                console.log('Data de hoje:', hojeStr);
+
                 let hojeCount = 0;
-                let pendentesCount = 0;
+                let totalEncomendasCount = 0;
                 let pendentesPagamentoCount = 0;
 
                 pedidos.forEach(pedido => {
                     const dataRetirada = pedido.dataRetirada ? pedido.dataRetirada.slice(0, 10) : null;
+                    const dataPedido = pedido.dataPedido ? pedido.dataPedido.slice(0, 10) : null;
                     const status = (pedido.status || '').toUpperCase();
-                    // Encomenda para hoje
-                    if (dataRetirada === hojeStr && status !== 'CANCELADO') {
-                        hojeCount++;
+                    
+                    console.log('Pedido:', pedido.id, 'dataRetirada:', dataRetirada, 'dataPedido:', dataPedido, 'status:', status);
+                    
+                    // Verificar se é encomenda (dataRetirada > dataPedido)
+                    const isEncomenda = dataRetirada && dataPedido && new Date(dataRetirada) > new Date(dataPedido);
+                    
+                    console.log('  É encomenda?', isEncomenda);
+                    
+                    // Contar encomendas futuras (não canceladas e não finalizadas)
+                    if (isEncomenda && status !== 'CANCELADO' && status !== 'FINALIZADO') {
+                        const dataRetiradaDate = new Date(dataRetirada + 'T00:00:00');
+                        
+                        // Total de encomendas (dataRetirada >= hoje)
+                        if (dataRetiradaDate >= hoje) {
+                            totalEncomendasCount++;
+                            console.log('  -> Encomenda ativa contabilizada');
+                        }
+                        // Encomendas para hoje
+                        if (dataRetirada === hojeStr) {
+                            hojeCount++;
+                            console.log('  -> Encomenda para hoje contabilizada');
+                        }
                     }
-                    // Encomenda pendente (não finalizado nem cancelado)
-                    if (status === 'PENDENTE' || status === 'PENDENTE_PAGAMENTO') {
-                        pendentesCount++;
-                    }
-                    // Pagamento pendente
-                    if (status === 'PENDENTE_PAGAMENTO') {
+                    
+                    // Pagamento pendente (independente de ser encomenda ou não, mas não cancelado nem finalizado)
+                    if ((status === 'PENDENTE_PAGAMENTO' || status === 'PENDENTEPAGAMENTO' || status.includes('PENDENTE')) && status !== 'CANCELADO' && status !== 'FINALIZADO') {
                         pendentesPagamentoCount++;
+                        console.log('  -> Pendente de pagamento contabilizada');
                     }
                 });
 
+                console.log('Resultado final:', { hojeCount, totalEncomendasCount, pendentesPagamentoCount });
+
                 setNotificacoes({
                     hoje: hojeCount,
-                    pendentes: pendentesCount,
+                    totalEncomendas: totalEncomendasCount,
                     pendentesPagamento: pendentesPagamentoCount
                 });
             } catch (err) {
-                setNotificacoes({ hoje: 0, pendentes: 0, pendentesPagamento: 0 });
+                console.error('Erro ao buscar notificações:', err);
+                setNotificacoes({ hoje: 0, totalEncomendas: 0, pendentesPagamento: 0 });
             }
         }
         fetchNotificacoes();
@@ -81,7 +105,7 @@ export function Menu(props) {
             {/* Card de Notificações Fixo */}
 
             {/* Notificações dinâmicas - só exibe se houver notificações */}
-            {(notificacoes.hoje > 0 || notificacoes.pendentes > 0 || notificacoes.pendentesPagamento > 0) && (
+            {(notificacoes.hoje > 0 || notificacoes.totalEncomendas > 0 || notificacoes.pendentesPagamento > 0) && (
                 <div 
                     className={`${styles.notificationCard} ${showNotification ? styles.notificationShow : ''}`}
                     onClick={() => navigate('/encomendas')}
@@ -93,7 +117,7 @@ export function Menu(props) {
                                 <path d="M13.73 21C13.5542 21.3031 13.3019 21.5547 12.9982 21.7295C12.6946 21.9044 12.3504 21.9965 12 21.9965C11.6496 21.9965 11.3054 21.9044 11.0018 21.7295C10.6982 21.5547 10.4458 21.3031 10.27 21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                             </svg>
                             <span className={styles.notificationBadge}>
-                                {notificacoes.hoje + notificacoes.pendentes + notificacoes.pendentesPagamento}
+                                {notificacoes.hoje + notificacoes.totalEncomendas + notificacoes.pendentesPagamento}
                             </span>
                         </div>
                         <h3 className={styles.notificationTitle}>Notificações</h3>
@@ -103,15 +127,23 @@ export function Menu(props) {
                             <div className={styles.notificationItem}>
                                 <div className={styles.notificationDotRed}></div>
                                 <div className={styles.notificationText}>
-                                    <strong>{notificacoes.hoje} encomenda{notificacoes.hoje > 1 ? 's' : ''}</strong> pendente{notificacoes.hoje > 1 ? 's' : ''} para hoje
+                                    {notificacoes.hoje === 1 ? (
+                                        <>{notificacoes.hoje} Encomenda <strong>Pendente para Hoje</strong></>
+                                    ) : (
+                                        <>{notificacoes.hoje} Encomendas <strong>Pendentes para Hoje</strong></>
+                                    )}
                                 </div>
                             </div>
                         )}
-                        {notificacoes.pendentes > 0 && (
+                        {notificacoes.totalEncomendas > 0 && (
                             <div className={styles.notificationItem}>
                                 <div className={styles.notificationDotOrange}></div>
                                 <div className={styles.notificationText}>
-                                    <strong>{notificacoes.pendentes} encomenda{notificacoes.pendentes > 1 ? 's' : ''}</strong> pendente{notificacoes.pendentes > 1 ? 's' : ''}
+                                    {notificacoes.totalEncomendas === 1 ? (
+                                        <>{notificacoes.totalEncomendas} Encomenda <strong>Pendente no Total</strong></>
+                                    ) : (
+                                        <>{notificacoes.totalEncomendas} Encomendas <strong>Pendentes no Total</strong></>
+                                    )}
                                 </div>
                             </div>
                         )}
@@ -119,7 +151,11 @@ export function Menu(props) {
                             <div className={styles.notificationItem}>
                                 <div className={styles.notificationDotOrange}></div>
                                 <div className={styles.notificationText}>
-                                    <strong>{notificacoes.pendentesPagamento} pedido{notificacoes.pendentesPagamento > 1 ? 's' : ''}</strong> pendente{notificacoes.pendentesPagamento > 1 ? 's' : ''} de pagamento
+                                    {notificacoes.pendentesPagamento === 1 ? (
+                                        <>{notificacoes.pendentesPagamento} Pedido <strong>Pendente de Pagamento</strong></>
+                                    ) : (
+                                        <>{notificacoes.pendentesPagamento} Pedidos <strong>Pendentes de Pagamento</strong></>
+                                    )}
                                 </div>
                             </div>
                         )}

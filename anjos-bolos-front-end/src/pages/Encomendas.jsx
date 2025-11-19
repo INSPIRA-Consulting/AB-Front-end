@@ -5,9 +5,19 @@ import { FaRegCalendarAlt, FaSearch, FaLock, FaLockOpen } from "react-icons/fa";
 import { useDocumentTitle } from "../hooks/useDocumentTitle";
 import api from '../provider/api';
 import { ModernToast } from '../components/ModernToast';
+import ModalItensStyles from '../styles/ModalItensPedido.module.css';
+import { Modal } from '../components/Modal';
 
 export function Encomendas(props) {
   useDocumentTitle(props.titulo);
+
+  // Função para formatar status para exibição
+  const formatarStatusParaExibicao = (status) => {
+    if (status === 'Pendente de Pagamento') {
+      return 'Pendente Pag';
+    }
+    return status;
+  };
 
   // Função para obter o primeiro dia do mês atual no formato yyyy-MM-dd
   const getPrimeiroDiaDoMes = () => {
@@ -56,6 +66,12 @@ export function Encomendas(props) {
   const [statusEditando, setStatusEditando] = useState({});
   
   const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
+
+  // Estado para modal de itens do pedido
+  const [modalItensOpen, setModalItensOpen] = useState(false);
+  const [itensPedidoModal, setItensPedidoModal] = useState([]);
+  const [pedidoIdModal, setPedidoIdModal] = useState(null);
+  const [dataRetiradaModal, setDataRetiradaModal] = useState('');
 
   const showToast = (message, type = 'success') => {
     setToast({ show: true, message, type });
@@ -387,7 +403,7 @@ export function Encomendas(props) {
           <h1>Pesquisar</h1>
           
           <div className={styles.filtroItem}>
-            <label>Data Início</label>
+            <label>Data do Pedido</label>
             <div className={styles.periodoDate}
               onClick={() => startInputRef.current && startInputRef.current.showPicker && startInputRef.current.showPicker()}>
               <FaRegCalendarAlt className={styles.calendarIcon} />
@@ -409,7 +425,7 @@ export function Encomendas(props) {
           </div>
 
           <div className={styles.filtroItem}>
-            <label>Data Final</label>
+            <label>Data de Retirada</label>
             <div
               className={styles.periodoDate}
               onClick={() => endInputRef.current && endInputRef.current.showPicker && endInputRef.current.showPicker()}
@@ -457,7 +473,7 @@ export function Encomendas(props) {
               >
                 <option value="Todos">Todos</option>
                 <option value="Confirmado">Confirmado</option>
-                <option value="Pendente de Pagamento">Pendente de Pagamento</option>
+                <option value="Pendente de Pagamento">Pendente Pag</option>
                 <option value="Cancelado">Cancelado</option>
                 <option value="Finalizado">Finalizado</option>
               </select>
@@ -523,7 +539,7 @@ export function Encomendas(props) {
                                   className={styles.statusSelectInline}
                                 >
                                   <option value="Confirmado">Confirmado</option>
-                                  <option value="Pendente de Pagamento">Pendente de Pagamento</option>
+                                  <option value="Pendente de Pagamento">Pendente Pag</option>
                                   <option value="Finalizado">Finalizado</option>
                                   <option value="Cancelado">Cancelado</option>
                                 </select>
@@ -548,7 +564,33 @@ export function Encomendas(props) {
                                 className={styles.btnIconRound}
                                 title="Visualizar"
                                 tabIndex={-1}
-                                onClick={() => {}}
+                                data-pedido-id={enc.pedidoId}
+                                onClick={async () => {
+                                  try {
+                                    const token = localStorage.getItem('token');
+                                    if (!token) {
+                                      console.error('Token não encontrado. Usuário não está logado.');
+                                      return;
+                                    }
+                                    setPedidoIdModal(enc.pedidoId);
+                                    setDataRetiradaModal(enc.dataRetirada);
+                                    setModalItensOpen(true);
+                                    setItensPedidoModal([]);
+                                    const resp = await api.get('/itens-pedido', {
+                                      headers: { Authorization: `Bearer ${token}` }
+                                    });
+                                    const todosItens = Array.isArray(resp.data) ? resp.data : [];
+                                    const itensFiltrados = todosItens.filter(item => Number(item.pedidoId) === Number(enc.pedidoId));
+                                    setItensPedidoModal(itensFiltrados);
+                                  } catch (err) {
+                                    setItensPedidoModal([]);
+                                    if (err.response && err.response.status === 204) {
+                                      setItensPedidoModal([]);
+                                    } else {
+                                      console.error('Erro ao buscar itens do pedido:', err);
+                                    }
+                                  }
+                                }}
                               >
                                 <FaSearch size={18} color="#7a5230" />
                               </button>
@@ -562,7 +604,7 @@ export function Encomendas(props) {
                                   className={styles.statusSelectInline}
                                 >
                                   <option value="Confirmado">Confirmado</option>
-                                  <option value="Pendente de Pagamento">Pendente de Pagamento</option>
+                                  <option value="Pendente de Pagamento">Pendente Pag</option>
                                   <option value="Finalizado">Finalizado</option>
                                   <option value="Cancelado">Cancelado</option>
                                 </select>
@@ -580,7 +622,33 @@ export function Encomendas(props) {
                                 className={styles.btnIconRound}
                                 title="Visualizar"
                                 tabIndex={-1}
-                                onClick={() => {}}
+                                data-pedido-id={enc.pedidoId}
+                                onClick={async () => {
+                                  try {
+                                    const token = localStorage.getItem('token');
+                                    if (!token) {
+                                      console.error('Token não encontrado. Usuário não está logado.');
+                                      return;
+                                    }
+                                    setPedidoIdModal(enc.pedidoId);
+                                    setDataRetiradaModal(enc.dataRetirada);
+                                    setModalItensOpen(true);
+                                    setItensPedidoModal([]);
+                                    const resp = await api.get('/itens-pedido', {
+                                      headers: { Authorization: `Bearer ${token}` }
+                                    });
+                                    const todosItens = Array.isArray(resp.data) ? resp.data : [];
+                                    const itensFiltrados = todosItens.filter(item => Number(item.pedidoId) === Number(enc.pedidoId));
+                                    setItensPedidoModal(itensFiltrados);
+                                  } catch (err) {
+                                    setItensPedidoModal([]);
+                                    if (err.response && err.response.status === 204) {
+                                      setItensPedidoModal([]);
+                                    } else {
+                                      console.error('Erro ao buscar itens do pedido:', err);
+                                    }
+                                  }
+                                }}
                               >
                                 <FaSearch size={18} color="#7a5230" />
                               </button>
@@ -604,6 +672,43 @@ export function Encomendas(props) {
         show={toast.show}
         onClose={() => setToast({ ...toast, show: false })}
       />
+
+      {/* Modal de Itens do Pedido */}
+      <Modal isOpen={modalItensOpen} onClose={() => setModalItensOpen(false)}>
+        <div className={ModalItensStyles.modalItensContent}>
+          <div className={ModalItensStyles.modalItensHeader}>
+            <h2>Encomenda - {dataRetiradaModal}</h2>
+          </div>
+          <div className={ModalItensStyles.tableItensWrapper}>
+            {itensPedidoModal.length === 0 ? (
+              <div className={ModalItensStyles.emptyItensState}>
+                <p>Nenhum item encontrado para esta encomenda.</p>
+              </div>
+            ) : (
+              <table className={ModalItensStyles.modalItensTable}>
+                <thead>
+                  <tr>
+                    <th>Produto</th>
+                    <th>Quantidade</th>
+                    <th>Preço Unitário</th>
+                    <th>Total</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {itensPedidoModal.map((item, idx) => (
+                    <tr key={idx}>
+                      <td>{item.produto || item.nomeProduto || item.descricao || '-'}</td>
+                      <td>{item.quantidade || 1}</td>
+                      <td>R$ {Number(item.precoUnitario || 0).toFixed(2)}</td>
+                      <td>R$ {(Number(item.precoUnitario || 0) * Number(item.quantidade || 1)).toFixed(2)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 
