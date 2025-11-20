@@ -123,7 +123,7 @@
 .qtdVendas label:last-child,
 .tipoVenda label:last-child {
   font-weight: normal;
-  color: #56270B;
+  color: #3A1709;
 }
 
 .nomeCliente {
@@ -137,7 +137,7 @@
 }
 
 .nomeCliente input {
-  color: #56270B;
+  color: #3A1709;
   font-size: 0.85rem;
   font-weight: normal;
   font-family: 'Montserrat';
@@ -208,7 +208,7 @@
   border: 2px solid #76533E;
   padding: 4px 8px;
   background: #EFE9E5;
-  color: #56270B;
+  color: #3A1709;
   font-family: 'Montserrat';
   font-size: 0.85rem;
   cursor: pointer;

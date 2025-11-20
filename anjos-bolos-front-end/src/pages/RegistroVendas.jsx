@@ -307,42 +307,30 @@ export function RegistroVendas(props) {
 
   const handleAdicionarItemBolo = () => {
     const id = festaMontada.id || (Date.now().toString(36) + Math.random().toString(36).slice(2, 8));
-
-    if (selectedMassa) {
-      setFestaMontada(prev => ({
-        ...prev,
-        id,
-        massa: [...(prev.massa || []), selectedMassa]
-      }));
-      setIsButtonActive(true);
-      setSelectedMassa('');
+    
+    const temAlgoSelecionado = selectedMassa || selectedRecheio || selectedCobertura;
+    
+    if (!temAlgoSelecionado) {
+      setToastMessage('Selecione uma massa, recheio ou cobertura antes de adicionar.');
+      setToastVisible(true);
       return;
     }
 
-    if (selectedRecheio) {
-      setFestaMontada(prev => ({
-        ...prev,
-        id,
-        recheio: [...(prev.recheio || []), selectedRecheio]
-      }));
-      setIsButtonActive(true);
-      setSelectedRecheio('');
-      return;
-    }
+    const novasMassas = selectedMassa ? [...(festaMontada.massa || []), selectedMassa] : festaMontada.massa || [];
+    const novosRecheios = selectedRecheio ? [...(festaMontada.recheio || []), selectedRecheio] : festaMontada.recheio || [];
+    const novasCoberturas = selectedCobertura ? [...(festaMontada.cobertura || []), selectedCobertura] : festaMontada.cobertura || [];
 
-    if (selectedCobertura) {
-      setFestaMontada(prev => ({
-        ...prev,
-        id,
-        cobertura: [...(prev.cobertura || []), selectedCobertura]
-      }));
-      setIsButtonActive(true);
-      setSelectedCobertura('');
-      return;
-    }
+    setFestaMontada({
+      id,
+      massa: novasMassas,
+      recheio: novosRecheios,
+      cobertura: novasCoberturas
+    });
 
-    setToastMessage('Selecione uma massa, recheio ou cobertura antes de adicionar.');
-    setToastVisible(true);
+    setIsButtonActive(true);
+    setSelectedMassa('');
+    setSelectedRecheio('');
+    setSelectedCobertura('');
   };
 
   const handleRemoverMontagem = () => {
@@ -351,50 +339,51 @@ export function RegistroVendas(props) {
   };
 
   const handleConfirmarBoloFesta = () => {
-    try {
-      const temMassa = festaMontada && (festaMontada.massa?.length > 0);
+    const temMassa = festaMontada && (festaMontada.massa?.length > 0);
 
-      if (!temMassa) {
-        throw new Error('Selecione pelo menos uma massa para o bolo.');
-      }
-
-      const pesoNum = parseFloat(String(festaModalInput.peso || '').replace(',', '.'));
-      const precoNum = parseFloat(String(festaModalInput.preco || '').replace(',', '.'));
-
-      if (Number.isNaN(pesoNum) || pesoNum <= 0) {
-        throw new Error('Informe um peso válido para o bolo.');
-      }
-      if (Number.isNaN(precoNum) || precoNum <= 0) {
-        throw new Error('Informe um preço válido para o bolo.');
-      }
-
-      const bolo = {
-        categoriaEntrega: tipoVenda,
-        nome: 'Bolo de festa',
-        massa: festaMontada.massa.join(' | '),
-        recheio: festaMontada.recheio.join(' | '),
-        cobertura: festaMontada.cobertura.join(' | '),
-        peso: pesoNum,
-        valorFinal: precoNum,
-        observacao: festaModalInput.observacao || ''
-      };
-
-      const updatedVendas = [...vendas, bolo];
-      const payload = { vendas: updatedVendas, tipoVenda };
-      if (tipoVenda === 'Encomenda' && orderDetails) {
-        payload.orderDetails = orderDetails;
-      }
-      localStorage.setItem('resumoVendas', JSON.stringify(payload));
-
-      setFestaMontada({ id: null, massa: [], recheio: [], cobertura: [] });
-      setFestaModalInput({ peso: '', preco: '', observacao: '' });
-      setShowBoloFestaModal(false);
-
-      window.location.href = '/resumo-venda';
-    } catch (err) {
-      alert(err.message || 'Erro ao confirmar o bolo. Preencha todos os campos corretamente.');
-      console.error(err);
+    if (!temMassa) {
+      setToastMessage('Selecione pelo menos uma massa para o bolo.');
+      setToastVisible(true);
+      return;
     }
+
+    const pesoNum = parseFloat(String(festaModalInput.peso || '').replace(',', '.'));
+    const precoNum = parseFloat(String(festaModalInput.preco || '').replace(',', '.'));
+
+    if (Number.isNaN(pesoNum) || pesoNum <= 0) {
+      setToastMessage('Informe um peso válido para o bolo.');
+      setToastVisible(true);
+      return;
+    }
+    if (Number.isNaN(precoNum) || precoNum <= 0) {
+      setToastMessage('Informe um preço válido para o bolo.');
+      setToastVisible(true);
+      return;
+    }
+
+    const bolo = {
+      categoriaEntrega: tipoVenda,
+      nome: 'Bolo de festa',
+      massa: festaMontada.massa.join(' | '),
+      recheio: festaMontada.recheio.join(' | '),
+      cobertura: festaMontada.cobertura.join(' | '),
+      peso: pesoNum,
+      valorFinal: precoNum,
+      observacao: festaModalInput.observacao || ''
+    };
+
+    const updatedVendas = [...vendas, bolo];
+    const payload = { vendas: updatedVendas, tipoVenda };
+    if (tipoVenda === 'Encomenda' && orderDetails) {
+      payload.orderDetails = orderDetails;
+    }
+    localStorage.setItem('resumoVendas', JSON.stringify(payload));
+
+    setFestaMontada({ id: null, massa: [], recheio: [], cobertura: [] });
+    setFestaModalInput({ peso: '', preco: '', observacao: '' });
+    setShowBoloFestaModal(false);
+
+    window.location.href = '/resumo-venda';
   };
 
   const navigateToResumoVendas = async () => {
@@ -549,14 +538,6 @@ export function RegistroVendas(props) {
               <div>Nenhum bolo montado. Volte e adicione massa, recheio e cobertura antes de confirmar.</div>
             ) : (
               <div style={{ background: '#fff', border: '1px solid #e8e1d8', padding: 12, borderRadius: 6 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-                  <strong>Bolo</strong>
-                  <span style={{ color: '#6b3200' }}>
-                    {festaMontada.massa?.length ? festaMontada.massa.join(' | ') : '-'} /
-                    {festaMontada.recheio?.length ? festaMontada.recheio.join(' | ') : '-'} /
-                    {festaMontada.cobertura?.length ? festaMontada.cobertura.join(' | ') : '-'}
-                  </span>
-                </div>
                 <div style={{ display: 'flex', gap: 12 }}>
                   <div style={{ flex: 1 }}>
                     <label>Peso (kg)</label>
