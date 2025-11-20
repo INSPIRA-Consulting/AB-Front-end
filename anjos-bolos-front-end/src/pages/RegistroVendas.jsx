@@ -4,8 +4,12 @@ import { Navbar } from "../components/Navbar";
 import styles from "../styles/RegistroVendas.module.css";
 import { Produto } from "../components/Produto";
 import { Modal } from "../components/Modal";
+import { ModernToast } from "../components/ModernToast";
 import api from '../provider/api';
 import { useDocumentTitle } from "../hooks/useDocumentTitle";
+import { GiWhisk } from "react-icons/gi";
+import { MdCake } from "react-icons/md";
+import { TbBowlSpoonFilled } from "react-icons/tb";
 
 export function RegistroVendas(props) {
   useDocumentTitle(props.titulo);
@@ -42,6 +46,9 @@ export function RegistroVendas(props) {
   const [selectedMassa, setSelectedMassa] = React.useState('');
   const [selectedRecheio, setSelectedRecheio] = React.useState('');
   const [selectedCobertura, setSelectedCobertura] = React.useState('');
+  const [toastVisible, setToastVisible] = React.useState(false);
+  const [toastMessage, setToastMessage] = React.useState('');
+
   const [festaMontada, setFestaMontada] = React.useState({
     id: null,
     massa: [],
@@ -334,7 +341,8 @@ export function RegistroVendas(props) {
       return;
     }
 
-    alert('Selecione uma massa, recheio ou cobertura antes de adicionar.');
+    setToastMessage('Selecione uma massa, recheio ou cobertura antes de adicionar.');
+    setToastVisible(true);
   };
 
   const handleRemoverMontagem = () => {
@@ -344,14 +352,10 @@ export function RegistroVendas(props) {
 
   const handleConfirmarBoloFesta = () => {
     try {
-      const temMontagem = festaMontada && (
-        (festaMontada.massa?.length > 0) &&
-        (festaMontada.recheio?.length > 0) &&
-        (festaMontada.cobertura?.length > 0)
-      );
+      const temMassa = festaMontada && (festaMontada.massa?.length > 0);
 
-      if (!temMontagem) {
-        throw new Error('Nenhum bolo completamente montado para confirmar.');
+      if (!temMassa) {
+        throw new Error('Selecione pelo menos uma massa para o bolo.');
       }
 
       const pesoNum = parseFloat(String(festaModalInput.peso || '').replace(',', '.'));
@@ -384,6 +388,7 @@ export function RegistroVendas(props) {
 
       setFestaMontada({ id: null, massa: [], recheio: [], cobertura: [] });
       setFestaModalInput({ peso: '', preco: '', observacao: '' });
+      setShowBoloFestaModal(false);
 
       window.location.href = '/resumo-venda';
     } catch (err) {
@@ -400,18 +405,16 @@ export function RegistroVendas(props) {
     );
 
     if (temMontagemParcial) {
-      const montagemCompleta = (
-        (festaMontada.massa?.length > 0) &&
-        (festaMontada.recheio?.length > 0) &&
-        (festaMontada.cobertura?.length > 0)
-      );
+      const temMassa = festaMontada.massa?.length > 0;
 
-      if (montagemCompleta) {
+      if (temMassa) {
         setShowBoloFestaModal(true);
         return;
       }
 
-      alert('Complete a montagem do bolo (massa, recheio e cobertura) antes de registrar.');
+      setToastMessage('Selecione uma massa para completar a montagem do bolo.');
+      setToastVisible(true);
+      setTimeout(() => setToastVisible(false), 1000);
       return;
     }
 
@@ -448,9 +451,9 @@ export function RegistroVendas(props) {
   };
 
   const temMontagemAtual = festaMontada && (
-    (festaMontada.massa?.length) ||
-    (festaMontada.recheio?.length) ||
-    (festaMontada.cobertura?.length)
+    (festaMontada.massa?.length > 0) ||
+    (festaMontada.recheio?.length > 0) ||
+    (festaMontada.cobertura?.length > 0)
   );
 
   return (
@@ -593,7 +596,7 @@ export function RegistroVendas(props) {
               Cancelar
             </button>
             <button onClick={handleConfirmarBoloFesta} style={{ padding: '8px 12px' }}>
-              Confirmar e Continuar
+              Confirmar
             </button>
           </div>
         </div>
@@ -658,18 +661,17 @@ export function RegistroVendas(props) {
 
       {/* Seção de Montagem de Bolo de Festa */}
       {categoria === 'festa' && (
-        <div className={styles.festaAssembly} style={{ color: '#6b3200', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-          <h3 style={{ textAlign: 'center' }}>Montar Bolo de Festa</h3>
-          <div style={{ display: 'grid', gap: 12, maxWidth: 760, width: '100%' }}>
-            <div style={{ display: 'flex', gap: 12 }}>
-              <div style={{ flex: 1 }}>
-                <label>Massa</label>
+        <div className={styles.festaAssembly}>
+          <h3>Montar Bolo de Festa</h3>
+          <div className={styles.festaGrid}>
+            <div className={styles.festaSelects}>
+              <div className={styles.festaSelectGroup}>
+                <label><MdCake className={styles.labelIcon} /> Massa</label>
                 <select
                   value={selectedMassa}
                   onChange={e => setSelectedMassa(e.target.value)}
-                  style={{ width: '100%', padding: 8, marginTop: 6 }}
                 >
-                  <option value="">-- selecione massa --</option>
+                  <option value="">Selecione a Massa</option>
                   {massas.length ? massas.map(r => (
                     <option key={r.id} value={r.nome}>{r.nome}</option>
                   )) : produtos.filter(p => p.categoria === 'massa').map(p => (
@@ -677,14 +679,13 @@ export function RegistroVendas(props) {
                   ))}
                 </select>
               </div>
-              <div style={{ flex: 1 }}>
-                <label>Recheio</label>
+              <div className={styles.festaSelectGroup}>
+                <label><TbBowlSpoonFilled className={styles.labelIcon} /> Recheio</label>
                 <select
                   value={selectedRecheio}
                   onChange={e => setSelectedRecheio(e.target.value)}
-                  style={{ width: '100%', padding: 8, marginTop: 6 }}
                 >
-                  <option value="">-- selecione recheio --</option>
+                  <option value="">Selecione o Recheio</option>
                   {recheios.length ? recheios.map(r => (
                     <option key={r.id} value={r.nome}>{r.nome}</option>
                   )) : produtos.filter(p => p.categoria === 'recheio').map(p => (
@@ -692,14 +693,13 @@ export function RegistroVendas(props) {
                   ))}
                 </select>
               </div>
-              <div style={{ flex: 1 }}>
-                <label>Cobertura</label>
+              <div className={styles.festaSelectGroup}>
+                <label><GiWhisk className={styles.labelIconWhisk} /> Cobertura</label>
                 <select
                   value={selectedCobertura}
                   onChange={e => setSelectedCobertura(e.target.value)}
-                  style={{ width: '100%', padding: 8, marginTop: 6 }}
                 >
-                  <option value="">-- selecione cobertura --</option>
+                  <option value="">Selecione a Cobertura</option>
                   {coberturas.length ? coberturas.map(r => (
                     <option key={r.id} value={r.nome}>{r.nome}</option>
                   )) : produtos.filter(p => p.categoria === 'cobertura').map(p => (
@@ -709,44 +709,55 @@ export function RegistroVendas(props) {
               </div>
             </div>
 
-            <div style={{ display: 'flex', gap: 8 }}>
-              <button
-                type="button"
-                onClick={handleAdicionarItemBolo}
-                style={{ padding: '8px 12px' }}
-              >
-                Adicionar item
-              </button>
-            </div>
+            <button
+              type="button"
+              onClick={handleAdicionarItemBolo}
+              className={styles.festaAddButton}
+            >
+              Adicionar item
+            </button>
 
             {temMontagemAtual && (
-              <div style={{ marginTop: 12, background: '#fff', border: '2px solid #6b3200', borderRadius: 8, padding: 8 }}>
+              <div className={styles.montagemAtualCard}>
                 <strong>Montagem atual</strong>
-                <div style={{ marginTop: 8 }}>
-                  <div style={{ color: '#6b3200' }}>
-                    <strong>Massa:</strong> {festaMontada.massa?.length ? festaMontada.massa.join(' | ') : '-'}
-                  </div>
-                  <div style={{ color: '#6b3200' }}>
-                    <strong>Recheio:</strong> {festaMontada.recheio?.length ? festaMontada.recheio.join(' | ') : '-'}
-                  </div>
-                  <div style={{ color: '#6b3200' }}>
-                    <strong>Cobertura:</strong> {festaMontada.cobertura?.length ? festaMontada.cobertura.join(' | ') : '-'}
-                  </div>
-                  <div style={{ marginTop: 8 }}>
-                    <button
-                      type="button"
-                      onClick={handleRemoverMontagem}
-                      className={styles.removerButton}
-                    >
-                      Remover montagem
-                    </button>
-                  </div>
+                <div className={styles.montagemDetails}>
+                  {festaMontada.massa?.length > 0 && (
+                    <div className={styles.montagemItem}>
+                      <strong>Massa:</strong> <span>{festaMontada.massa.join(' | ')}</span>
+                    </div>
+                  )}
+                  {festaMontada.recheio?.length > 0 && (
+                    <div className={styles.montagemItem}>
+                      <strong>Recheio:</strong> <span>{festaMontada.recheio.join(' | ')}</span>
+                    </div>
+                  )}
+                  {festaMontada.cobertura?.length > 0 && (
+                    <div className={styles.montagemItem}>
+                      <strong>Cobertura:</strong> <span>{festaMontada.cobertura.join(' | ')}</span>
+                    </div>
+                  )}
+                  <button
+                    type="button"
+                    onClick={handleRemoverMontagem}
+                    className={styles.removerButton}
+                  >
+                    Remover montagem
+                  </button>
                 </div>
               </div>
             )}
           </div>
         </div>
       )}
+
+      {/* Toast de validação */}
+      <ModernToast
+        isVisible={toastVisible}
+        message={toastMessage}
+        type="error"
+        duration={1000}
+        onClose={() => setToastVisible(false)}
+      />
 
       {/* Lista de Produtos */}
       <div className={styles.produtos}>

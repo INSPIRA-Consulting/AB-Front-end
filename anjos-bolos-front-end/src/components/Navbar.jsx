@@ -1,4 +1,4 @@
-import Logo from "../assets/logo.png"
+import Logo from "../assets/anjos-bolos.png"
 import styles from "../styles/Navbar.module.css"
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";

@@ -144,22 +144,82 @@
 	letter-spacing: 0.2px;
 }
 
+/* Wrapper para tabela de recomendações com scroll */
+.recomendTableWrapper {
+	max-height: 130px;
+	overflow-y: auto;
+	overflow-x: hidden;
+	border-radius: 16px;
+	border: 2px solid #9D4F4F;
+	box-shadow: 0 2px 8px #0001;
+	display: block;
+}
+
+.recomendTableWrapper::-webkit-scrollbar {
+	width: 8px;
+	height: 8px;
+}
+
+.recomendTableWrapper::-webkit-scrollbar-track {
+	background: #f0f0f0;
+	border-radius: 10px;
+}
+
+.recomendTableWrapper::-webkit-scrollbar-thumb {
+	background: #9D4F4F;
+	border-radius: 10px;
+}
+
+.recomendTableWrapper::-webkit-scrollbar-thumb:hover {
+	background: #7d3f3f;
+}
+
 /* Tabela de recomendações harmonizada */
 .recomendTable {
 	width: 100%;
 	border-collapse: separate;
 	border-spacing: 0;
 	background: #fff;
-	border-radius: 16px;
-	box-shadow: 0 2px 8px #0001;
 	font-size: 1.08rem;
-	margin: 0 auto;
-	overflow: hidden;
-	border: 2px solid #9D4F4F;
+	margin: 0;
+	display: table;
+	table-layout: fixed;
 }
+
+.recomendTable thead {
+	position: sticky;
+	top: 0;
+	z-index: 10;
+	background: #9D4F4F;
+}
+
 .recomendTable th, .recomendTable td {
-	padding: 8px 18px;
+	padding: 8px 12px;
 	text-align: center;
+	word-wrap: break-word;
+	white-space: normal;
+	vertical-align: middle;
+}
+
+/* Larguras específicas para cada coluna */
+.recomendTable th:nth-child(1),
+.recomendTable td:nth-child(1) {
+	width: 15%;
+}
+
+.recomendTable th:nth-child(2),
+.recomendTable td:nth-child(2) {
+	width: 35%;
+}
+
+.recomendTable th:nth-child(3),
+.recomendTable td:nth-child(3) {
+	width: 25%;
+}
+
+.recomendTable th:nth-child(4),
+.recomendTable td:nth-child(4) {
+	width: 25%;
 }
 .recomendTable th {
 	background: #9D4F4F;

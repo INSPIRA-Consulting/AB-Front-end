@@ -1,5 +1,6 @@
 import React, { useRef, useState } from "react";
 import { Navbar } from "../components/Navbar";
+import { SuccessPopup } from "../components/SuccessPopup";
 import styles from "../styles/ResumoVendas.module.css";
 import { DateInput } from 'rsuite';
 import { FaRegCalendarAlt } from "react-icons/fa";
@@ -15,6 +16,9 @@ export function ResumoVenda() {
   // controles do menu lateral
   const [formaPagamentoSelect, setFormaPagamentoSelect] = React.useState('DINHEIRO');
   const [statusPedidoSelect, setStatusPedidoSelect] = React.useState('FINALIZADO');
+  
+  // Estado para o pop-up de sucesso
+  const [showSuccessPopup, setShowSuccessPopup] = React.useState(false);
 
   const handleVoltar = () => {
     window.location.href = '/registro-vendas';
@@ -312,8 +316,14 @@ export function ResumoVenda() {
         // sucesso
         localStorage.removeItem('resumoVendas');
         setVendas([]);
-        alert('Pedido e itens registrados com sucesso.');
-        window.location.href = '/registro-vendas';
+        
+        // Mostrar pop-up de sucesso
+        setShowSuccessPopup(true);
+        
+        // Redirecionar após 1 segundo
+        setTimeout(() => {
+          window.location.href = '/registro-vendas';
+        }, 1000);
       } catch (err) {
         console.error('Erro ao registrar pedido:', err);
         alert('Ocorreu um erro ao registrar o pedido. Veja o console para detalhes.');
@@ -324,6 +334,12 @@ export function ResumoVenda() {
   return (
     <div className={styles.containerResumoVendas}>
       <Navbar logado={true} />
+      
+      <SuccessPopup 
+        show={showSuccessPopup}
+        message="Pedido e itens registrados com sucesso!"
+        onClose={() => setShowSuccessPopup(false)}
+      />
       
       <div className={styles.headerContainer}>
         <button 

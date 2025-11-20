@@ -16,6 +16,8 @@
     font-weight: bold;
     color: #663b2b;
     margin-bottom: 0;
+    margin-top: 35px;
+    text-align: center;
 }
 
 h3{
@@ -31,25 +33,50 @@ h3{
     justify-content: space-between;
     padding-left: 10%;
     padding-right: 10%;
+    margin-top: 25px;
 
     h4 {
         font-family: 'Montserrat';
-        font-size: 1.5rem;
+        font-size: 1.2rem;
         color: #663b2b;
-        font-weight: normal;
-        margin-bottom: 0.5rem;
-        margin-top: 0.5rem;
+        font-weight: 600;
+        margin-bottom: 10px;
+        margin-top: 0;
     }
 
     select {
         width: 100%;
-        padding: 12px 12px;
-        font-size: 1rem;
+        max-width: 320px;
+        padding: 12px 16px;
+        font-size: 0.95rem;
+        font-family: 'Montserrat';
+        font-weight: 500;
         color: #FFFFFF;
-        border-radius: 8px;
+        border-radius: 12px;
         outline: none;
-        background-color: #56270B;
-        box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.8);
+        background: linear-gradient(135deg, #56270B 0%, #3A1709 100%);
+        border: 2px solid #3A1709;
+        box-shadow: 0px 2px 8px rgba(58, 23, 9, 0.3);
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    select:hover {
+        background: linear-gradient(135deg, #663b2b 0%, #4A1F0F 100%);
+        border-color: #4A1F0F;
+        box-shadow: 0px 4px 12px rgba(58, 23, 9, 0.4);
+        transform: translateY(-2px);
+    }
+
+    select:focus {
+        border-color: #4A1F0F;
+        box-shadow: 0 0 0 3px rgba(74, 31, 15, 0.2);
+    }
+
+    select option {
+        background-color: #fff;
+        color: #56270B;
+        padding: 10px;
     }
 
     button {
@@ -59,11 +86,16 @@ h3{
         color: #FFFFFF;
         border-radius: 8px;
         outline: none;
-        background-color: #663b2B;
+        background-color: #4A1F0F;
         border: none;
         cursor: pointer;
         box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.8);
         margin-top: 3.5%;
+        transition: background-color 0.3s ease;
+    }
+
+    button:hover:not(.inactiveButton) {
+        background-color: #3A1709;
     }
 
     .inactiveButton{
@@ -301,4 +333,214 @@ h3{
 
 .modalConfirmButton:hover {
     background: #56270B;
+}
+
+/* Estilos da Seção de Montagem de Bolo de Festa */
+.festaAssembly {
+    color: #663b2b;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin: 15px 10% 40px 10%;
+    padding: 25px 30px 30px 30px;
+    background: linear-gradient(135deg, #F5F1ED 0%, #EFE9E5 100%);
+    border-radius: 20px;
+    box-shadow: 0 4px 12px rgba(86, 39, 11, 0.15);
+}
+
+.festaAssembly h3 {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #663b2b;
+    text-align: center;
+    margin-top: -15px;
+    margin-bottom: 30px;
+}
+
+.festaGrid {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    max-width: 900px;
+    width: 100%;
+}
+
+.festaSelects {
+    display: flex;
+    gap: 20px;
+    width: 100%;
+    margin-top: 15px;
+}
+
+.festaSelectGroup {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.festaSelectGroup label {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 0.95rem;
+    font-weight: bold;
+    color: #56270B;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+.labelIcon {
+    font-size: 1.3rem;
+    color: #56270B;
+}
+
+.labelIconWhisk {
+    font-size: 1.5rem;
+    color: #56270B;
+}
+
+.festaSelectGroup select {
+    width: 100%;
+    padding: 12px 14px;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 0.9rem;
+    color: #56270B;
+    background: white;
+    border: 2px solid #c4b5a3;
+    border-radius: 10px;
+    outline: none;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.festaSelectGroup select:hover {
+    border-color: #8b5a2b;
+    box-shadow: 0 2px 8px rgba(86, 39, 11, 0.15);
+}
+
+.festaSelectGroup select:focus {
+    border-color: #663b2b;
+    box-shadow: 0 0 0 3px rgba(102, 59, 43, 0.1);
+}
+
+.festaAddButton {
+    padding: 12px 28px;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 1rem;
+    font-weight: 600;
+    color: white;
+    background: linear-gradient(135deg, #663b2b 0%, #56270B 100%);
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 3px 8px rgba(86, 39, 11, 0.25);
+    align-self: center;
+    width: fit-content;
+    min-width: 180px;
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.festaAddButton:hover {
+    background: linear-gradient(135deg, #56270B 0%, #3A1709 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 5px 12px rgba(86, 39, 11, 0.35);
+}
+
+.festaAddButton:active {
+    transform: translateY(0);
+}
+
+.montagemAtualCard {
+    margin-top: 20px;
+    background: white;
+    border: 2px solid #c4b5a3;
+    border-radius: 15px;
+    padding: 20px;
+    box-shadow: 0 3px 10px rgba(86, 39, 11, 0.1);
+}
+
+.montagemAtualCard > strong {
+    display: block;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 1.1rem;
+    font-weight: bold;
+    color: #663b2b;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #EFE9E5;
+}
+
+.montagemDetails {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+
+.montagemItem {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 0.95rem;
+    color: #56270B;
+    line-height: 1.8;
+    padding: 10px 15px;
+    background: linear-gradient(to right, #F9F6F3 0%, transparent 100%);
+    border-left: 3px solid #c4b5a3;
+    margin-bottom: 8px;
+    border-radius: 4px;
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    text-align: left;
+}
+
+.montagemItem:last-of-type {
+    margin-bottom: 0;
+}
+
+.montagemItem strong {
+    font-weight: bold;
+    color: #663b2b;
+    min-width: 85px;
+    flex-shrink: 0;
+}
+
+.montagemItem span {
+    color: #56270B;
+    font-weight: normal;
+    flex: 1;
+    text-align: left;
+}
+
+.removerButton {
+    margin-top: 15px;
+    padding: 8px 20px;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: white;
+    background: linear-gradient(135deg, #d9534f 0%, #c9302c 100%);
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 6px rgba(217, 83, 79, 0.3);
+    width: fit-content;
+    min-width: 150px;
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.removerButton:hover {
+    background: linear-gradient(135deg, #c9302c 0%, #ac2925 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(217, 83, 79, 0.4);
+}
+
+.removerButton:active {
+    transform: translateY(0);
 }

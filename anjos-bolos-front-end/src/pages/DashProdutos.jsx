@@ -67,11 +67,7 @@ export function DashProdutos(props) {
 	const [showRecomendFilter, setShowRecomendFilter] = useState(false);
 	const [showCategoriasFilter, setShowCategoriasFilter] = useState(false);
 	const [selectedRecomendFilters, setSelectedRecomendFilters] = useState([
-		"Bolos Tradicionais",
-		"Bebidas", 
-		"Salgados",
-		"Bolos de Pote",
-		"Bolos de Festa"
+		"Bolos Tradicionais"
 	]);
 	const [selectedCategoriaType, setSelectedCategoriaType] = useState("Categorias de Produtos");
 	
@@ -124,26 +120,27 @@ export function DashProdutos(props) {
 	const fetchRecomendacoesFeriados = async () => {
 		try {
 			setLoadingRecomendacoes(true);
-			const token = localStorage.getItem('token');
-			const resp = await api.get('/produtos-recomendados-feriados', {
-				headers: { Authorization: `Bearer ${token}` }
-			});
+			console.log('🎉 Buscando produtos recomendados para feriados...');
+			
+			const resp = await api.get('/dashboards/produtos-recomendados-feriados');
+			
+			console.log('✅ Resposta do endpoint:', resp.data);
+			
 			const lista = Array.isArray(resp.data) ? resp.data : [];
+			
 			// Mapear para o formato usado pela tabela
 			const mapped = lista.map(item => ({
-				data: item.dataFeriado || item.data || '',
+				data: item.dataFeriado || '',
 				feriado: item.feriado || '',
 				categoria: item.categoria || '',
 				produto: item.produto || ''
 			}));
+			
+			console.log('📊 Recomendações mapeadas:', mapped);
 			setRecomendacoes(mapped);
 		} catch (error) {
-			if (error?.response?.status === 404) {
-				setRecomendacoes([]);
-			} else {
-				console.error("❌ Erro ao buscar recomendações de feriados:", error);
-				setRecomendacoes([]);
-			}
+			console.error("❌ Erro ao buscar recomendações de feriados:", error);
+			setRecomendacoes([]);
 		} finally {
 			setLoadingRecomendacoes(false);
 		}
@@ -329,7 +326,7 @@ export function DashProdutos(props) {
 							</div>
 						)}
 
-						<div style={{ overflowX: "auto" }}>
+						<div className={styles.recomendTableWrapper}>
 							<table className={styles.recomendTable}>
 								<thead>
 									<tr>
