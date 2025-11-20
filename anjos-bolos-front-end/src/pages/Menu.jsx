@@ -148,7 +148,8 @@ export function Menu(props) {
                                     e.stopPropagation();
                                     const hoje = new Date();
                                     const dataHoje = hoje.toISOString().split('T')[0];
-                                    navigate(`/encomendas?dataRetiradaInicio=${dataHoje}&dataRetiradaFim=${dataHoje}`);
+                                    // Navegar para encomendas de hoje, filtrando apenas Confirmado e Pendente de Pagamento
+                                    navigate(`/encomendas?dataRetiradaInicio=${dataHoje}&dataRetiradaFim=${dataHoje}&status=CONFIRMADO,PENDENTE_PAGAMENTO`);
                                 }}
                             >
                                 <div className={styles.notificationDotRed}></div>
