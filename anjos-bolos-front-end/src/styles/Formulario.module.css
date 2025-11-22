@@ -3,6 +3,7 @@
 .pageContainer {
   background: #f9f7f4;
   min-height: 100vh;
+  height: 100vh;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   overflow: hidden;
 }

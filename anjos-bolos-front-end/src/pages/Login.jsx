@@ -55,9 +55,10 @@ export function Login(props) {
         }
     }
     return(
-        <><Navbar hideMenuButton={true} />
-        <div className={styles.login}>
-        <div className={styles.container} style={{ width: "580px" }}>
+        <div className={styles.pageContainer}>
+            <Navbar hideMenuButton={true} />
+            <div className={styles.login}>
+                <div className={styles.container} style={{ width: "580px" }}>
             <h1>{props.titulo}</h1>
 
             <div className={styles["input-grid"]}>
@@ -87,7 +88,8 @@ export function Login(props) {
                 onClose={() => setToastErro(false)}
                 duration={1500}
             />
+                </div>
             </div>
-        </div></>
+        </div>
     )
 }

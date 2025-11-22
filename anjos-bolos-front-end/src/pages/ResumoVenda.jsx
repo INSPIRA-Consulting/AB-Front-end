@@ -445,7 +445,7 @@ export function ResumoVenda() {
                             </select>
                           </div>
                           <div className={styles.valorTotal}>
-                            <label>R$ {vendas.reduce((total, v) => total + (v.valorFinal || 0), 0)},00</label>
+                            <label>R$ {vendas.reduce((total, v) => total + (v.valorFinal || 0), 0).toFixed(2).replace('.', ',')}</label>
                           </div>
                           {/* <label>Nome Cliente (opcional):</label>
                           <input type="text" /> */}
