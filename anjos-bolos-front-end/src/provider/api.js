@@ -2,15 +2,24 @@ import axios from "axios";
 
 const IP_API = import.meta.env.VITE_IP_API || 'localhost';
 const BASE_URL = `/api`;
+const EMAIL_BASE_URL = `/email`;
 
 console.log('🔧 API Configuration:', {
     VITE_IP_API: import.meta.env.VITE_IP_API,
     IP_API,
-    BASE_URL
+    BASE_URL,
+    EMAIL_BASE_URL
 });
 
 const api = axios.create({
     baseURL: BASE_URL,
+    headers: {
+        'Content-Type': 'application/json'
+    }
+});
+
+const email = axios.create({
+    baseURL: EMAIL_BASE_URL,
     headers: {
         'Content-Type': 'application/json'
     }
@@ -30,14 +39,20 @@ api.interceptors.request.use(
     }
 );
 
-api.interceptors.response.use(
-    (resp) => resp,
-    (error) => {
-        if (error?.response?.status === 404 || error?.response?.status === 400) {
-            console.warn("API request failed:", error.response.status, error.config?.url);
+const attachResponseInterceptor = (client, label) => {
+    client.interceptors.response.use(
+        (resp) => resp,
+        (error) => {
+            if (error?.response?.status === 404 || error?.response?.status === 400) {
+                console.warn(`${label} request failed:`, error.response.status, error.config?.url);
+            }
+            return Promise.reject(error);
         }
-        return Promise.reject(error);
-    }
-);
+    );
+};
 
+attachResponseInterceptor(api, 'API');
+attachResponseInterceptor(email, 'EMAIL');
+
+export { email };
 export default api;
