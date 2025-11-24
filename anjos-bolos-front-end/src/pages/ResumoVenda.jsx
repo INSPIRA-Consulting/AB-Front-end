@@ -5,7 +5,7 @@ import styles from "../styles/ResumoVendas.module.css";
 import { DateInput } from 'rsuite';
 import { FaRegCalendarAlt } from "react-icons/fa";
 import { useEffect } from "react";
-import api from '../provider/api';
+import api, { email as emailApi } from '../provider/api';
 
 export function ResumoVenda() {
 
@@ -113,6 +113,18 @@ export function ResumoVenda() {
 
         const parsed = JSON.parse(raw);
         const vendasPayload = Array.isArray(parsed.vendas) ? parsed.vendas : (Array.isArray(parsed) ? parsed : []);
+
+        if (Array.isArray(vendasPayload) && vendasPayload.length > 5) {
+          const totalProdutos = vendasPayload.reduce((acc, venda) => acc + Number(venda.quantidade || 1), 0);
+          try {
+            await emailApi.post('/resumo', {
+              qtdVendas: vendasPayload.length,
+              totalProdutos
+            });
+          } catch (emailErr) {
+            console.error('Erro ao enviar email de resumo:', emailErr);
+          }
+        }
 
         // montar payload do pedido
         const now = new Date();
