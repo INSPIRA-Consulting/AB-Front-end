@@ -67,11 +67,7 @@ export function DashProdutos(props) {
 	const [showRecomendFilter, setShowRecomendFilter] = useState(false);
 	const [showCategoriasFilter, setShowCategoriasFilter] = useState(false);
 	const [selectedRecomendFilters, setSelectedRecomendFilters] = useState([
-		"Bolos Tradicionais",
-		"Bebidas", 
-		"Salgados",
-		"Bolos de Pote",
-		"Bolos de Festa"
+		"Bolos Tradicionais"
 	]);
 	const [selectedCategoriaType, setSelectedCategoriaType] = useState("Categorias de Produtos");
 	
@@ -124,77 +120,24 @@ export function DashProdutos(props) {
 	const fetchRecomendacoesFeriados = async () => {
 		try {
 			setLoadingRecomendacoes(true);
-			const anoAtual = new Date().getFullYear();
-			const token = localStorage.getItem('token');
+			console.log('🎉 Buscando produtos recomendados para feriados...');
 			
-			console.log('🎉 Buscando feriados do ano:', anoAtual);
+			const resp = await api.get('/dashboards/produtos-recomendados-feriados');
 			
-			// Buscar feriados do ano atual
-			const feriadosResponse = await api.get(`/feriados-nacionais?ano=${anoAtual}`, {
-				headers: { Authorization: `Bearer ${token}` }
-			});
+			console.log('✅ Resposta do endpoint:', resp.data);
 			
-			const feriados = feriadosResponse.data;
-			console.log('✅ Feriados recebidos:', feriados);
+			const lista = Array.isArray(resp.data) ? resp.data : [];
 			
-			if (!Array.isArray(feriados) || feriados.length === 0) {
-				setRecomendacoes([]);
-				return;
-			}
+			// Mapear para o formato usado pela tabela
+			const mapped = lista.map(item => ({
+				data: item.dataFeriado || '',
+				feriado: item.feriado || '',
+				categoria: item.categoria || '',
+				produto: item.produto || ''
+			}));
 			
-			// Categorias que queremos analisar
-			const categorias = [
-				{ nome: "Bolo Tradicional", display: "Bolos Tradicionais" },
-				{ nome: "Bebida", display: "Bebidas" },
-				{ nome: "Salgados", display: "Salgados" },
-				{ nome: "Bolo de Pote", display: "Bolos de Pote" },
-				{ nome: "Bolo de Festa", display: "Bolos de Festa" }
-			];
-			
-			const recomendacoesTemp = [];
-			
-			// Para cada feriado, buscar produto mais vendido de cada categoria
-			for (const feriado of feriados) {
-				const dataFeriado = feriado.date;
-				
-				console.log(`📅 Processando feriado: ${feriado.name} (${dataFeriado})`);
-				
-				// Para cada categoria, buscar o produto mais vendido
-				for (const categoria of categorias) {
-					try {
-						const produtosResponse = await api.get(
-							`/dashboards/produtos-mais-vendidos?inicio=${dataFeriado}&fim=${dataFeriado}`,
-							{ headers: { Authorization: `Bearer ${token}` } }
-						);
-						
-						// Filtrar por categoria
-						const produtosDaCategoria = produtosResponse.data.filter(
-							p => p.categoriaProduto === categoria.nome
-						);
-						
-						// Pegar o primeiro produto (mais vendido)
-						if (produtosDaCategoria.length > 0) {
-							const produtoMaisVendido = produtosDaCategoria[0];
-							
-							recomendacoesTemp.push({
-								data: dataFeriado,
-								feriado: feriado.name,
-								categoria: categoria.display,
-								produto: produtoMaisVendido.nomeProduto,
-								quantidade: produtoMaisVendido.quantidadeVendida
-							});
-							
-							console.log(`✅ ${categoria.display}: ${produtoMaisVendido.nomeProduto} (${produtoMaisVendido.quantidadeVendida} unidades)`);
-						}
-					} catch (error) {
-						console.log(`⚠️ Nenhum produto encontrado para ${categoria.display} em ${feriado.name}`);
-					}
-				}
-			}
-			
-			console.log('📊 Total de recomendações geradas:', recomendacoesTemp.length);
-			setRecomendacoes(recomendacoesTemp);
-			
+			console.log('📊 Recomendações mapeadas:', mapped);
+			setRecomendacoes(mapped);
 		} catch (error) {
 			console.error("❌ Erro ao buscar recomendações de feriados:", error);
 			setRecomendacoes([]);
@@ -383,7 +326,7 @@ export function DashProdutos(props) {
 							</div>
 						)}
 
-						<div style={{ overflowX: "auto" }}>
+						<div className={styles.recomendTableWrapper}>
 							<table className={styles.recomendTable}>
 								<thead>
 									<tr>

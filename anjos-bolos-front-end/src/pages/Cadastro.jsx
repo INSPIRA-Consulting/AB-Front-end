@@ -1,4 +1,4 @@
-import styles from "../styles/Formulario.module.css";
+import styles from "../styles/Cadastro.module.css";
 import { useState } from "react";
 import api from "../provider/api";
 import { TextBox } from "../components/TextBox";
@@ -70,8 +70,8 @@ export function Cadastro(props) {
     };
 
     return(
-        <><Navbar />
         <div className={styles.pageContainer}>
+            <Navbar />
             <div className={styles.headerContainer}>
                 <button 
                     className={styles.voltarButton}
@@ -81,7 +81,7 @@ export function Cadastro(props) {
                 </button>
             </div>
             
-        <div className={styles.cadastro}>
+            <div className={styles.cadastro}>
         <div className={styles.container}>
             <h1>{props.titulo}</h1>
 
@@ -121,8 +121,8 @@ export function Cadastro(props) {
                 type="error"
                 duration={1500}
             />
+            </div>
+            </div>
         </div>
-        </div>
-        </div></>
     )
 }
