@@ -10,6 +10,8 @@ import { useDocumentTitle } from "../hooks/useDocumentTitle";
 import { GiWhisk } from "react-icons/gi";
 import { MdCake } from "react-icons/md";
 import { TbBowlSpoonFilled } from "react-icons/tb";
+import { generateMenuPDF } from '../utils/generateMenuPDF';
+import Logo from '../assets/anjos-bolos.png';
 
 export function RegistroVendas(props) {
   useDocumentTitle(props.titulo);
@@ -48,6 +50,7 @@ export function RegistroVendas(props) {
   const [selectedCobertura, setSelectedCobertura] = React.useState('');
   const [toastVisible, setToastVisible] = React.useState(false);
   const [toastMessage, setToastMessage] = React.useState('');
+  const [toastType, setToastType] = React.useState('error');
 
   const [festaMontada, setFestaMontada] = React.useState({
     id: null,
@@ -338,6 +341,20 @@ export function RegistroVendas(props) {
     setIsButtonActive(vendas.length > 0);
   };
 
+  const handleDownloadCardapio = async () => {
+    try {
+      await generateMenuPDF(produtos, Logo);
+      setToastType('success');
+      setToastMessage('Cardápio baixado com sucesso!');
+      setToastVisible(true);
+    } catch (error) {
+      console.error('Erro ao gerar cardápio:', error);
+      setToastType('error');
+      setToastMessage('Erro ao gerar cardápio. Tente novamente.');
+      setToastVisible(true);
+    }
+  };
+
   const handleConfirmarBoloFesta = () => {
     const temMassa = festaMontada && (festaMontada.massa?.length > 0);
 
@@ -458,13 +475,21 @@ export function RegistroVendas(props) {
             <option value="Encomenda">Encomenda</option>
           </select>
         </div>
-        <button
-          disabled={!isButtonActive}
-          className={!isButtonActive ? styles.inactiveButton : ''}
-          onClick={navigateToResumoVendas}
-        >
-          Registrar
-        </button>
+        <div className={styles.buttonGroup}>
+          <button
+            className={styles.downloadButton}
+            onClick={handleDownloadCardapio}
+          >
+            Download do Cardápio
+          </button>
+          <button
+            disabled={!isButtonActive}
+            className={!isButtonActive ? styles.inactiveButton : ''}
+            onClick={navigateToResumoVendas}
+          >
+            Registrar
+          </button>
+        </div>
       </div>
 
       {/* Modal de Encomenda */}
@@ -735,7 +760,7 @@ export function RegistroVendas(props) {
       <ModernToast
         isVisible={toastVisible}
         message={toastMessage}
-        type="error"
+        type={toastType}
         duration={1000}
         onClose={() => setToastVisible(false)}
       />
