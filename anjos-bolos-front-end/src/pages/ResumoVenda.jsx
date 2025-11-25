@@ -72,7 +72,7 @@ export function ResumoVenda() {
       .filter(Boolean);
   }
 
-  async function notifyHeavyPartyCake(venda) {
+  async function notifyHeavyPartyCake(venda, dataReferencia) {
     const payload = {
       pedido: {
         massas: parseOptionList(venda.massa),
@@ -82,6 +82,10 @@ export function ResumoVenda() {
         observacao: venda.observacao || 'Sem observação'
       }
     };
+
+    if (dataReferencia) {
+      payload.dataReferencia = dataReferencia;
+    }
 
     try {
       await emailApi.post('/bolos', payload);
@@ -153,6 +157,11 @@ export function ResumoVenda() {
           }
         }
 
+        const tipoVendaResumo = parsed.tipoVenda || (vendasPayload[vendasPayload.length - 1]?.categoriaEntrega) || null;
+        const dataReferencia = tipoVendaResumo === 'Encomenda'
+          ? (parsed.orderDetails?.date || null)
+          : null;
+
         const heavyPartyCakes = vendasPayload.filter(v => {
           const isBoloFesta = String(v?.nome || '').toLowerCase().includes('bolo de festa');
           const peso = Number(v?.peso) || 0;
@@ -160,7 +169,7 @@ export function ResumoVenda() {
         });
 
         for (const bolo of heavyPartyCakes) {
-          await notifyHeavyPartyCake(bolo);
+          await notifyHeavyPartyCake(bolo, dataReferencia);
         }
 
         // montar payload do pedido
