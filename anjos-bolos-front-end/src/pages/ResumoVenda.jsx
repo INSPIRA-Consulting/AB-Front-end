@@ -65,11 +65,13 @@ export function ResumoVenda() {
 
   function parseOptionList(value) {
     if (!value) return [];
-    if (Array.isArray(value)) return value.map(item => String(item).trim()).filter(Boolean);
-    return String(value)
-      .split('|')
-      .map(part => part.trim())
-      .filter(Boolean);
+    const toList = (arr) => arr
+      .map(item => String(item).trim())
+      .filter(Boolean)
+      .slice(0, 3);
+
+    if (Array.isArray(value)) return toList(value);
+    return toList(String(value).split('|'));
   }
 
   async function notifyHeavyPartyCake(venda, dataReferencia) {
