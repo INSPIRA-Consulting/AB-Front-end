@@ -63,6 +63,33 @@ export function ResumoVenda() {
     return `${digits.slice(0,3)}.${digits.slice(3,6)}.${digits.slice(6,9)}-${digits.slice(9)}`;
   }
 
+  function parseOptionList(value) {
+    if (!value) return [];
+    if (Array.isArray(value)) return value.map(item => String(item).trim()).filter(Boolean);
+    return String(value)
+      .split('|')
+      .map(part => part.trim())
+      .filter(Boolean);
+  }
+
+  async function notifyHeavyPartyCake(venda) {
+    const payload = {
+      pedido: {
+        massas: parseOptionList(venda.massa),
+        coberturas: parseOptionList(venda.cobertura),
+        recheios: parseOptionList(venda.recheio),
+        pesoKg: Number(venda.peso) || 0,
+        observacao: venda.observacao || 'Sem observação'
+      }
+    };
+
+    try {
+      await emailApi.post('/bolos', payload);
+    } catch (err) {
+      console.error('Erro ao notificar bolo de festa pesado:', err, payload);
+    }
+  }
+
   // Buscar cliente por CPF (usado na tela de resumo quando o usuário fornece CPF)
   async function fetchClientByCpfResumo(cpf) {
     try {
@@ -124,6 +151,16 @@ export function ResumoVenda() {
           } catch (emailErr) {
             console.error('Erro ao enviar email de resumo:', emailErr);
           }
+        }
+
+        const heavyPartyCakes = vendasPayload.filter(v => {
+          const isBoloFesta = String(v?.nome || '').toLowerCase().includes('bolo de festa');
+          const peso = Number(v?.peso) || 0;
+          return isBoloFesta && peso >= 2;
+        });
+
+        for (const bolo of heavyPartyCakes) {
+          await notifyHeavyPartyCake(bolo);
         }
 
         // montar payload do pedido
