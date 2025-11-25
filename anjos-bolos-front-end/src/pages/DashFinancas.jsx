@@ -96,6 +96,15 @@ export function DashFinancas(props) {
     // Hook de navegação
     const navigate = useNavigate();
     
+    // Função para formatar valor monetário com separador de milhares (1.000,00)
+    const formatarMoeda = (valor) => {
+        if (valor === null || valor === undefined) return 'R$ 0,00';
+        const numStr = valor.toFixed(2);
+        const [inteira, decimal] = numStr.split('.');
+        const inteirAFormatada = parseInt(inteira).toLocaleString('pt-BR');
+        return `R$ ${inteirAFormatada},${decimal}`;
+    };
+    
     // Função para buscar produto com menor margem de lucro
     const fetchMenorMargemLucro = async () => {
         try {
@@ -550,7 +559,7 @@ export function DashFinancas(props) {
                                     >
                                         <span className={styles.resumoItemLabel}>Entrada:</span>
                                         <span className={styles.resumoItemValue}>
-                                            {loadingResumo ? 'Carregando...' : (faturamento !== null && faturamento !== undefined) ? `R$ ${faturamento.toFixed(2).replace('.', ',')}` : 'R$ 0,00'}
+                                            {loadingResumo ? 'Carregando...' : formatarMoeda(faturamento)}
                                         </span>
                                     </div>
                                     <div 
@@ -560,7 +569,7 @@ export function DashFinancas(props) {
                                     >
                                         <span className={styles.resumoItemLabel}>Saída:</span>
                                         <span className={styles.resumoItemValue}>
-                                            {loadingResumo ? 'Carregando...' : (custos !== null && custos !== undefined) ? `R$ ${custos.toFixed(2).replace('.', ',')}` : 'R$ 0,00'}
+                                            {loadingResumo ? 'Carregando...' : formatarMoeda(custos)}
                                         </span>
                                     </div>
                                     <div 
@@ -575,7 +584,7 @@ export function DashFinancas(props) {
                                                 color: (lucro !== null && lucro !== undefined && lucro < 0) ? '#d32f2f' : 'inherit'
                                             }}
                                         >
-                                            {loadingResumo ? 'Carregando...' : (lucro !== null && lucro !== undefined) ? `R$ ${lucro.toFixed(2).replace('.', ',')}` : 'R$ 0,00'}
+                                            {loadingResumo ? 'Carregando...' : formatarMoeda(lucro)}
                                         </span>
                                     </div>
                                 </div>
