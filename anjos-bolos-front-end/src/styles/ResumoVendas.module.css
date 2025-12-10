@@ -23,22 +23,23 @@
   background: #6b3200;
   color: #fff;
   border: none;
-  border-radius: 8px;
-  padding: 6px 12px;
+  border-radius: 10px;
+  padding: 6px 16px;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-  transition: background 0.2s ease;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.12);
+  transition: background 0.2s ease, transform 0.2s ease;
   margin-left: 40px;
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 7%;
+  width: auto;
 }
 
 .voltarButton:hover {
   background: #8b4513;
+  transform: translateY(-1px);
 }
 
 .pageTitle {

@@ -3,7 +3,7 @@ import { Navbar } from "../components/Navbar";
 import { SuccessPopup } from "../components/SuccessPopup";
 import styles from "../styles/ResumoVendas.module.css";
 import { DateInput } from 'rsuite';
-import { FaRegCalendarAlt } from "react-icons/fa";
+import { FaRegCalendarAlt, FaArrowLeft } from "react-icons/fa";
 import { useEffect } from "react";
 import api, { email as emailApi } from '../provider/api';
 
@@ -61,6 +61,39 @@ export function ResumoVenda() {
     if (digits.length <= 6) return `${digits.slice(0,3)}.${digits.slice(3)}`;
     if (digits.length <= 9) return `${digits.slice(0,3)}.${digits.slice(3,6)}.${digits.slice(6)}`;
     return `${digits.slice(0,3)}.${digits.slice(3,6)}.${digits.slice(6,9)}-${digits.slice(9)}`;
+  }
+
+  function parseOptionList(value) {
+    if (!value) return [];
+    const toList = (arr) => arr
+      .map(item => String(item).trim())
+      .filter(Boolean)
+      .slice(0, 3);
+
+    if (Array.isArray(value)) return toList(value);
+    return toList(String(value).split('|'));
+  }
+
+  async function notifyHeavyPartyCake(venda, dataReferencia) {
+    const payload = {
+      pedido: {
+        massas: parseOptionList(venda.massa),
+        coberturas: parseOptionList(venda.cobertura),
+        recheios: parseOptionList(venda.recheio),
+        pesoKg: Number(venda.peso) || 0,
+        observacao: venda.observacao || 'Sem observação'
+      }
+    };
+
+    if (dataReferencia) {
+      payload.dataReferencia = dataReferencia;
+    }
+
+    try {
+      await emailApi.post('/bolos', payload);
+    } catch (err) {
+      console.error('Erro ao notificar bolo de festa pesado:', err, payload);
+    }
   }
 
   // Buscar cliente por CPF (usado na tela de resumo quando o usuário fornece CPF)
@@ -124,6 +157,21 @@ export function ResumoVenda() {
           } catch (emailErr) {
             console.error('Erro ao enviar email de resumo:', emailErr);
           }
+        }
+
+        const tipoVendaResumo = parsed.tipoVenda || (vendasPayload[vendasPayload.length - 1]?.categoriaEntrega) || null;
+        const dataReferencia = tipoVendaResumo === 'Encomenda'
+          ? (parsed.orderDetails?.date || null)
+          : null;
+
+        const heavyPartyCakes = vendasPayload.filter(v => {
+          const isBoloFesta = String(v?.nome || '').toLowerCase().includes('bolo de festa');
+          const peso = Number(v?.peso) || 0;
+          return isBoloFesta && peso >= 2;
+        });
+
+        for (const bolo of heavyPartyCakes) {
+          await notifyHeavyPartyCake(bolo, dataReferencia);
         }
 
         // montar payload do pedido
@@ -358,7 +406,8 @@ export function ResumoVenda() {
           className={styles.voltarButton}
           onClick={handleVoltar}
         >
-          {'< Voltar'}
+          <FaArrowLeft size={12} style={{ marginRight: 6 }} />
+          Voltar
         </button>
 
         <h1 className={styles.pageTitle}>Resumo da Venda</h1>

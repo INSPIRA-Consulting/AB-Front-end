@@ -32,6 +32,7 @@ jobs:
 
              npm install
              npm install axios
+             npm install jspdf
              
              echo "🏗️ Iniciando build..."
              npm run build

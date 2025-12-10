@@ -6,6 +6,7 @@ import { Button } from "../components/Button";
 import { ModernToast } from "../components/ModernToast";
 import { Navbar } from "../components/Navbar";
 import { useDocumentTitle } from "../hooks/useDocumentTitle";
+import { FaArrowLeft } from "react-icons/fa";
 
 export function RegistroIngredientes(props) {
     useDocumentTitle(props.titulo);
@@ -58,7 +59,8 @@ export function RegistroIngredientes(props) {
                     className={styles.voltarButton}
                     onClick={handleVoltar}
                 >
-                    {'< Voltar'}
+                    <FaArrowLeft size={12} style={{ marginRight: 6 }} />
+                    Voltar
                 </button>
             </div>
             

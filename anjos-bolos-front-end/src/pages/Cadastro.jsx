@@ -6,6 +6,7 @@ import { Button } from "../components/Button";
 import { ModernToast } from "../components/ModernToast";
 import { Navbar } from "../components/Navbar";
 import { useDocumentTitle } from "../hooks/useDocumentTitle";
+import { FaArrowLeft } from "react-icons/fa";
 
 export function Cadastro(props) {
     useDocumentTitle(props.titulo);
@@ -20,25 +21,52 @@ export function Cadastro(props) {
 
     const [toastSucesso, setToastSucesso] = useState(false);
     const [toastErro, setToastErro] = useState(false);
+    const [toastErroMensagem, setToastErroMensagem] = useState('');
 
 
-    // Máscara para CPF: 000.000.000-00
+    // Máscara para CPF: 000.000.000-00 com correções pós-seleção
     function maskCPF(value) {
-        return value
-            .replace(/\D/g, "")
-            .replace(/(\d{3})(\d)/, "$1.$2")
-            .replace(/(\d{3})(\d)/, "$1.$2")
-            .replace(/(\d{3})(\d{1,2})$/, "$1-$2")
-            .slice(0, 14);
+        const digits = value.replace(/\D/g, '').slice(0, 11);
+        let masked = digits;
+        masked = masked.replace(/(\d{3})(\d)/, '$1.$2');
+        masked = masked.replace(/(\d{3})(\d)/, '$1.$2');
+        masked = masked.replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+        return masked;
     }
 
-    // Máscara para telefone: (00) 00000-0000
+    // Máscara para telefone: (00) 9XXXX-XXXX
     function maskTelefone(value) {
-        return value
-            .replace(/\D/g, "")
-            .replace(/(\d{2})(\d)/, "($1) $2")
-            .replace(/(\d{5})(\d)/, "$1-$2")
-            .slice(0, 15);
+        const digits = value.replace(/\D/g, '').slice(0, 11);
+        if (!digits) return '';
+
+        if (digits.length <= 2) {
+            return digits.length === 2 ? `(${digits}) ` : `(${digits}`;
+        }
+
+        if (digits.length <= 7) {
+            return `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
+        }
+
+        return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
+    }
+
+    function isValidCPF(value) {
+        const cpf = value.replace(/\D/g, '');
+        if (cpf.length !== 11 || /^(\d)\1{10}$/.test(cpf)) return false;
+
+        const calcDigit = (baseLength) => {
+            let sum = 0;
+            for (let i = 0; i < baseLength; i += 1) {
+                sum += Number(cpf[i]) * (baseLength + 1 - i);
+            }
+            const remainder = (sum * 10) % 11;
+            return remainder === 10 ? 0 : remainder;
+        };
+
+        const digit1 = calcDigit(9);
+        const digit2 = calcDigit(10);
+
+        return digit1 === Number(cpf[9]) && digit2 === Number(cpf[10]);
     }
 
     const alterarForm = e => {
@@ -52,15 +80,66 @@ export function Cadastro(props) {
         setForm({ ...form, [e.target.name]: value });
     }
 
+    const validarFormulario = () => {
+        if (!form.nome.trim() || form.nome.trim().length < 3) {
+            setToastErroMensagem('Nome deve ter pelo menos 3 caracteres.');
+            setToastErro(true);
+            return false;
+        }
+
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(form.email.trim())) {
+            setToastErroMensagem('Informe um e-mail válido.');
+            setToastErro(true);
+            return false;
+        }
+
+        if (!isValidCPF(form.cpf)) {
+            setToastErroMensagem('CPF inválido. Confira os dígitos informados.');
+            setToastErro(true);
+            return false;
+        }
+
+        const telefoneRegex = /^\(\d{2}\) 9\d{4}-\d{4}$/;
+        if (!telefoneRegex.test(form.telefone)) {
+            setToastErroMensagem("Telefone deve estar no formato '(XX) 9XXXX-XXXX'.");
+            setToastErro(true);
+            return false;
+        }
+
+        if (!form.funcao) {
+            setToastErroMensagem('Selecione a função do funcionário.');
+            setToastErro(true);
+            return false;
+        }
+
+        if (!form.senha || form.senha.length < 6) {
+            setToastErroMensagem('Senha deve ter pelo menos 6 caracteres.');
+            setToastErro(true);
+            return false;
+        }
+
+        return true;
+    };
+
     const cadastrar = async e => {
         e.preventDefault();
 
+        if (!validarFormulario()) {
+            return;
+        }
+
         try{
-            const response = await api.post(`/usuarios`, form)
+            await api.post(`/usuarios`, {
+                ...form,
+                cpf: form.cpf.replace(/\D/g, ''),
+                telefone: form.telefone.replace(/\D/g, '')
+            })
             setToastSucesso(true)
         }
         catch(error) {
             console.error(error);
+            setToastErroMensagem('Erro ao realizar cadastro. Verifique as informações e tente novamente.');
             setToastErro(true)
         }
     }
@@ -74,10 +153,12 @@ export function Cadastro(props) {
             <Navbar />
             <div className={styles.headerContainer}>
                 <button 
+                    type="button"
                     className={styles.voltarButton}
                     onClick={handleVoltar}
                 >
-                    {'< Voltar'}
+                    <FaArrowLeft className={styles.voltarIcon} />
+                    Voltar
                 </button>
             </div>
             
@@ -112,14 +193,16 @@ export function Cadastro(props) {
                 isOpen={toastSucesso}
                 message={`Funcionário ${form.nome} cadastrado com sucesso!`}
                 type="success"
-                duration={1500}
+                duration={1800}
+                onClose={() => setToastSucesso(false)}
             />
 
             <ModernToast 
                 isOpen={toastErro}
-                message="Erro ao realizar cadastro. Verifique as informações e tente novamente."
+                message={toastErroMensagem || "Erro ao validar cadastro."}
                 type="error"
-                duration={1500}
+                duration={2000}
+                onClose={() => setToastErro(false)}
             />
             </div>
             </div>
