@@ -65,7 +65,7 @@ export function RegistroProduto(props) {
     setNomeProduto('');
     setCategoria('');
     setValor('');
-    setCusto('');
+    setCusto(0.00);
     setListareceitas([]);
     setReceitaSelecionadaId('');
     setQuantidade('');
@@ -272,7 +272,6 @@ export function RegistroProduto(props) {
       toast.warning('Adicione pelo menos um ingrediente à receita.');
       return;
     }
-
     const novaReceita = {
       nome: nomeReceita,
       tipo: tipoReceita,
@@ -281,10 +280,9 @@ export function RegistroProduto(props) {
         nome: ing.nome,
         quantidade: ing.quantidade,
         unidadeMedida: ing.unidadeMedida || ''
-      }))
+      })),
+      custoProducao: 0
     };
-
-
 
     const payloadApi = {
       nome: nomeReceita,
@@ -295,18 +293,24 @@ export function RegistroProduto(props) {
       }))
     };
 
-    api.post('/receitas', payloadApi)
-      .then(() => {
+    // Enviar para API e usar retorno (se fornecer custoProducao)
+    (async () => {
+      try {
+        const resp = await api.post('/receitas', payloadApi);
+        const criado = resp?.data || {};
+        if (criado && (typeof criado.custoProducao !== 'undefined')) {
+          novaReceita.custoProducao = Number(criado.custoProducao) || 0;
+        }
         setToastMessage('Receita registrada com sucesso!');
         setToastSucesso(true);
-      })
-      .catch((err) => {
+      } catch (err) {
         console.error('Erro ao registrar receita:', err);
         setToastMessage('Não foi possível registrar a receita. Tente novamente.');
         setToastErro(true);
-      });
-
-    setListareceitas(prev => [...prev, novaReceita]);
+      } finally {
+        setListareceitas(prev => [...prev, novaReceita]);
+      }
+    })();
     // Resetar e fechar modal
     setNomeReceita('');
     setIngredienteSelecionado('');
@@ -390,14 +394,14 @@ export function RegistroProduto(props) {
             quantidade: ing.quantidade,
             unidadeMedida: mapUnidadeFromApi(ing.unidadeMedida)
           }))
-        : []
+        : [],
+      custoProducao: Number(selecionada.custoProducao) || 0,
+      tipo: selecionada.tipoReceita || selecionada.tipo || ''
     };
 
 
-    // Adiciona a quantidade solicitada de receitas
-    const entradas = Array.from({ length: qtd }, () => ({
-      ...entrada
-    }));
+    // Adiciona a quantidade solicitada de receitas (cada unidade carrega seu custoProducao)
+    const entradas = Array.from({ length: qtd }, () => ({ ...entrada }));
 
     setListareceitas(prev => [...prev, ...entradas]);
     setReceitaSelecionadaId('');
@@ -413,6 +417,19 @@ export function RegistroProduto(props) {
     setDetalheAberto(true);
     console.log(item.ingredientes)
   }
+
+  // Recalcula automaticamente o custo de produção total baseado nas receitas adicionadas
+  useEffect(() => {
+    try {
+      const total = (listareceitas || []).reduce((s, r) => {
+        const c = Number(r.custoProducao || r.custo || 0);
+        return s + (Number.isFinite(c) ? c : 0);
+      }, 0);
+      setCusto(total);
+    } catch (err) {
+      console.error('Erro ao recalcular custo de produção:', err);
+    }
+  }, [listareceitas]);
 
   function handleImagem(e) {
     const file = e.target.files && e.target.files[0];
@@ -562,8 +579,18 @@ export function RegistroProduto(props) {
                     <label className={styles.label}>Custo de Produção:</label>
                     <input
                       type="text"
-                      value={custo}
-                      onChange={e => setCusto(e.target.value)}
+                      value={typeof custo === 'number' ? custo.toFixed(2) : (custo || '0.00')}
+                      onChange={e => {
+                        const raw = e.target.value;
+                        if (raw === '' || raw === null) {
+                          setCusto(0.00);
+                          return;
+                        }
+                        // aceitar vírgula ou ponto; remover outros caracteres
+                        const normalized = String(raw).replace(/\./g, '').replace(/,/g, '.').replace(/[^0-9.]/g, '');
+                        const num = parseFloat(normalized);
+                        setCusto(Number.isNaN(num) ? 0.00 : num);
+                      }}
                       className={`${styles.input} ${errors.custo ? styles.inputError : ''}`}
                     />
                     {errors.custo && <div className={styles.errorMessage}>{errors.custo}</div>}
