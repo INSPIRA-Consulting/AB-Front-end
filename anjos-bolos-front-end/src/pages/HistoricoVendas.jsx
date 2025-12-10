@@ -343,36 +343,50 @@ export function HistoricoVendas(props) {
 
   // abre modal com itens do dia selecionado
   const handleDetalhesDia = (vendaItem) => {
-    try {
-      console.log('🔍 Abrindo detalhes para:', vendaItem);
-      
-      // Usar dataCompleta ao invés de só o número do dia
-      const dataAlvo = vendaItem.dataCompleta; // "2025-11-01"
-      
-      const pedidosDoDia = pedidosFull.filter(p => {
-        const dataStr = p.dataPedido || p.dataPedidoString || p.dataPedidoAt || '';
-        const dataCompleta = dataStr.split(' ')[0]; // "2025-11-01"
-        return dataCompleta === dataAlvo;
-      });
+  try {
+    console.log('🔍 Abrindo detalhes para:', vendaItem);
+    const dataAlvo = vendaItem.dataCompleta; // "yyyy-mm-dd"
 
-      console.log('📦 Pedidos do dia', dataAlvo, ':', pedidosDoDia.length);
+    // Filtrar pedidos do dia e aplicar filtro de status (se houver)
+    const pedidosDoDia = pedidosFull.filter(p => {
+      const dataStr = p.dataPedido || p.dataPedidoString || p.dataPedidoAt || '';
+      const dataCompleta = dataStr.split(' ')[0];
+      if (dataCompleta !== dataAlvo) return false;
 
-      const itens = [];
-      pedidosDoDia.forEach(p => {
-        const itensDoPedido = itensFull.filter(it => Number(it.pedidoId) === Number(p.id));
-        itens.push(...itensDoPedido);
-      });
+      if (statusSelecionados && statusSelecionados.length > 0) {
+        const status = (p.status || p.Status || '').toString().toUpperCase();
+        if (!statusSelecionados.includes(status)) return false;
+      }
+      return true;
+    });
 
-      console.log('🛒 Itens encontrados:', itens.length);
-      
-      setItensDoDia(itens);
-      setModalAberto(true);
-    } catch (err) {
-      console.error('❌ Erro ao buscar itens do dia:', err);
-      setItensDoDia([]);
-      setModalAberto(true);
-    }
-  };
+    console.log('📦 Pedidos do dia (após status):', pedidosDoDia.length);
+
+    // Para cada pedido, pegar itens e aplicar filtro de categoria (se houver)
+    const itens = [];
+    pedidosDoDia.forEach(p => {
+      const itensDoPedido = itensFull
+        .filter(it => Number(it.pedidoId) === Number(p.id))
+        .filter(it => {
+          if (!categoriasSelecionadas || categoriasSelecionadas.length === 0) return true;
+          const nome = (it.produto || it.nomeProduto || it.descricao || '').toString();
+          const cat = inferCategoryFromProductName(nome);
+          return categoriasSelecionadas.includes(cat);
+        });
+      itens.push(...itensDoPedido);
+    });
+
+    const soma = itens.reduce((s, it) => s + (Number(it.precoUnitario || 0) * (Number(it.quantidade) || 1)), 0);
+    console.log('🛒 Itens encontrados:', itens.length, '→ Soma:', soma);
+
+    setItensDoDia(itens);
+    setModalAberto(true);
+  } catch (err) {
+    console.error('❌ Erro ao buscar itens do dia:', err);
+    setItensDoDia([]);
+    setModalAberto(true);
+  }
+};
 
   return (
     <div className={styles.containerHistoiricoVendas}>
@@ -658,7 +672,7 @@ export function HistoricoVendas(props) {
                   <tr className={styles.totalRow}>
                     <td colSpan="3">Total</td>
                     <td className={styles.totalValue}>
-                      R$ {itensDoDia.reduce((sum, it) => sum + (Number(it.precoUnitario || 0) * (Number(it.quantidade) || 1)), 0).toFixed(2)};
+                      R$ {itensDoDia.reduce((sum, it) => sum + (Number(it.precoUnitario || 0) * (Number(it.quantidade) || 1)), 0).toFixed(2)}
                     </td>
                   </tr>
                 </tfoot>
