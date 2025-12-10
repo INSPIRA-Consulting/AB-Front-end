@@ -25,7 +25,7 @@ export function RegistroProduto(props) {
   const [toastMessage, setToastMessage] = useState('');
   const [receita, setreceita] = useState('');
   const [quantidade, setQuantidade] = useState('');
-  const [unidade, setUnidade] = useState('g');
+  const [unidadeMedida, setUnidade] = useState('g');
   const [listareceitas, setListareceitas] = useState([]);
   // Banco de receitas existentes
   const [receitasBanco, setReceitasBanco] = useState([]);
@@ -39,7 +39,7 @@ export function RegistroProduto(props) {
   const [carregandoCategorias, setCarregandoCategorias] = useState(false);
   const [erroCategorias, setErroCategorias] = useState('');
   const [valor, setValor] = useState('');
-  const [custo, setCusto] = useState('');
+  const [custo, setCusto] = useState(0.00);
   const [imagem, setImagem] = useState('/src/assets/bolinho15.png');
   const [imagemFile, setImagemFile] = useState(null);
   const imagemObjectUrlRef = useRef(null);
@@ -83,24 +83,25 @@ export function RegistroProduto(props) {
     }
   }
 
-  // Mapeia a medida da API para uma unidade curta para exibição
+  // Mapeia a medida da API para uma unidadeMedida curta para exibição
   function getUnidadeFromMedida(medidaApi) {
     const s = String(medidaApi || '').toLowerCase();
     if (s.startsWith('gram')) return 'g'; // grama, gramas
     if (s.startsWith('quilo')) return 'kg'; // quilograma
     if (s.startsWith('mili')) return 'ml'; // mililitro, mililitros
     if (s.startsWith('litro')) return 'l'; // litro, litros
-    if (s.startsWith('un')) return 'un'; // unidade, unidades
+    if (s.startsWith('un')) return 'un'; // unidadeMedida, unidades
     return '';
   }
 
   function mapUnidadeFromApi(unidadeApi) {
+    console.log('Mapeando unidade da API:', unidadeApi);
     const u = String(unidadeApi || '').toUpperCase();
-    if (u === 'GRAMA') return 'g';
-    if (u === 'QUILOGRAMA') return 'kg';
-    if (u === 'MILILITRO') return 'ml';
-    if (u === 'LITRO') return 'l';
-    if (u === 'UNIDADE') return 'un';
+    if (u === 'GRAMAS' || u === 'GRAMA') return 'g';
+    if (u === 'QUILOGRAMAS' || u === 'QUILOGRAMA') return 'kg';
+    if (u === 'MILILITROS' || u === 'MILILITRO') return 'ml';
+    if (u === 'LITROS' || u === 'LITRO') return 'l';
+    if (u === 'UNIDADES' || u === 'UNIDADE') return 'un';
     return '';
   }
 
@@ -277,18 +278,20 @@ export function RegistroProduto(props) {
       tipo: tipoReceita,
       ingredientes: ingredientesReceita.map(ing => ({
         ingredienteId: ing.ingredienteId,
-        ingredienteNome: ing.ingredienteNome,
+        nome: ing.nome,
         quantidade: ing.quantidade,
-        unidade: ing.unidade || ''
+        unidadeMedida: ing.unidadeMedida || ''
       }))
     };
+
+
 
     const payloadApi = {
       nome: nomeReceita,
       ingredientes: ingredientesReceita.map(ing => ({
         ingredienteId: isNaN(Number(ing.ingredienteId)) ? ing.ingredienteId : Number(ing.ingredienteId),
         quantidade: Number(ing.quantidade),
-        unidadeMedida: mapUnidadeToApi(ing.unidade)
+        unidadeMedida: mapUnidadeToApi(ing.unidadeMedida)
       }))
     };
 
@@ -323,9 +326,9 @@ export function RegistroProduto(props) {
                         ingredientes.find(i => String(i._id) === String(ingredienteSelecionado));
     const novo = {
       ingredienteId: ingrediente?.id || ingrediente?._id || ingredienteSelecionado,
-      ingredienteNome: ingrediente?.nome || '',
+      nome: ingrediente?.nome || '',
       quantidade: Number(quantidadeIngrediente),
-      unidade: getUnidadeFromMedida(ingrediente?.medida)
+      unidadeMedida: getUnidadeFromMedida(ingrediente?.medida)
     };
     setIngredientesReceita(prev => [...prev, novo]);
     setIngredienteSelecionado('');
@@ -383,12 +386,13 @@ export function RegistroProduto(props) {
       ingredientes: Array.isArray(selecionada.ingredientes)
         ? selecionada.ingredientes.map((ing) => ({
             ingredienteId: ing.ingredienteId,
-            ingredienteNome: ing.ingredienteNome || '',
+            nome: ing.nome || '',
             quantidade: ing.quantidade,
-            unidade: mapUnidadeFromApi(ing.unidadeMedida)
+            unidadeMedida: mapUnidadeFromApi(ing.unidadeMedida)
           }))
         : []
     };
+
 
     // Adiciona a quantidade solicitada de receitas
     const entradas = Array.from({ length: qtd }, () => ({
@@ -407,6 +411,7 @@ export function RegistroProduto(props) {
   function abrirDetalhes(item) {
     setReceitaDetalhe(item);
     setDetalheAberto(true);
+    console.log(item.ingredientes)
   }
 
   function handleImagem(e) {
@@ -621,7 +626,7 @@ export function RegistroProduto(props) {
                         • {item.nome} {isRecipe && item.tipo ? `(${String(item.tipo).charAt(0).toUpperCase() + String(item.tipo).slice(1)})` : ''}
                       </span>
                       <span className={styles.receitaQuantidade}>
-                        {isRecipe ? `${item.ingredientes?.length || 0} ${((item.ingredientes?.length || 0) === 1) ? 'item' : 'itens'}` : `${item.quantidade} ${item.unidade}`}
+                        {isRecipe ? `${item.ingredientes?.length || 0} ${((item.ingredientes?.length || 0) === 1) ? 'item' : 'itens'}` : `${item.quantidade} ${item.unidadeMedida}`}
                       </span>
                       <button
                         onClick={(e) => { e.stopPropagation(); removerreceita(idx); }}
@@ -647,8 +652,8 @@ export function RegistroProduto(props) {
 
       {/* Modal de criação de receita */}
   <Modal isOpen={modalAberto} onClose={handleCancelarModal}>
-        <div style={{ padding: '8px 8px 16px 8px', width: 720 }}>
-          <h2 className={styles.sectionTitle} style={{ marginTop: 6, marginBottom: 12 }}>Criar Receita</h2>
+        <div style={{ padding: '28px', width: '480px', maxWidth: '92vw', background: '#f5f1ed', borderRadius: '15px' }}>
+          <h2 style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '1.35rem', fontWeight: 'bold', color: '#663b2b', marginBottom: '20px', textAlign: 'center' }}>Criar Receita</h2>
           <form onSubmit={confirmarCriacaoReceita}>
             <div className={styles.inputGroup}>
               <label className={styles.label}>Nome da receita</label>
@@ -719,9 +724,9 @@ export function RegistroProduto(props) {
                     ) : (
                       ingredientesReceita.map((ing, idx) => (
                         <tr key={idx}>
-                          <td style={{ padding: '8px', borderBottom: '1px solid #f0ece8', color: '#6b3200' }}>{ing.ingredienteNome}</td>
+                          <td style={{ padding: '8px', borderBottom: '1px solid #f0ece8', color: '#6b3200' }}>{ing.nome}</td>
                           <td style={{ padding: '8px', textAlign: 'center', borderBottom: '1px solid #f0ece8', color: '#6b3200' }}>
-                            {ing.quantidade}{ing.unidade || ''}
+                            {ing.quantidade}{ing.unidadeMedida || ''}
                           </td>
                           <td style={{ padding: '8px', textAlign: 'center', borderBottom: '1px solid #f0ece8' }}>
                             <button type="button" className={styles.removerButton} onClick={() => removerIngredienteModal(idx)}>
@@ -760,10 +765,10 @@ export function RegistroProduto(props) {
 
       {/* Modal de detalhes da receita */}
       <Modal isOpen={detalheAberto} onClose={() => setDetalheAberto(false)}>
-        <div style={{ padding: 12, width: 720 }}>
+        <div style={{ padding: '28px', width: '480px', maxWidth: '92vw', background: '#f5f1ed', borderRadius: '15px' }}>
           {receitaDetalhe && (
             <>
-              <h2 className={styles.sectionTitle} style={{ marginTop: 6, marginBottom: 12 }}>
+              <h2 style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '1.35rem', fontWeight: 'bold', color: '#663b2b', marginBottom: '20px', textAlign: 'center' }}>
                 Detalhes: {receitaDetalhe.nome} {Array.isArray(receitaDetalhe.ingredientes) && receitaDetalhe.tipo ? `(${String(receitaDetalhe.tipo).charAt(0).toUpperCase() + String(receitaDetalhe.tipo).slice(1)})` : ''}
               </h2>
 
@@ -786,8 +791,8 @@ export function RegistroProduto(props) {
                       <tbody>
                         {receitaDetalhe.ingredientes.map((ing, i) => (
                           <tr key={i}>
-                            <td style={{ padding: '8px', borderBottom: '1px solid #f0ece8', color: '#6b3200' }}>{ing.ingredienteNome || `ID ${ing.ingredienteId}`}</td>
-                            <td style={{ padding: '8px', textAlign: 'center', borderBottom: '1px solid #f0ece8', color: '#6b3200' }}>{ing.quantidade}{ing.unidade || ''}</td>
+                            <td style={{ padding: '8px', borderBottom: '1px solid #f0ece8', color: '#6b3200' }}>{ing.nome || `${ing.nome}`}</td>
+                            <td style={{ padding: '8px', textAlign: 'center', borderBottom: '1px solid #f0ece8', color: '#6b3200' }}>{ing.quantidade}{ing.unidadeMedida || ''}</td>
                           </tr>
                         ))}
                       </tbody>
@@ -807,7 +812,7 @@ export function RegistroProduto(props) {
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 4px', color: '#6b3200', borderTop: '1px solid #f0ece8' }}>
                     <span>{receitaDetalhe.nome}</span>
-                    <span>{receitaDetalhe.quantidade} {receitaDetalhe.unidade}</span>
+                    <span>{receitaDetalhe.quantidade}{receitaDetalhe.unidadeMedida}</span>
                   </div>
                 </div>
               )}

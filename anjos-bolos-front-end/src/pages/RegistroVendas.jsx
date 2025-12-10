@@ -67,45 +67,50 @@ export function RegistroVendas(props) {
   const cpfDebounceRef = React.useRef(null);
   const toastResetRef = React.useRef(null);
 
-  // Carregar produtos da API
+  // Carregar produtos da API por categoria selecionada
   React.useEffect(() => {
     let mounted = true;
 
-    const categoryMap = {
-      'Bolo Tradicional': 'tradicionais',
-      'Bolo de Festa': 'festa',
-      'Bolo de Pote': 'pote',
-      'Bebidas': 'bebidas',
-      'Bebida': 'bebidas',
-      'Massa': 'massa',
-      'Recheio': 'recheio',
-      'Cobertura': 'cobertura',
-      'Salgados': 'salgados',
-      'Salgado': 'salgados'
+    // map local category key -> categoria id da API
+    const categoriaToId = {
+      tradicionais: 1, // 'Bolo Tradicional'
+      bebidas: 2,       // 'Bebida'
+      salgados: 3,      // 'Salgados'
+      pote: 4,          // 'Bolo de Pote'
+      festa: 5          // 'Bolo de Festa'
     };
 
-    async function loadProdutos() {
+    async function loadProdutosByCategoria() {
       try {
-        const resp = await api.get(`/produtos`);
-        const content = resp?.data?.content || [];
+        const catKey = categoria || 'tradicionais';
+        const catId = categoriaToId[catKey] || 1;
+        console.log(`🔍 Carregando produtos para categoria '${catKey}' (id=${catId})`);
+
+        const resp = await api.get(`/produtos/categoria/${catId}`);
+        // endpoint pode retornar array direto ou envelopado em .content
+        const content = Array.isArray(resp.data) ? resp.data : (resp?.data?.content || []);
+
         const mapped = content.map(p => ({
           id: p.id,
           imagem: p.nomeImagem
             ? `https://s3-anjos-bolos-images.s3.us-east-1.amazonaws.com/${p.nomeImagem}`
             : '',
-          titulo: p.nome,
-          valor: Number(p.precoFinal) || 0,
-          categoria: categoryMap[p.categoriaProduto] || 'tradicionais'
+          titulo: p.nome || p.titulo || '',
+          valor: Number(p.precoFinal || p.preco || p.valor || 0) || 0,
+          categoria: catKey
         }));
-        if (mounted && mapped.length) setProdutos(mapped);
+
+        console.log(`✅ Produtos carregados (${mapped.length}) para categoria '${catKey}'`);
+        if (mounted) setProdutos(mapped);
       } catch (err) {
-        console.error('Erro ao carregar produtos:', err);
+        console.error('Erro ao carregar produtos por categoria:', err);
+        if (mounted) setProdutos([]);
       }
     }
 
-    loadProdutos();
+    loadProdutosByCategoria();
     return () => { mounted = false };
-  }, []);
+  }, [categoria]);
 
   // Carregar receitas da API
   React.useEffect(() => {

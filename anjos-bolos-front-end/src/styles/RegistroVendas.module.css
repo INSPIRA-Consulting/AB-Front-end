@@ -250,42 +250,42 @@ h3{
 
 /* Estilos do Modal de Encomenda */
 .modalEncomenda {
-    padding: 36px;
-    width: min(560px, 92vw);
-    max-width: 560px;
+    padding: 28px;
+    width: min(480px, 92vw);
+    max-width: 480px;
     background: #f5f1ed;
     border-radius: 15px;
 }
 
 .modalEncomenda h3 {
     font-family: 'Montserrat', sans-serif;
-    font-size: 1.5rem;
+    font-size: 1.35rem;
     font-weight: bold;
     color: #663b2b;
-    margin-bottom: 25px;
-    text-align: left;
+    margin-bottom: 20px;
+    text-align: center;
 }
 
 .modalEncomendaField {
-    margin-bottom: 18px;
+    margin-bottom: 15px;
 }
 
 .modalEncomendaField label {
     display: block;
     font-family: 'Montserrat', sans-serif;
-    font-size: 0.95rem;
+    font-size: 0.9rem;
     font-weight: 500;
     color: #56270B;
-    margin-bottom: 6px;
+    margin-bottom: 5px;
     text-align: left;
 }
 
 .modalEncomendaField input,
 .modalEncomendaField select {
     width: 100%;
-    padding: 10px 12px;
+    padding: 9px 11px;
     font-family: 'Montserrat', sans-serif;
-    font-size: 0.95rem;
+    font-size: 0.9rem;
     color: #4a4a4a;
     background: white;
     border: 2px solid #c4b5a3;
@@ -303,14 +303,14 @@ h3{
 .modalEncomendaButtons {
     display: flex;
     justify-content: flex-end;
-    gap: 12px;
-    margin-top: 25px;
+    gap: 10px;
+    margin-top: 20px;
 }
 
 .modalEncomendaButtons button {
-    padding: 10px 20px;
+    padding: 9px 18px;
     font-family: 'Montserrat', sans-serif;
-    font-size: 1rem;
+    font-size: 0.95rem;
     font-weight: 600;
     border: none;
     border-radius: 8px;

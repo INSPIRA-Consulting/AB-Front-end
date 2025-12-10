@@ -111,13 +111,13 @@
 }
 
 .toast.error .icon {
-    background: linear-gradient(135deg, #a03a1a, #611e0d);
+    background: linear-gradient(135deg, #ef4444, #dc2626);
     color: white;
-    box-shadow: 0 10px 25px rgba(96, 24, 8, 0.35);
+    box-shadow: 0 10px 25px rgba(239, 68, 68, 0.35);
 }
 
 .toast.error .progressBar {
-    background: linear-gradient(90deg, #a03a1a, #611e0d);
+    background: linear-gradient(90deg, #ef4444, #dc2626);
 }
 
 /* Responsivo */
