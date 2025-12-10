@@ -334,11 +334,6 @@ export function RegistroVendas(props) {
       return;
     }
 
-    if (!hasCpf) {
-      showToast('Informe um CPF válido.');
-      return;
-    }
-
     if (!hasPhone) {
       showToast("Telefone deve estar no formato '(XX) 9XXXX-XXXX'.");
       return;
