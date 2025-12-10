@@ -8,7 +8,12 @@ export function Modal({ isOpen, onClose, children }) {
     <div className={ styles.overlay } onClick={ onClose }>
       <div className={ styles.modal } onClick={ (e) => e.stopPropagation() }>
         { children }
-        <button className={ styles["button-fechar"] } onClick={ onClose }>
+        <button
+          type="button"
+          className={ styles["button-fechar"] }
+          onClick={ onClose }
+          aria-label="Fechar modal"
+        >
             <img src={ fechar } alt="" />
         </button>
       </div>

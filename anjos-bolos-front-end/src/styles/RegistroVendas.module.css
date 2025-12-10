@@ -250,8 +250,9 @@ h3{
 
 /* Estilos do Modal de Encomenda */
 .modalEncomenda {
-    padding: 30px;
-    max-width: 500px;
+    padding: 36px;
+    width: min(560px, 92vw);
+    max-width: 560px;
     background: #f5f1ed;
     border-radius: 15px;
 }

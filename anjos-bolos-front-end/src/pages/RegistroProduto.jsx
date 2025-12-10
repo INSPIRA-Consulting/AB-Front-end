@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import api from '../provider/api';
 import { FaTrashCan } from "react-icons/fa6";
 import { Navbar } from '../components/Navbar';
+import { FaArrowLeft } from "react-icons/fa";
 import { Modal } from '../components/Modal';
 import { ModernToast } from '../components/ModernToast';
 import styles from '../styles/RegistroProduto.module.css';
@@ -459,7 +460,8 @@ export function RegistroProduto(props) {
           className={styles.voltarButton}
           onClick={handleVoltar}
         >
-          {'< Voltar'}
+          <FaArrowLeft size={12} style={{ marginRight: 6 }} />
+          Voltar
         </button>
       </div>
       

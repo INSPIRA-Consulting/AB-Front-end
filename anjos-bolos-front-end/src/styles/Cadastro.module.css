@@ -15,39 +15,38 @@
 }
 
 .voltarButton {
-  background: linear-gradient(135deg, #4b1804, #2c0b02);
+  background: #6b3200;
   color: #fff;
-  border: 1px solid #5b210c;
-  border-radius: 999px;
-  padding: 10px 24px;
+  border: none;
+  border-radius: 10px;
+  padding: 6px 16px;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   font-weight: 600;
-  font-size: 0.95rem;
+  font-size: 0.9rem;
   cursor: pointer;
-  box-shadow: 0 8px 20px rgba(122, 46, 18, 0.25);
-  transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.12);
+  transition: background 0.2s ease, transform 0.2s ease;
   margin-left: 0;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   text-align: center;
   width: auto;
-  min-width: 150px;
-  gap: 8px;
+  gap: 6px;
 }
 
 .voltarButton:hover {
+  background: #56270b;
   transform: translateY(-1px);
-  box-shadow: 0 12px 24px rgba(28, 4, 1, 0.45);
 }
 
 .voltarButton:active {
   transform: translateY(0);
-  opacity: 0.9;
+  opacity: 0.95;
 }
 
 .voltarIcon {
-  font-size: 1rem;
+  font-size: 0.85rem;
 }
 
 .cadastro {
@@ -100,7 +99,7 @@
 }
 
 select {
-  width: 320px;
+  width: 350px;
   padding: 8px 12px;
   font-size: 1rem;
   color: #663b2b;

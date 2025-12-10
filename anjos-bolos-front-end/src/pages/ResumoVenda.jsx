@@ -3,7 +3,7 @@ import { Navbar } from "../components/Navbar";
 import { SuccessPopup } from "../components/SuccessPopup";
 import styles from "../styles/ResumoVendas.module.css";
 import { DateInput } from 'rsuite';
-import { FaRegCalendarAlt } from "react-icons/fa";
+import { FaRegCalendarAlt, FaArrowLeft } from "react-icons/fa";
 import { useEffect } from "react";
 import api, { email as emailApi } from '../provider/api';
 
@@ -406,7 +406,8 @@ export function ResumoVenda() {
           className={styles.voltarButton}
           onClick={handleVoltar}
         >
-          {'< Voltar'}
+          <FaArrowLeft size={12} style={{ marginRight: 6 }} />
+          Voltar
         </button>
 
         <h1 className={styles.pageTitle}>Resumo da Venda</h1>

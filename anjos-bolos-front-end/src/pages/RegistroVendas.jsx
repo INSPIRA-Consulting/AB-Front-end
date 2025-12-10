@@ -65,6 +65,7 @@ export function RegistroVendas(props) {
   });
 
   const cpfDebounceRef = React.useRef(null);
+  const toastResetRef = React.useRef(null);
 
   // Carregar produtos da API
   React.useEffect(() => {
@@ -138,6 +139,12 @@ export function RegistroVendas(props) {
     return () => { mounted = false };
   }, []);
 
+  React.useEffect(() => {
+    return () => {
+      if (toastResetRef.current) clearTimeout(toastResetRef.current);
+    };
+  }, []);
+
   // Funções auxiliares
   function normalizeDigits(str = '') {
     return String(str).replace(/\D/g, '');
@@ -156,6 +163,72 @@ export function RegistroVendas(props) {
   }
 
   const timeOptions = generateTimeOptions();
+  const telefoneRegex = /^\(\d{2}\) 9\d{4}-\d{4}$/;
+
+  function maskCpf(value = '') {
+    const digits = normalizeDigits(value).slice(0, 11);
+    let masked = digits;
+    masked = masked.replace(/(\d{3})(\d)/, '$1.$2');
+    masked = masked.replace(/(\d{3})(\d)/, '$1.$2');
+    masked = masked.replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+    return masked;
+  }
+
+  function maskPhone(value = '') {
+    const digits = normalizeDigits(value).slice(0, 11);
+    if (!digits) return '';
+
+    if (digits.length <= 2) {
+      return digits.length === 2 ? `(${digits}) ` : `(${digits}`;
+    }
+
+    if (digits.length <= 7) {
+      return `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
+    }
+
+    return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
+  }
+
+  function isValidCPF(value = '') {
+    const cpf = normalizeDigits(value);
+    if (cpf.length !== 11 || /^(\d)\1{10}$/.test(cpf)) return false;
+
+    const calcDigit = (baseLength) => {
+      let sum = 0;
+      for (let i = 0; i < baseLength; i += 1) {
+        sum += Number(cpf[i]) * (baseLength + 1 - i);
+      }
+      const remainder = (sum * 10) % 11;
+      return remainder === 10 ? 0 : remainder;
+    };
+
+    const digit1 = calcDigit(9);
+    const digit2 = calcDigit(10);
+
+    return digit1 === Number(cpf[9]) && digit2 === Number(cpf[10]);
+  }
+
+  function isValidPickupDate(dateStr) {
+    if (!dateStr) return false;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const selected = new Date(`${dateStr}T00:00:00`);
+    selected.setHours(0, 0, 0, 0);
+    return selected >= today;
+  }
+
+  const showToast = (message, type = 'error') => {
+    if (toastResetRef.current) {
+      clearTimeout(toastResetRef.current);
+    }
+
+    setToastVisible(false);
+    toastResetRef.current = setTimeout(() => {
+      setToastMessage(message);
+      setToastType(type);
+      setToastVisible(true);
+    }, 20);
+  };
 
   // Buscar cliente por CPF
   async function fetchClientByCpf(cpf) {
@@ -171,7 +244,7 @@ export function RegistroVendas(props) {
             ...prev,
             clientId: found.id,
             clientName: found.nome,
-            phone: found.telefone
+            phone: maskPhone(found.telefone || prev.phone)
           };
           try {
             const payload = { vendas, tipoVenda };
@@ -207,15 +280,20 @@ export function RegistroVendas(props) {
 
   // Handlers
   function handleCpfChange(e) {
-    const val = e.target.value;
-    setOrderDetails(prev => ({ ...prev, cpf: val, clientId: null }));
+    const masked = maskCpf(e.target.value);
+    setOrderDetails(prev => ({ ...prev, cpf: masked, clientId: null }));
 
     if (cpfDebounceRef.current) clearTimeout(cpfDebounceRef.current);
     cpfDebounceRef.current = setTimeout(() => {
-      if (normalizeDigits(val).length >= 11) {
-        fetchClientByCpf(val);
+      if (normalizeDigits(masked).length === 11) {
+        fetchClientByCpf(masked);
       }
     }, 500);
+  }
+
+  function handlePhoneChange(e) {
+    const masked = maskPhone(e.target.value);
+    setOrderDetails(prev => ({ ...prev, phone: masked }));
   }
 
   const handleTipoVendaChange = (e) => {
@@ -227,46 +305,80 @@ export function RegistroVendas(props) {
   };
 
   const handleConfirmEncomenda = async () => {
-    if (!orderDetails.date || !orderDetails.time || !orderDetails.clientName) {
-      alert('Por favor, preencha data, horário e nome do cliente.');
+    const trimmedName = orderDetails.clientName.trim();
+    const hasCpf = isValidCPF(orderDetails.cpf);
+    const hasPhone = telefoneRegex.test(orderDetails.phone);
+
+    if (!orderDetails.date) {
+      showToast('Informe a data de retirada.');
       return;
     }
 
-    if (!orderDetails.clientId && !orderDetails.cpf) {
-      alert('Por favor, informe o CPF do cliente ou selecione um cliente cadastrado.');
+    if (!isValidPickupDate(orderDetails.date)) {
+      showToast('Data de retirada não pode ser no passado.');
       return;
     }
+
+    if (!orderDetails.time) {
+      showToast('Selecione o horário previsto.');
+      return;
+    }
+
+    if (!trimmedName) {
+      showToast('Informe o nome do cliente.');
+      return;
+    }
+
+    if (!hasCpf) {
+      showToast('Informe um CPF válido.');
+      return;
+    }
+
+    if (!hasPhone) {
+      showToast("Telefone deve estar no formato '(XX) 9XXXX-XXXX'.");
+      return;
+    }
+
+    let normalizedDetails = {
+      ...orderDetails,
+      clientName: trimmedName,
+      cpf: maskCpf(orderDetails.cpf),
+      phone: maskPhone(orderDetails.phone)
+    };
 
     if (!orderDetails.clientId) {
       try {
         const payload = {
-          nome: orderDetails.clientName,
-          cpf: orderDetails.cpf,
-          telefone: orderDetails.phone
+          nome: trimmedName,
+          cpf: normalizedDetails.cpf,
+          telefone: normalizedDetails.phone
         };
         const resp = await api.post(`/clientes`, payload);
         const newClient = resp?.data;
         if (newClient?.id) {
-            setOrderDetails(prev => {
-              const updated = { ...prev, clientId: newClient.id };
-              try {
-                const payload = { vendas, tipoVenda };
-                if (tipoVenda === 'Encomenda') payload.orderDetails = updated;
-                localStorage.setItem('resumoVendas', JSON.stringify(payload));
-              } catch (e) {
-                console.error('Erro ao atualizar resumoVendas no localStorage (handleConfirmEncomenda):', e);
-              }
-              return updated;
-            });
-          }
+          normalizedDetails = { ...normalizedDetails, clientId: newClient.id };
+        }
       } catch (err) {
         console.error('Erro ao cadastrar cliente:', err);
-        alert('Não foi possível cadastrar o cliente. Tente novamente.');
+        showToast('Não foi possível cadastrar o cliente. Tente novamente.');
         return;
       }
     }
 
+    setOrderDetails(() => {
+      const updated = { ...normalizedDetails };
+      try {
+        const payload = { vendas, tipoVenda };
+        if (tipoVenda === 'Encomenda') payload.orderDetails = updated;
+        localStorage.setItem('resumoVendas', JSON.stringify(payload));
+      } catch (e) {
+        console.error('Erro ao atualizar resumoVendas no localStorage (handleConfirmEncomenda):', e);
+      }
+      return updated;
+    });
+
     setShowEncomendaModal(false);
+    showToast('Detalhes da encomenda confirmados.', 'success');
   };
 
   const handleCancelEncomenda = () => {
@@ -314,8 +426,7 @@ export function RegistroVendas(props) {
     const temAlgoSelecionado = selectedMassa || selectedRecheio || selectedCobertura;
     
     if (!temAlgoSelecionado) {
-      setToastMessage('Selecione uma massa, recheio ou cobertura antes de adicionar.');
-      setToastVisible(true);
+      showToast('Selecione uma massa, recheio ou cobertura antes de adicionar.');
       return;
     }
 
@@ -344,14 +455,10 @@ export function RegistroVendas(props) {
   const handleDownloadCardapio = async () => {
     try {
       await generateMenuPDF(produtos, Logo);
-      setToastType('success');
-      setToastMessage('Cardápio baixado com sucesso!');
-      setToastVisible(true);
+      showToast('Cardápio baixado com sucesso!', 'success');
     } catch (error) {
       console.error('Erro ao gerar cardápio:', error);
-      setToastType('error');
-      setToastMessage('Erro ao gerar cardápio. Tente novamente.');
-      setToastVisible(true);
+      showToast('Erro ao gerar cardápio. Tente novamente.');
     }
   };
 
@@ -359,8 +466,7 @@ export function RegistroVendas(props) {
     const temMassa = festaMontada && (festaMontada.massa?.length > 0);
 
     if (!temMassa) {
-      setToastMessage('Selecione pelo menos uma massa para o bolo.');
-      setToastVisible(true);
+      showToast('Selecione pelo menos uma massa para o bolo.');
       return;
     }
 
@@ -368,13 +474,11 @@ export function RegistroVendas(props) {
     const precoNum = parseFloat(String(festaModalInput.preco || '').replace(',', '.'));
 
     if (Number.isNaN(pesoNum) || pesoNum <= 0) {
-      setToastMessage('Informe um peso válido para o bolo.');
-      setToastVisible(true);
+      showToast('Informe um peso válido para o bolo.');
       return;
     }
     if (Number.isNaN(precoNum) || precoNum <= 0) {
-      setToastMessage('Informe um preço válido para o bolo.');
-      setToastVisible(true);
+      showToast('Informe um preço válido para o bolo.');
       return;
     }
 
@@ -418,9 +522,7 @@ export function RegistroVendas(props) {
         return;
       }
 
-      setToastMessage('Selecione uma massa para completar a montagem do bolo.');
-      setToastVisible(true);
-      setTimeout(() => setToastVisible(false), 1000);
+      showToast('Selecione uma massa para completar a montagem do bolo.');
       return;
     }
 
@@ -461,6 +563,7 @@ export function RegistroVendas(props) {
     (festaMontada.recheio?.length > 0) ||
     (festaMontada.cobertura?.length > 0)
   );
+  const toastDuration = toastType === 'success' ? 1800 : 1500;
 
   return (
     <div className={styles.containerRegistroVendas}>
@@ -511,6 +614,7 @@ export function RegistroVendas(props) {
               value={orderDetails.cpf}
               onChange={handleCpfChange}
               placeholder="000.000.000-00"
+              maxLength={14}
             />
           </div>
           <div className={styles.modalEncomendaField}>
@@ -539,8 +643,9 @@ export function RegistroVendas(props) {
             <input
               type="tel"
               value={orderDetails.phone}
-              onChange={e => setOrderDetails(prev => ({ ...prev, phone: e.target.value }))}
-              placeholder="(xx) xxxxx-xxxx"
+              onChange={handlePhoneChange}
+              placeholder="(XX) 9XXXX-XXXX"
+              maxLength={15}
             />
           </div>
           <div className={styles.modalEncomendaButtons}>
@@ -758,10 +863,10 @@ export function RegistroVendas(props) {
 
       {/* Toast de validação */}
       <ModernToast
-        isVisible={toastVisible}
+        isOpen={toastVisible}
         message={toastMessage}
         type={toastType}
-        duration={1000}
+        duration={toastDuration}
         onClose={() => setToastVisible(false)}
       />
 
